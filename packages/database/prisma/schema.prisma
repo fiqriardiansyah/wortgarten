@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WordLevel {
+  new
+  learning
+  mastered
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  tagline   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  words     Word[]
+}
+
+model Word {
+  id        String    @id @default(cuid())
+  german    String
+  native    String
+  level     WordLevel @default(new)
+  isRusty   Boolean   @default(false)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Story {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  minutes   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
