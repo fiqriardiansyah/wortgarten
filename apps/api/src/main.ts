@@ -1,10 +1,6 @@
 import 'reflect-metadata';
-import { config } from 'dotenv';
-import { resolve } from 'path';
-
-config({ path: resolve(__dirname, '../../../.env') });
-
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -12,8 +8,9 @@ async function bootstrap() {
   // body itself; the nestjs-better-auth integration re-adds parsers for
   // non-auth routes.
   const app = await NestFactory.create(AppModule, { bodyParser: false });
+  const configService = app.get(ConfigService);
 
-  const webOrigins = (process.env.WEB_ORIGIN ?? 'http://localhost:5173')
+  const webOrigins = (configService.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173')
     .split(',')
     .map((origin) => origin.trim());
 
@@ -23,7 +20,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const port = process.env.API_PORT ?? 3026;
+  const port = configService.get<string>('API_PORT') ?? 3026;
   await app.listen(port);
   console.log(`API running on http://localhost:${port}`);
 }
