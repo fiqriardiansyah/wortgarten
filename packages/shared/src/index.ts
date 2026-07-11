@@ -62,6 +62,21 @@ export const GardenStatsSchema = z.object({
 });
 export type GardenStats = z.infer<typeof GardenStatsSchema>;
 
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export const SessionUserSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  image: z.string().nullish(),
+});
+export type SessionUser = z.infer<typeof SessionUserSchema>;
+
+export const MeResponseSchema = z.object({
+  user: SessionUserSchema,
+});
+export type MeResponse = z.infer<typeof MeResponseSchema>;
+
 // ─── Home dashboard ───────────────────────────────────────────────────────────
 
 export const HomeDashboardSchema = z.object({

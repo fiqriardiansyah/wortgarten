@@ -1,7 +1,8 @@
-import { Home, Type, BookOpen, BarChart2, Plus, Settings, Sprout } from 'lucide-react';
+import { Home, Type, BookOpen, BarChart2, Plus, LogOut, Sprout } from 'lucide-react';
 import { SidebarNavItem } from '@/components/ui/SidebarNavItem';
 import { Avatar } from '@/components/ui/Avatar';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { authClient } from '@/lib/authClient';
 
 const NAV = [
   { to: '/', icon: <Home size={18} />, label: 'Home' },
@@ -11,6 +12,15 @@ const NAV = [
 ];
 
 export function Sidebar() {
+  const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
+  async function handleLogout() {
+    await authClient.signOut();
+    navigate('/login');
+  }
+
   return (
     <aside className="fixed left-6 top-6 bottom-6 z-40 flex w-56 flex-col rounded-card bg-card shadow-card">
       {/* Logo */}
@@ -39,13 +49,17 @@ export function Sidebar() {
 
       {/* User block */}
       <div className="mt-auto flex items-center gap-3 border-t border-gray-100 px-4 py-4">
-        <Avatar name="Dinda" size="md" />
+        <Avatar name={user?.name} src={user?.image ?? undefined} size="md" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-deep">Dinda</p>
-          <p className="truncate text-xs text-muted">Learning German 🇩🇪</p>
+          <p className="truncate text-sm font-bold text-deep">{user?.name ?? '…'}</p>
+          <p className="truncate text-xs text-muted">{user?.email ?? ''}</p>
         </div>
-        <button className="text-muted hover:text-deep transition-colors">
-          <Settings size={16} />
+        <button
+          onClick={handleLogout}
+          aria-label="Log out"
+          className="text-muted hover:text-deep transition-colors"
+        >
+          <LogOut size={16} />
         </button>
       </div>
     </aside>

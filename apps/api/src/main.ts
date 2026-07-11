@@ -8,10 +8,17 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // bodyParser: false is required by Better Auth, which reads the raw request
+  // body itself; the nestjs-better-auth integration re-adds parsers for
+  // non-auth routes.
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+
+  const webOrigins = (process.env.WEB_ORIGIN ?? 'http://localhost:5173')
+    .split(',')
+    .map((origin) => origin.trim());
 
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: webOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });

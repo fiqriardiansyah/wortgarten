@@ -1,6 +1,9 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { LogOut, Sprout } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { BottomNavBar } from '@/components/ui/BottomNavBar';
+import { Avatar } from '@/components/ui/Avatar';
+import { authClient } from '@/lib/authClient';
 
 const SPARKLES = [
   { top: '8%', left: '15%', size: 14, opacity: 0.25 },
@@ -23,6 +26,15 @@ function Sparkle({ top, left, size, opacity }: { top: string; left: string; size
 }
 
 export function AppLayout() {
+  const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
+  async function handleLogout() {
+    await authClient.signOut();
+    navigate('/login');
+  }
+
   return (
     <div className="relative min-h-screen bg-page font-sans">
       {SPARKLES.map((s, i) => (
@@ -32,6 +44,24 @@ export function AppLayout() {
       {/* Desktop sidebar */}
       <div className="hidden lg:block">
         <Sidebar />
+      </div>
+
+      {/* Mobile top bar */}
+      <div className="flex items-center justify-between gap-2 px-4 pt-4 lg:hidden">
+        <div className="flex items-center gap-2">
+          <Sprout size={20} className="text-primary" />
+          <span className="font-extrabold text-deep">Wortgarten</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Avatar name={user?.name} src={user?.image ?? undefined} size="sm" />
+          <button
+            onClick={handleLogout}
+            aria-label="Log out"
+            className="text-muted hover:text-deep transition-colors"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Main content */}

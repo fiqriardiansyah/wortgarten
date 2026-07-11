@@ -1,6 +1,13 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Sprout } from 'lucide-react';
+import { authClient } from '@/lib/authClient';
 import { AppLayout } from './layout/AppLayout';
 import { HomePage } from '@/features/home/HomePage';
+import { LoginPage } from '@/features/auth/LoginPage';
+import { SignupPage } from '@/features/auth/SignupPage';
+import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage';
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -11,11 +18,63 @@ function Placeholder({ title }: { title: string }) {
   );
 }
 
+function AuthLoadingScreen() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-2 bg-page font-sans">
+      <Sprout size={28} className="animate-pulse text-primary" />
+      <p className="text-sm font-semibold text-muted">Loading…</p>
+    </div>
+  );
+}
+
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { data, isPending } = authClient.useSession();
+
+  if (isPending) return <AuthLoadingScreen />;
+  if (!data) return <Navigate to="/login" replace />;
+
+  return children;
+}
+
+function RequireGuest({ children }: { children: ReactNode }) {
+  const { data, isPending } = authClient.useSession();
+
+  if (isPending) return <AuthLoadingScreen />;
+  if (data) return <Navigate to="/" replace />;
+
+  return children;
+}
+
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<AppLayout />}>
+        <Route
+          path="/login"
+          element={
+            <RequireGuest>
+              <LoginPage />
+            </RequireGuest>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <RequireGuest>
+              <SignupPage />
+            </RequireGuest>
+          }
+        />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        <Route
+          element={
+            <RequireAuth>
+              <AppLayout />
+            </RequireAuth>
+          }
+        >
           <Route path="/" element={<HomePage />} />
           <Route path="/words" element={<Placeholder title="My Words" />} />
           <Route path="/read" element={<Placeholder title="Read" />} />
