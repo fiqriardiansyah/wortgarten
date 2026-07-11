@@ -1,2 +1,25 @@
 export { PrismaClient } from '../generated/prisma';
-export type { User, Word, Story, WordLevel, Session, Account, Verification } from '../generated/prisma';
+export type {
+  User,
+  Session,
+  Account,
+  Verification,
+  Lexeme,
+  Sense,
+  WordForm,
+  UserWord,
+  Attempt,
+  Task,
+  Story,
+  AiQuota,
+  PartOfSpeech,
+  Gender,
+  Provenance,
+  WordLevel,
+  TaskType,
+  AttemptResult,
+  FsrsRating,
+  TaskStatus,
+  StoryStatus,
+  AiSource,
+} from '../generated/prisma';

@@ -9,11 +9,83 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum WordLevel {
-  new
-  learning
-  mastered
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum PartOfSpeech {
+  NOUN
+  VERB
+  ADJECTIVE
+  ADVERB
+  PRONOUN
+  PREPOSITION
+  CONJUNCTION
+  ARTICLE
+  NUMERAL
+  PARTICLE
+  OTHER
 }
+
+enum Gender {
+  MASCULINE
+  FEMININE
+  NEUTER
+}
+
+enum Provenance {
+  SEED
+  AI
+  USER
+}
+
+enum WordLevel {
+  NEW
+  RECOGNIZE
+  RECALL
+  PRODUCE
+  MASTERED
+}
+
+enum TaskType {
+  PICK_MEANING
+  TYPE_WORD
+  BUILD_SENTENCE
+  WRITE_SENTENCE
+}
+
+enum AttemptResult {
+  CORRECT
+  CORRECT_WITH_TYPO
+  WRONG_GENDER
+  WRONG_MEANING
+  WRONG_FORM
+  EMPTY
+}
+
+enum FsrsRating {
+  AGAIN
+  HARD
+  GOOD
+  EASY
+}
+
+enum TaskStatus {
+  READY
+  USED
+  FAILED_CHECK
+}
+
+enum StoryStatus {
+  READY
+  READ
+  FAILED_CHECK
+}
+
+enum AiSource {
+  GROQ
+  OLLAMA
+}
+
+// ─── Better Auth ────────────────────────────────────────────────────────────
 
 model User {
   id            String    @id @default(cuid())
@@ -22,34 +94,16 @@ model User {
   tagline       String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  words         Word[]
   emailVerified Boolean   @default(false)
   image         String?
   sessions      Session[]
   accounts      Account[]
 
+  userWords UserWord[]
+  tasks     Task[]
+  stories   Story[]
+
   @@map("user")
-}
-
-model Word {
-  id        String    @id @default(cuid())
-  german    String
-  native    String
-  level     WordLevel @default(new)
-  isRusty   Boolean   @default(false)
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model Story {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  minutes   Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Session {
@@ -98,4 +152,152 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// ─── Dictionary (shared, seeded later) ─────────────────────────────────────
+
+model Lexeme {
+  id           String       @id @default(cuid())
+  language     String       @default("de")
+  lemma        String
+  partOfSpeech PartOfSpeech
+
+  // nouns
+  gender Gender?
+  plural String?
+
+  // verbs
+  separablePrefix String?
+  auxiliary       String?
+  government      String?
+
+  frequencyRank Int?
+
+  provenance Provenance @default(SEED)
+  isVerified Boolean    @default(false)
+
+  senses Sense[]
+  forms  WordForm[]
+
+  @@unique([language, lemma, partOfSpeech, gender])
+  @@index([language, frequencyRank])
+}
+
+model Sense {
+  id          String  @id @default(cuid())
+  lexemeId    String
+  lexeme      Lexeme  @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
+  translation String
+  definition  String?
+  example     String?
+  cefrLevel   String?
+
+  userWords UserWord[]
+
+  @@index([lexemeId])
+}
+
+model WordForm {
+  id         String @id @default(cuid())
+  lexemeId   String
+  lexeme     Lexeme @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
+  surface    String
+  normalized String
+  features   Json?
+
+  @@index([normalized])
+  @@index([lexemeId])
+}
+
+// ─── Word bank (personal) ───────────────────────────────────────────────────
+
+model UserWord {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  senseId String
+  sense   Sense  @relation(fields: [senseId], references: [id])
+
+  level WordLevel @default(NEW)
+
+  // FSRS state
+  stability      Float     @default(0)
+  difficulty     Float     @default(0)
+  dueAt          DateTime  @default(now())
+  reps           Int       @default(0)
+  lapses         Int       @default(0)
+  lastReviewedAt DateTime?
+
+  // personal
+  customTranslation String?
+  sourceSentence    String?
+  sourceType        String?
+  note              String?
+
+  addedAt DateTime @default(now())
+
+  attempts Attempt[]
+  tasks    Task[]
+
+  @@unique([userId, senseId])
+  @@index([userId, dueAt])
+  @@index([userId, level])
+}
+
+model Attempt {
+  id             String        @id @default(cuid())
+  userWordId     String
+  userWord       UserWord      @relation(fields: [userWordId], references: [id], onDelete: Cascade)
+  taskType       TaskType
+  result         AttemptResult
+  responseTimeMs Int
+  rating         FsrsRating
+  answeredAt     DateTime      @default(now())
+
+  @@index([userWordId, answeredAt])
+}
+
+// ─── Generated content (tables only — stay empty this task) ────────────────
+
+model Task {
+  id         String     @id @default(cuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userWordId String
+  userWord   UserWord   @relation(fields: [userWordId], references: [id], onDelete: Cascade)
+  type       TaskType
+  payload    Json
+  status     TaskStatus @default(READY)
+  source     AiSource?
+  createdAt  DateTime   @default(now())
+  usedAt     DateTime?
+
+  @@index([userId, status])
+}
+
+model Story {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  body          String
+  tokenMap      Json
+  newWordCount  Int
+  minutes       Int
+  status        StoryStatus @default(READY)
+  source        AiSource?
+  createdAt     DateTime    @default(now())
+  readAt        DateTime?
+
+  @@index([userId, status])
+}
+
+model AiQuota {
+  id     String   @id @default(cuid())
+  date   DateTime @db.Date
+  source AiSource
+  used   Int      @default(0)
+  limit  Int
+
+  @@unique([date, source])
 }

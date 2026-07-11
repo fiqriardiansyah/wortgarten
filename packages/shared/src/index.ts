@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export * from './text';
+
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export const WordLevelSchema = z.enum(['new', 'learning', 'mastered']);

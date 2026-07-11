@@ -12,7 +12,7 @@ import { MeModule } from './me/me.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: resolve(__dirname, '../../../.env'),
+      envFilePath: resolve(__dirname, '../../../../.env'),
     }),
     AuthModule.forRootAsync({
       inject: [ConfigService],
