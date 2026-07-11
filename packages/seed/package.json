@@ -1,0 +1,23 @@
+{
+  "name": "@wortgarten/seed",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "seed:filter": "ts-node src/1-filter.ts",
+    "seed:rank": "ts-node src/2-rank.ts",
+    "seed:load": "ts-node src/3-load.ts",
+    "seed:verify": "ts-node src/verify.ts",
+    "seed:all": "pnpm run seed:filter && pnpm run seed:rank && pnpm run seed:load",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@wortgarten/database": "workspace:*",
+    "@wortgarten/shared": "workspace:*",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,4 +1,4 @@
-export { PrismaClient } from '../generated/prisma';
+export { PrismaClient, Prisma } from '../generated/prisma';
 export type {
   User,
   Session,
