@@ -2,10 +2,11 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import type { AnalyzedToken, AnalyzeResponse } from '@wortgarten/shared';
 import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Chip';
+import { partOfSpeechLabel } from '@/lib/partOfSpeech';
 import { suggestsNonGermanText } from '@/lib/looksGerman';
 import { useAnalyzeText } from '../api/useAnalyzeText';
 import { useAddWordsBatch } from '../api/useAddWordsBatch';
-import { SensePickerModal } from './SensePickerModal';
 
 const MAX_LENGTH = 5000;
 
@@ -14,13 +15,21 @@ interface Selection {
   sourceSentence?: string;
 }
 
+type SelectionKey = `${number}:${string}`;
+
+function selectionKey(token: AnalyzedToken): SelectionKey | undefined {
+  const senseId = token.candidates?.[0]?.senseId;
+  return senseId ? `${token.groupId}:${senseId}` : undefined;
+}
+
 /** NEW and AMBIGUOUS both default to their top candidate — collectable in one tap,
  * "change meaning" is opt-in rather than a gate. */
-function defaultSelection(tokens: AnalyzedToken[]): Map<number, Selection> {
-  const next = new Map<number, Selection>();
+function defaultSelection(tokens: AnalyzedToken[]): Map<SelectionKey, Selection> {
+  const next = new Map<SelectionKey, Selection>();
   for (const token of tokens) {
-    if ((token.status === 'NEW' || token.status === 'AMBIGUOUS') && token.candidates?.[0] && !next.has(token.groupId)) {
-      next.set(token.groupId, { senseId: token.candidates[0].senseId, sourceSentence: token.sourceSentence });
+    const key = selectionKey(token);
+    if ((token.status === 'NEW' || token.status === 'AMBIGUOUS') && token.candidates?.[0] && key && !next.has(key)) {
+      next.set(key, { senseId: token.candidates[0].senseId, sourceSentence: token.sourceSentence });
     }
   }
   return next;
@@ -28,14 +37,14 @@ function defaultSelection(tokens: AnalyzedToken[]): Map<number, Selection> {
 
 function TokenSpan({
   token,
-  selection,
+  selected,
+  active,
   onTap,
-  onOpenPicker,
 }: {
   token: AnalyzedToken;
-  selection?: Selection;
+  selected: boolean;
+  active: boolean;
   onTap: () => void;
-  onOpenPicker: () => void;
 }) {
   if (token.status === 'KNOWN') {
     return <span className="text-muted">{token.surface}</span>;
@@ -44,36 +53,21 @@ function TokenSpan({
     return <span className="text-muted underline decoration-dotted underline-offset-4">{token.surface}</span>;
   }
 
-  const selected = selection != null;
   const wordClasses = selected
-    ? 'bg-primary text-white'
-    : 'bg-lilac text-primary hover:bg-lilac/70';
-  const chosen = selection && token.candidates?.find((c) => c.senseId === selection.senseId);
+    ? `bg-primary text-white ${active ? 'ring-2 ring-primary ring-offset-1' : ''}`
+    : active
+      ? 'border-2 border-primary text-primary bg-transparent'
+      : 'border border-dashed border-primary/50 text-primary hover:bg-lilac/40';
 
   return (
-    <span className="inline-flex items-center gap-0.5 align-baseline">
+    <span className="inline-flex items-center align-baseline">
       <button
         type="button"
         onClick={onTap}
-        className={`rounded px-0.5 font-semibold transition-colors cursor-pointer ${wordClasses}`}
+        className={`rounded-lg px-1.5 py-0.5 font-semibold transition-colors cursor-pointer ${wordClasses}`}
       >
         {token.surface}
       </button>
-      {token.status === 'AMBIGUOUS' && (
-        <button
-          type="button"
-          onClick={onOpenPicker}
-          aria-label={`Change meaning of "${token.surface}"`}
-          className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold leading-none text-primary hover:bg-primary/25"
-        >
-          ?
-        </button>
-      )}
-      {chosen && (
-        <span className="rounded-chip bg-white/70 px-1.5 py-0.5 text-xs font-normal text-muted">
-          {chosen.lexeme.lemma} · {chosen.translation}
-        </span>
-      )}
     </span>
   );
 }
@@ -81,9 +75,9 @@ function TokenSpan({
 function renderTokens(
   text: string,
   tokens: AnalyzedToken[],
-  selected: Map<number, Selection>,
+  selected: Map<SelectionKey, Selection>,
+  activeTokenStart: number | null,
   onTap: (t: AnalyzedToken) => void,
-  onOpenPicker: (t: AnalyzedToken) => void,
 ) {
   const nodes: ReactNode[] = [];
   let cursor = 0;
@@ -93,9 +87,9 @@ function renderTokens(
       <TokenSpan
         key={`tok-${i}`}
         token={token}
-        selection={selected.get(token.groupId)}
+        selected={selectionKey(token) != null && selected.has(selectionKey(token)!)}
+        active={token.start === activeTokenStart}
         onTap={() => onTap(token)}
-        onOpenPicker={() => onOpenPicker(token)}
       />,
     );
     cursor = token.end;
@@ -119,8 +113,9 @@ function EmptyState({ hint }: { hint: boolean }) {
 
 export function PasteTab() {
   const [text, setText] = useState('');
-  const [selected, setSelected] = useState<Map<number, Selection>>(new Map());
-  const [pickerGroupId, setPickerGroupId] = useState<number | null>(null);
+  const [selected, setSelected] = useState<Map<SelectionKey, Selection>>(new Map());
+  const [activeTokenStart, setActiveTokenStart] = useState<number | null>(null);
+  const [draftSenseId, setDraftSenseId] = useState<string | null>(null);
   const [addedMessage, setAddedMessage] = useState<string | null>(null);
 
   const analyze = useAnalyzeText();
@@ -130,45 +125,41 @@ export function PasteTab() {
   const tooLong = text.length > MAX_LENGTH;
   const noMatches = analysis != null && analysis.summary.known + analysis.summary.new + analysis.summary.ambiguous === 0;
   const hasAddableTokens = analysis?.tokens.some((t) => t.status === 'NEW' || t.status === 'AMBIGUOUS') ?? false;
+  const addableCount = analysis ? analysis.summary.new + analysis.summary.ambiguous : 0;
 
-  function toggleSelection(token: AnalyzedToken) {
+  function addSelection(token: AnalyzedToken, senseId: string) {
+    const key = selectionKey(token);
+    if (!key) return;
     setSelected((prev) => {
       const next = new Map(prev);
-      if (next.has(token.groupId)) {
-        next.delete(token.groupId);
-      } else if (token.candidates?.[0]) {
-        next.set(token.groupId, { senseId: token.candidates[0].senseId, sourceSentence: token.sourceSentence });
-      }
+      next.set(key, { senseId, sourceSentence: token.sourceSentence });
       return next;
     });
   }
 
   function handleTap(token: AnalyzedToken) {
-    if (token.status === 'NEW' || token.status === 'AMBIGUOUS') toggleSelection(token);
-  }
-
-  function chooseSense(senseId: string) {
-    if (pickerGroupId == null) return;
-    const token = analysis?.tokens.find((t) => t.groupId === pickerGroupId);
-    setSelected((prev) => new Map(prev).set(pickerGroupId, { senseId, sourceSentence: token?.sourceSentence }));
-    setPickerGroupId(null);
-  }
-
-  function clearPickerGroup() {
-    if (pickerGroupId == null) return;
-    setSelected((prev) => {
-      const next = new Map(prev);
-      next.delete(pickerGroupId);
-      return next;
-    });
-    setPickerGroupId(null);
+    if (token.status === 'NEW' || token.status === 'AMBIGUOUS') {
+      const key = selectionKey(token);
+      setActiveTokenStart(token.start);
+      setDraftSenseId((key && selected.get(key)?.senseId) ?? token.candidates?.[0]?.senseId ?? null);
+    }
   }
 
   function handleAnalyze() {
     setAddedMessage(null);
+    setActiveTokenStart(null);
+    setDraftSenseId(null);
     analyze.mutate(text, {
-      onSuccess: (result) => setSelected(defaultSelection(result.tokens)),
+      onSuccess: () => setSelected(new Map()),
     });
+  }
+
+  function handleSelectAllNew() {
+    if (analysis) setSelected(defaultSelection(analysis.tokens));
+  }
+
+  function handleClearSelection() {
+    setSelected(new Map());
   }
 
   function handleAddSelected() {
@@ -181,12 +172,19 @@ export function PasteTab() {
           setText('');
           analyze.reset();
           setSelected(new Map());
+          setActiveTokenStart(null);
+          setDraftSenseId(null);
         },
       },
     );
   }
 
-  const pickerToken = pickerGroupId == null ? undefined : analysis?.tokens.find((t) => t.groupId === pickerGroupId);
+  const activeToken =
+    activeTokenStart == null
+      ? undefined
+      : analysis?.tokens.find((t) => t.start === activeTokenStart && (t.status === 'NEW' || t.status === 'AMBIGUOUS'));
+  const activeKey = activeToken && selectionKey(activeToken);
+  const activeSelected = activeKey != null && selected.has(activeKey);
 
   return (
     <div>
@@ -218,35 +216,94 @@ export function PasteTab() {
       {analysis && noMatches && <EmptyState hint={suggestsNonGermanText(analysis.text)} />}
 
       {analysis && !noMatches && (
-        <div className="mt-3 rounded-card bg-card p-4 shadow-card">
-          <p className="border-b border-gray-100 pb-3 text-sm text-muted">
-            {analysis.summary.total} words · {analysis.summary.known} you know ·{' '}
-            <span className="font-bold text-primary">{analysis.summary.new} new</span>
-            {analysis.summary.ambiguous > 0 ? ` · ${analysis.summary.ambiguous} to clarify` : ''} ·{' '}
-            {analysis.summary.unrecognized} not recognized
-          </p>
-          <div className="mt-3 whitespace-pre-wrap leading-8">
-            {renderTokens(analysis.text, analysis.tokens, selected, handleTap, (t) => setPickerGroupId(t.groupId))}
+        <>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Chip variant="neutral">
+              {analysis.summary.total} word{analysis.summary.total === 1 ? '' : 's'}
+            </Chip>
+            {analysis.summary.known > 0 && <Chip variant="lilac">{analysis.summary.known} you already know</Chip>}
+            {addableCount > 0 && <Chip variant="coral">{addableCount} new</Chip>}
           </div>
-        </div>
-      )}
+          {analysis.summary.unrecognized > 0 && (
+            <p className="mt-1 text-xs text-muted">
+              {analysis.summary.unrecognized} word{analysis.summary.unrecognized === 1 ? '' : 's'} not recognized
+            </p>
+          )}
 
-      {pickerToken?.candidates && (
-        <SensePickerModal
-          surface={pickerToken.surface}
-          candidates={pickerToken.candidates}
-          selectedSenseId={selected.get(pickerToken.groupId)?.senseId}
-          onChoose={chooseSense}
-          onClear={clearPickerGroup}
-          onClose={() => setPickerGroupId(null)}
-        />
+          <div className="mt-3 rounded-card bg-card p-4 shadow-card">
+            {hasAddableTokens && <p className="text-sm text-muted">Tap a highlighted word to see its meaning and add it</p>}
+            <div className="mt-3 flex flex-wrap items-center gap-x-1 gap-y-2 whitespace-pre-wrap leading-8">
+              {renderTokens(analysis.text, analysis.tokens, selected, activeTokenStart, handleTap)}
+            </div>
+
+            {activeToken?.candidates && activeToken.candidates.length > 0 && (
+              <div className="mt-4 rounded-xl border border-gray-200 p-4">
+                <p className="font-bold text-deep">Choose the meaning of “{activeToken.surface}”</p>
+                <div className="mt-3 flex flex-col gap-2">
+                  {activeToken.candidates.map((candidate) => (
+                    <button
+                      key={candidate.senseId}
+                      type="button"
+                      onClick={() => setDraftSenseId(candidate.senseId)}
+                      className={`flex items-center justify-between gap-4 rounded-xl border px-3 py-2 text-left transition-colors ${
+                        draftSenseId === candidate.senseId
+                          ? 'border-primary bg-lilac/60'
+                          : 'border-gray-200 hover:border-primary/40 hover:bg-lilac/20'
+                      }`}
+                    >
+                      <span>
+                        <span className="block font-semibold text-deep">{candidate.lexeme.lemma}</span>
+                        <span className="block text-sm text-muted">
+                          {candidate.translation} · {partOfSpeechLabel[candidate.lexeme.partOfSpeech]}
+                        </span>
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={`h-4 w-4 shrink-0 rounded-full border-2 ${
+                          draftSenseId === candidate.senseId ? 'border-primary bg-primary ring-2 ring-white ring-inset' : 'border-gray-300'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    variant="primary"
+                    className="!px-5 !py-2 text-sm"
+                    disabled={!draftSenseId || (activeSelected && selected.get(activeKey!)?.senseId === draftSenseId)}
+                    onClick={() => draftSenseId && addSelection(activeToken, draftSenseId)}
+                  >
+                    {activeSelected && selected.get(activeKey!)?.senseId === draftSenseId ? 'Added ✓' : 'Add word'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {hasAddableTokens && (
-        <div className="mt-3 flex justify-end">
-          <Button variant="primary" onClick={handleAddSelected} disabled={selected.size === 0} pulse={selected.size > 0}>
-            {addWordsBatch.isPending ? 'Adding…' : `Add ${selected.size} word${selected.size === 1 ? '' : 's'}`}
-          </Button>
+        <div className="mt-3 flex items-end justify-between gap-3">
+          <div className="flex gap-2">
+            <Button variant="outline" className="!px-3 !py-1.5 text-xs" onClick={handleSelectAllNew}>
+              Select all new
+            </Button>
+            <Button variant="outline" className="!px-3 !py-1.5 text-xs" onClick={handleClearSelection}>
+              Clear
+            </Button>
+          </div>
+          <div className="text-right">
+            <Button variant="primary" onClick={handleAddSelected} disabled={selected.size === 0} pulse={selected.size > 0}>
+              {addWordsBatch.isPending
+                ? 'Adding…'
+                : selected.size === 0
+                  ? 'Select words to add'
+                  : `Add ${selected.size} word${selected.size === 1 ? '' : 's'}`}
+            </Button>
+            <p className="mt-1 text-xs text-muted">
+              {selected.size} of {addableCount} new word{addableCount === 1 ? '' : 's'} selected
+            </p>
+          </div>
         </div>
       )}
     </div>

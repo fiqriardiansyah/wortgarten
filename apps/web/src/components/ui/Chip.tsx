@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-type ChipVariant = 'neutral' | 'lilac' | 'level' | 'new' | 'learning' | 'mastered';
+type ChipVariant = 'neutral' | 'lilac' | 'level' | 'new' | 'learning' | 'mastered' | 'coral';
 
 interface ChipProps {
   variant?: ChipVariant;
@@ -15,6 +15,7 @@ const variantClasses: Record<ChipVariant, string> = {
   new: 'bg-gray-100 text-muted',
   learning: 'bg-lilac text-primary',
   mastered: 'bg-gold/10 text-gold',
+  coral: 'bg-coral/10 text-coral',
 };
 
 export function Chip({ variant = 'neutral', children, className = '' }: ChipProps) {
