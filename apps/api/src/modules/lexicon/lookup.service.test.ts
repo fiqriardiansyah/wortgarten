@@ -88,6 +88,15 @@ beforeAll(async () => {
   });
 
   await createLexeme({
+    lemma: 'aufrufen',
+    partOfSpeech: 'VERB',
+    separablePrefix: 'auf',
+    senses: ['to call up'],
+    // shares the "rufe" bare stem with anrufen above — deliberately ambiguous.
+    forms: [{ surface: 'aufrufen' }, { surface: 'rufe' }],
+  });
+
+  await createLexeme({
     lemma: 'Bank',
     partOfSpeech: 'NOUN',
     gender: 'FEMININE',
@@ -110,6 +119,46 @@ beforeAll(async () => {
     gender: 'FEMININE',
     senses: ['sea'],
     forms: [{ surface: 'See' }],
+  });
+
+  // The "heute → heuen" bug fixture: "heute" is both the adverb's own lemma AND the ich/er
+  // simple-past form of the weak verb "heuen" (to make hay) — both matches are real, only ranking
+  // decides which wins.
+  await createLexeme({
+    lemma: 'heute',
+    partOfSpeech: 'ADVERB',
+    senses: ['today'],
+    forms: [{ surface: 'heute' }],
+  });
+  await createLexeme({
+    lemma: 'heuen',
+    partOfSpeech: 'VERB',
+    senses: ['to make hay'],
+    forms: [{ surface: 'heuen' }, { surface: 'heue' }, { surface: 'heust' }, { surface: 'heut' }, { surface: 'heute' }],
+  });
+
+  // Casing fixture: "park" (lowercase) is the imperative of "parken"; "Park" (capitalized) is the
+  // noun. Same normalized surface, genuinely different readings.
+  await createLexeme({
+    lemma: 'Park',
+    partOfSpeech: 'NOUN',
+    gender: 'MASCULINE',
+    senses: ['park (green space)'],
+    forms: [{ surface: 'Park' }, { surface: 'Parks' }],
+  });
+  await createLexeme({
+    lemma: 'parken',
+    partOfSpeech: 'VERB',
+    senses: ['to park'],
+    forms: [{ surface: 'parken' }, { surface: 'parke' }, { surface: 'parkst' }, { surface: 'parkt' }, { surface: 'park' }],
+  });
+
+  // Contraction fixture: "im" must resolve to this lexeme, never be collectable as its own form.
+  await createLexeme({
+    lemma: 'in',
+    partOfSpeech: 'PREPOSITION',
+    senses: ['in; into'],
+    forms: [{ surface: 'in' }],
   });
 
   const user = await prisma.user.create({
@@ -169,6 +218,36 @@ describe('LookupService.lookupForm', () => {
     const matches = await lookupService.lookupForm('KOMMT', LANG);
     expect(matches.map((m) => m.lexeme.lemma)).toEqual(['kommen']);
   });
+
+  it('heute → resolves to the adverb "today", never "heuen" (to make hay) despite both being real matches', async () => {
+    const matches = await lookupService.lookupForm('heute', LANG);
+    expect(matches[0].lexeme.lemma).toBe('heute');
+    expect(matches[0].lexeme.partOfSpeech).toBe('ADVERB');
+  });
+
+  it('Heute at sentence start still resolves to the adverb — capitalization there carries no signal', async () => {
+    const matches = await lookupService.lookupForm('Heute', LANG, true);
+    expect(matches[0].lexeme.lemma).toBe('heute');
+  });
+
+  it('park (lowercase, mid-sentence) is penalized away from the noun "der Park"', async () => {
+    const matches = await lookupService.lookupForm('park', LANG, false);
+    expect(matches[0].lexeme.partOfSpeech).not.toBe('NOUN');
+    expect(matches[0].lexeme.lemma).toBe('parken');
+  });
+
+  it('Park (capitalized, mid-sentence) resolves to the noun', async () => {
+    const matches = await lookupService.lookupForm('Park', LANG, false);
+    expect(matches[0].lexeme.partOfSpeech).toBe('NOUN');
+    expect(matches[0].lexeme.lemma).toBe('Park');
+  });
+
+  it('im resolves to its base preposition "in" — never collectable as "im"', async () => {
+    const matches = await lookupService.lookupForm('im', LANG);
+    expect(matches).toHaveLength(1);
+    expect(matches[0].lexeme.lemma).toBe('in');
+    expect(matches[0].lexeme.partOfSpeech).toBe('PREPOSITION');
+  });
 });
 
 describe('LookupService.lookupSentence', () => {
@@ -187,6 +266,26 @@ describe('LookupService.lookupSentence', () => {
 
     // total slots: Ich, [rufe an], dich = 3
     expect(results).toHaveLength(3);
+  });
+
+  it('an ambiguous bare stem shared by two separable verbs resolves to the first prefix it meets, without losing later tokens', async () => {
+    // "rufe" matches both anrufen (prefix "an") and aufrufen (prefix "auf").
+    // "an" resolves it first; the later, unrelated "auf" must not clobber that
+    // already-resolved slot and orphan "an" out of the results.
+    const results = await lookupService.lookupSentence(['rufe', 'dich', 'an', 'sitze', 'auf'], LANG);
+
+    const rufeSlot = results.find((r) => r.tokens[0] === 'rufe');
+    expect(rufeSlot?.tokens).toEqual(['rufe', 'an']);
+    expect(rufeSlot?.matches).toHaveLength(1);
+    expect(rufeSlot?.matches[0].lexeme.lemma).toBe('anrufen');
+
+    const aufSlot = results.find((r) => r.tokens.length === 1 && r.tokens[0] === 'auf');
+    expect(aufSlot).toBeDefined(); // gets its own slot rather than being swallowed by the resolved "rufe" slot
+    expect(aufSlot?.unknown).toBe(true); // "auf" itself was never seeded as its own WordForm in this fixture
+
+    // every one of the 5 input tokens is accounted for in exactly one slot
+    const coveredIndices = results.flatMap((r) => r.tokenIndices).sort((a, b) => a - b);
+    expect(coveredIndices).toEqual([0, 1, 2, 3, 4]);
   });
 });
 

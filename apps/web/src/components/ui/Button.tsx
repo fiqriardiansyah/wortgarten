@@ -12,6 +12,7 @@ interface ButtonProps {
   pulse?: boolean;
   className?: string;
   type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
 }
 
 const variantClasses: Record<Variant, string> = {
@@ -29,16 +30,18 @@ export function Button({
   pulse = false,
   className = '',
   type = 'button',
+  disabled = false,
 }: ButtonProps) {
   return (
     <motion.button
       type={type}
-      whileTap={{ scale: 0.96 }}
+      disabled={disabled}
+      whileTap={disabled ? undefined : { scale: 0.96 }}
       transition={pressSpring}
-      animate={pulse ? 'pulse' : undefined}
+      animate={pulse && !disabled ? 'pulse' : undefined}
       variants={pulse ? ctaPulseVariants : undefined}
-      onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-pill px-5 py-2.5 font-sans font-700 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${variantClasses[variant]} ${className}`}
+      onClick={disabled ? undefined : onClick}
+      className={`inline-flex items-center gap-2 rounded-pill px-5 py-2.5 font-sans font-700 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${className}`}
     >
       {children}
       {icon && <span className="ml-1">{icon}</span>}

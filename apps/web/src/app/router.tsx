@@ -8,6 +8,9 @@ import { LoginPage } from '@/features/auth/LoginPage';
 import { SignupPage } from '@/features/auth/SignupPage';
 import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage';
+import { AddWordsPage } from '@/features/add-words/AddWordsPage';
+import { WordsPage } from '@/features/words/WordsPage';
+import { WordDetailPage } from '@/features/words/detail/WordDetailPage';
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -76,10 +79,11 @@ export function AppRouter() {
           }
         >
           <Route path="/" element={<HomePage />} />
-          <Route path="/words" element={<Placeholder title="My Words" />} />
+          <Route path="/words" element={<WordsPage />} />
+          <Route path="/words/:id" element={<WordDetailPage />} />
           <Route path="/read" element={<Placeholder title="Read" />} />
           <Route path="/progress" element={<Placeholder title="Progress" />} />
-          <Route path="/add" element={<Placeholder title="Add Words" />} />
+          <Route path="/add" element={<AddWordsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

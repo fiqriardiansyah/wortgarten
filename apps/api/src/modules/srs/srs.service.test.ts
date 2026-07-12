@@ -71,10 +71,10 @@ describe('SrsService.retrievability', () => {
     expect(rLater).toBeLessThan(rSoon);
   });
 
-  it('is never stored — a brand-new card (reps 0, stability 0) still computes a number', () => {
+  it('a never-reviewed word (reps 0) is fully retrievable, not decayed — it hasn\'t been learned yet, so it isn\'t "forgotten" either', () => {
     const now = new Date();
     const r = pureSrs.retrievability({ stability: 0, difficulty: 0, dueAt: now, reps: 0, lapses: 0, lastReviewedAt: null }, now);
-    expect(Number.isFinite(r)).toBe(true);
+    expect(r).toBe(1);
   });
 });
 

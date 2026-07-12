@@ -56,6 +56,10 @@ export class SrsService {
 
   /** Current recall probability (0-1) from FSRS state. Computed on demand — there is no stored "strength". */
   retrievability(state: FsrsUserWordState, now: Date = new Date()): number {
+    // A never-reviewed word (stability 0) isn't "forgotten" — it just hasn't been
+    // learned yet. Running FSRS's decay formula on stability 0 collapses to ~0,
+    // which would wrongly flag every freshly-added word as rusty on day one.
+    if (state.reps === 0) return 1;
     return this.scheduler.get_retrievability(this.toCard(state), now, false);
   }
 

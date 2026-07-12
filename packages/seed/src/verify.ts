@@ -85,6 +85,82 @@ async function main() {
   const seeGenders = new Set(see.filter((m) => m.lexeme.lemma === 'See').map((m) => m.lexeme.gender));
   check('See → two lexemes, different genders', seeGenders.size >= 2, JSON.stringify([...seeGenders]));
 
+  // ─── "heute → heuen" bug: the data genuinely contains both a real lemma
+  // match (the adverb) and a real form-only match (heuen's ich/er past tense)
+  // for the same surface — proves the fix has something real to rank, not
+  // just a synthetic test fixture. The ranking algorithm itself is unit-tested
+  // in apps/api/lexicon/ranking.test.ts; this only checks the data shape.
+  const heute = await lookupForm('heute', language);
+  const heuteLemmaMatch = heute.find((m) => foldForLookup(m.lexeme.lemma) === 'heute' && m.lexeme.partOfSpeech === 'ADVERB');
+  const heuenFormOnly = heute.find((m) => m.lexeme.lemma === 'heuen');
+  check(
+    '"heute" has both a real lemma match (adverb) and a real form-only match (heuen)',
+    !!heuteLemmaMatch && !!heuenFormOnly,
+    JSON.stringify(heute.map((m) => ({ lemma: m.lexeme.lemma, pos: m.lexeme.partOfSpeech }))),
+  );
+
+  // ─── Contractions: every base preposition a contraction resolves to must
+  // actually exist, or the fix silently points at nothing. (The contraction
+  // map itself is duplicated here in miniature — this package must not depend
+  // on apps/api, same reason the separable-verb reassembly above is redone.)
+  const CONTRACTION_BASES = ['in', 'an', 'zu', 'bei', 'von', 'auf', 'für', 'durch', 'um'];
+  for (const base of CONTRACTION_BASES) {
+    const baseLexeme = await prisma.lexeme.findFirst({ where: { language, lemma: { equals: base, mode: 'insensitive' } } });
+    check(`contraction base preposition "${base}" exists in dictionary`, !!baseLexeme, baseLexeme ? `rank ${baseLexeme.frequencyRank}` : 'missing');
+  }
+
+  // ─── "war → wär" bug: the dictionary genuinely contains 82 lexemes glossed "alternative form
+  // of X" — spelling variants kaikki still models as their own lemma. "wär" is one (rank 140,
+  // "alternative form of wäre") and happens to fold-match "war" as its own lemma, which would
+  // wrongly outrank "sein" (rank 13 — "war" is really its simple past) under lemma-match alone.
+  // A miniature standalone reproduction of apps/api ranking.ts's marginal-variant tier + lemma-match
+  // + frequency tiers (this package must not depend on apps/api, same reason as elsewhere in this file).
+  const MARGINAL_GLOSS_PATTERN = /\balternative (form|spelling) of\b/i;
+  // every(), not some(): a polysemous lexeme with one alt-of cross-reference sense among several real
+  // ones (e.g. "er" — he/it/she — also glossed "alternative spelling of Er" for one narrow usage) is
+  // not marginal; only a lexeme with no real sense of its own (every sense is an alt-of gloss) is.
+  function isMarginalVariant(senses: { translation: string }[]): boolean {
+    return senses.length > 0 && senses.every((s) => MARGINAL_GLOSS_PATTERN.test(s.translation));
+  }
+  function pickDominant(surface: string, matches: Awaited<ReturnType<typeof lookupForm>>) {
+    return [...matches].sort((a, b) => {
+      const marginal = Number(isMarginalVariant(a.senses)) - Number(isMarginalVariant(b.senses));
+      if (marginal !== 0) return marginal;
+      const lemmaMatch =
+        Number(foldForLookup(surface) !== foldForLookup(a.lexeme.lemma)) - Number(foldForLookup(surface) !== foldForLookup(b.lexeme.lemma));
+      if (lemmaMatch !== 0) return lemmaMatch;
+      return (a.lexeme.frequencyRank ?? Infinity) - (b.lexeme.frequencyRank ?? Infinity);
+    })[0];
+  }
+
+  const war = await lookupForm('war', language);
+  const warDominant = pickDominant('war', war);
+  check(
+    '"war" → "sein" (to be), not the marginal alt-of lexeme "wär"',
+    warDominant?.lexeme.lemma === 'sein',
+    JSON.stringify(war.map((m) => ({ lemma: m.lexeme.lemma, rank: m.lexeme.frequencyRank, marginal: isMarginalVariant(m.senses) }))),
+  );
+
+  const mir = await lookupForm('mir', language);
+  const mirDominant = pickDominant('mir', mir);
+  check(
+    '"mir" → "ich" (I), not the marginal alt-of lexeme "mir" (alternative form of "wir")',
+    mirDominant?.lexeme.lemma === 'ich',
+    JSON.stringify(mir.map((m) => ({ lemma: m.lexeme.lemma, rank: m.lexeme.frequencyRank, marginal: isMarginalVariant(m.senses) }))),
+  );
+
+  // ─── Casing data: "park" (lowercase) and "Park" (capitalized) must resolve
+  // to genuinely different real lexemes for the casing signal to have
+  // anything to rank between (the ranking itself is unit-tested elsewhere).
+  const park = await lookupForm('park', language);
+  const parkNoun = park.find((m) => m.lexeme.lemma === 'Park' && m.lexeme.partOfSpeech === 'NOUN');
+  const parkenVerb = park.find((m) => m.lexeme.lemma === 'parken' && m.lexeme.partOfSpeech === 'VERB');
+  check(
+    '"park" has both a NOUN reading (Park) and a VERB reading (parken)',
+    !!parkNoun && !!parkenVerb,
+    JSON.stringify(park.map((m) => ({ lemma: m.lexeme.lemma, pos: m.lexeme.partOfSpeech }))),
+  );
+
   for (const w of ['der', 'die', 'das', 'sein', 'haben']) {
     const lexeme = await prisma.lexeme.findFirst({ where: { language, lemma: w } });
     if (lexeme) {

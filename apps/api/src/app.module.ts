@@ -6,7 +6,9 @@ import { createAuth } from './lib/auth';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { HomeModule } from './home/home.module';
+import { LexiconModule } from './modules/lexicon/lexicon.module';
 import { MeModule } from './me/me.module';
+import { WordsModule } from './modules/words/words.module';
 
 @Module({
   imports: [
@@ -23,7 +25,9 @@ import { MeModule } from './me/me.module';
     PrismaModule,
     HealthModule,
     HomeModule,
+    LexiconModule,
     MeModule,
+    WordsModule,
   ],
 })
 export class AppModule {}
