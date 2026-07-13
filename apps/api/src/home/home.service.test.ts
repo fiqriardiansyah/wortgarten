@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient } from '@wortgarten/database';
 import { HomeDashboardSchema } from '@wortgarten/shared';
@@ -57,7 +58,14 @@ describe('HomeService.getDashboard — with data', () => {
 
     async function addWord(lemma: string, translation: string, level: 'NEW' | 'RECOGNIZE' | 'RECALL' | 'PRODUCE' | 'MASTERED', dueOffsetMs: number) {
       const lexeme = await prisma2.lexeme.create({
-        data: { language: LANG, lemma, partOfSpeech: 'NOUN', senses: { create: [{ translation }] } },
+        data: {
+          id: randomUUID(),
+          sourceKey: randomUUID(),
+          language: LANG,
+          lemma,
+          partOfSpeech: 'NOUN',
+          senses: { create: [{ id: randomUUID(), sourceKey: randomUUID(), translation }] },
+        },
         include: { senses: true },
       });
       lexemeIds.push(lexeme.id);

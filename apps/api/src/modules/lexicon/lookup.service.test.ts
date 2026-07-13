@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient, type Gender, type PartOfSpeech } from '@wortgarten/database';
 import { foldForLookup } from '@wortgarten/shared';
@@ -30,12 +31,14 @@ async function createLexeme(params: {
 }) {
   const lexeme = await prisma.lexeme.create({
     data: {
+      id: randomUUID(),
+      sourceKey: randomUUID(),
       language: LANG,
       lemma: params.lemma,
       partOfSpeech: params.partOfSpeech,
       gender: params.gender,
       separablePrefix: params.separablePrefix,
-      senses: { create: params.senses.map((translation) => ({ translation })) },
+      senses: { create: params.senses.map((translation) => ({ id: randomUUID(), sourceKey: randomUUID(), translation })) },
       forms: {
         create: params.forms.map((f) => ({
           surface: f.surface,

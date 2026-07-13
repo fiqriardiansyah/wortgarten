@@ -157,7 +157,8 @@ model Verification {
 // ─── Dictionary (shared, seeded later) ─────────────────────────────────────
 
 model Lexeme {
-  id           String       @id @default(cuid())
+  id           String       @id // deterministic content hash (see packages/seed) — never @default(cuid())
+  sourceKey    String       @unique // the raw identity key the id was hashed from; debugging/re-mapping
   language     String       @default("de")
   lemma        String
   partOfSpeech PartOfSpeech
@@ -171,6 +172,11 @@ model Lexeme {
   auxiliary       String?
   government      String?
 
+  // kaikki's homograph discriminator. Informational only — NOT part of Lexeme
+  // identity (see lexemeCoreKey in packages/seed/src/map.ts). Null when this
+  // lexeme merged raw entries from more than one etymology.
+  etymologyNumber Int?
+
   frequencyRank Int?
 
   provenance Provenance @default(SEED)
@@ -179,12 +185,13 @@ model Lexeme {
   senses Sense[]
   forms  WordForm[]
 
-  @@unique([language, lemma, partOfSpeech, gender])
+  @@index([language, lemma, partOfSpeech])
   @@index([language, frequencyRank])
 }
 
 model Sense {
-  id          String  @id @default(cuid())
+  id          String  @id // deterministic content hash (see packages/seed) — never @default(cuid())
+  sourceKey   String  @unique // `${lexemeId}|${normalizedGloss}` the id was hashed from
   lexemeId    String
   lexeme      Lexeme  @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
   translation String

@@ -2,19 +2,27 @@ import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
 import { parseArgs } from 'util';
-import type { Gender, PartOfSpeech } from '@wortgarten/database';
 import { KaikkiEntrySchema, type RankedFile } from './types';
-import { mapPos, extractGender, extractSeparablePrefix, compositeKey, isFormOfEntry, scoreEntry } from './map';
+import {
+  mapPos,
+  extractGender,
+  extractPlural,
+  extractSeparablePrefix,
+  extractAuxiliary,
+  extractPastParticiple,
+  lexemeCoreKey,
+  isFormOfEntry,
+  scoreEntry,
+  type LexemeIdentity,
+} from './map';
 import { loadFrequencyList } from './frequency';
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DEFAULT_IN = path.join(DATA_DIR, 'german.jsonl');
 const DEFAULT_OUT = path.join(DATA_DIR, 'ranked.json');
 
-interface Candidate {
-  lemma: string;
-  pos: PartOfSpeech;
-  gender: Gender | null;
+interface Candidate extends LexemeIdentity {
+  etymologyNumbers: Set<number>;
   score: number;
 }
 
@@ -82,14 +90,24 @@ async function main() {
 
     const pos = mapPos(entry.pos);
     const gender = extractGender(entry, pos) ?? null;
-    const key = compositeKey(entry.word, pos, gender);
-    const score = scoreEntry(entry, freq, extractSeparablePrefix(entry, pos));
+    const plural = extractPlural(entry, pos) ?? null;
+    const separablePrefix = extractSeparablePrefix(entry, pos) ?? null;
+    const auxiliary = extractAuxiliary(entry, pos) ?? null;
+    const pastParticiple = extractPastParticiple(entry, pos) ?? null;
+    const identity: LexemeIdentity = { lemma: entry.word, pos, gender, plural, separablePrefix, auxiliary, pastParticiple };
+    const key = lexemeCoreKey(identity);
+    const score = scoreEntry(entry, freq, separablePrefix ?? undefined);
 
     const existing = candidates.get(key);
     if (existing) {
       existing.score += score;
+      if (entry.etymology_number !== undefined) existing.etymologyNumbers.add(entry.etymology_number);
     } else {
-      candidates.set(key, { lemma: entry.word, pos, gender, score });
+      candidates.set(key, {
+        ...identity,
+        etymologyNumbers: entry.etymology_number !== undefined ? new Set([entry.etymology_number]) : new Set(),
+        score,
+      });
     }
   }
 
@@ -97,7 +115,21 @@ async function main() {
     .filter((c) => c.score > 0) // a word nobody says is not worth seeding
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
-    .map((c, i) => ({ lemma: c.lemma, pos: c.pos, gender: c.gender, score: c.score, rank: i + 1 }));
+    .map((c, i) => ({
+      lemma: c.lemma,
+      pos: c.pos,
+      gender: c.gender ?? null,
+      plural: c.plural ?? null,
+      separablePrefix: c.separablePrefix ?? null,
+      auxiliary: c.auxiliary ?? null,
+      pastParticiple: c.pastParticiple ?? null,
+      // Null when this candidate merged raw entries from more than one
+      // etymology (the merge guard: same core key, differing etymology) —
+      // there's no single honest answer once that's happened.
+      etymologyNumber: c.etymologyNumbers.size === 1 ? [...c.etymologyNumbers][0] : null,
+      score: c.score,
+      rank: i + 1,
+    }));
 
   const file: RankedFile = { generatedAt: new Date().toISOString(), limit, entries: ranked };
   fs.mkdirSync(path.dirname(outPath), { recursive: true });

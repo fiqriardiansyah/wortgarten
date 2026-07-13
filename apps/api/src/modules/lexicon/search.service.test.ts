@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient } from '@wortgarten/database';
 import { foldForLookup } from '@wortgarten/shared';
@@ -23,12 +24,14 @@ async function createLexeme(params: {
 }) {
   const lexeme = await prisma.lexeme.create({
     data: {
+      id: randomUUID(),
+      sourceKey: randomUUID(),
       language: LANG,
       lemma: params.lemma,
       partOfSpeech: params.partOfSpeech,
       gender: params.gender,
       frequencyRank: params.frequencyRank,
-      senses: { create: params.senses.map((translation) => ({ translation })) },
+      senses: { create: params.senses.map((translation) => ({ id: randomUUID(), sourceKey: randomUUID(), translation })) },
       forms: { create: params.forms.map((surface) => ({ surface, normalized: foldForLookup(surface) })) },
     },
     include: { senses: true },
@@ -73,6 +76,26 @@ beforeAll(async () => {
     forms: ['Hundehütte'],
   });
 
+  // The reported bug: searching "bank" ranked "ausgeben" above "die Bank" because
+  // "banknotes" is a substring inside its English gloss. ausgeben is deliberately
+  // MORE frequent than Bank here, so only tiering (lemma match > gloss substring),
+  // not frequencyRank, can explain Bank still winning.
+  await createLexeme({
+    lemma: 'Bank',
+    partOfSpeech: 'NOUN',
+    gender: 'FEMININE',
+    frequencyRank: 300,
+    senses: ['bank (financial institution)'],
+    forms: ['Bank', 'Banken'],
+  });
+  await createLexeme({
+    lemma: 'ausgeben',
+    partOfSpeech: 'VERB',
+    frequencyRank: 10,
+    senses: ['to issue (banknotes, stamps etc.)'],
+    forms: ['ausgeben'],
+  });
+
   const user = await prisma.user.create({
     data: { name: 'Search Test', email: `search-test-${Date.now()}@example.com` },
   });
@@ -96,6 +119,25 @@ describe('SearchService.search', () => {
     const results = await searchService.search('dog', userId, LANG);
     // "Hundehütte" (doghouse) legitimately substring-matches too — forgiving search, not a bug.
     expect(results.map((r) => r.lexeme.lemma)).toContain('Hund');
+  });
+
+  it('a whole-word translation match ("dog") outranks a substring-only one ("doghouse")', async () => {
+    const results = await searchService.search('dog', userId, LANG);
+    const hundIdx = results.findIndex((r) => r.lexeme.lemma === 'Hund');
+    const hundehuetteIdx = results.findIndex((r) => r.lexeme.lemma === 'Hundehütte');
+    expect(hundIdx).toBeGreaterThanOrEqual(0);
+    expect(hundehuetteIdx).toBeGreaterThanOrEqual(0);
+    expect(hundIdx).toBeLessThan(hundehuetteIdx);
+  });
+
+  it('a German lemma match outranks a substring hit inside an English translation (the "bank"/"banknotes" bug)', async () => {
+    const results = await searchService.search('bank', userId, LANG);
+    const bankIdx = results.findIndex((r) => r.lexeme.lemma === 'Bank');
+    const ausgebenIdx = results.findIndex((r) => r.lexeme.lemma === 'ausgeben');
+    expect(bankIdx).toBeGreaterThanOrEqual(0);
+    expect(ausgebenIdx).toBeGreaterThanOrEqual(0);
+    // ausgeben has the better (lower) frequencyRank — only tiering explains this order.
+    expect(bankIdx).toBeLessThan(ausgebenIdx);
   });
 
   it('is umlaut-insensitive: "fur" finds "für"', async () => {

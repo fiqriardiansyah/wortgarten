@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient, type UserWord } from '@wortgarten/database';
 import type { PrismaService } from '../../prisma/prisma.service';
@@ -89,10 +90,12 @@ describe('SrsService.grade (integration)', () => {
   beforeAll(async () => {
     const lexeme = await prisma.lexeme.create({
       data: {
+        id: randomUUID(),
+        sourceKey: randomUUID(),
         language: LANG,
         lemma: 'lernen',
         partOfSpeech: 'VERB',
-        senses: { create: [{ translation: 'to learn' }] },
+        senses: { create: [{ id: randomUUID(), sourceKey: randomUUID(), translation: 'to learn' }] },
       },
       include: { senses: true },
     });

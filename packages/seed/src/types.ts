@@ -58,6 +58,14 @@ export const KaikkiEntrySchema = z
     tags: z.array(z.string()).default([]),
     categories: z.array(KaikkiCategorySchema).default([]),
     head_templates: z.array(KaikkiHeadTemplateSchema).default([]),
+    // Wiktionary's own homograph discriminator: kaikki emits a separate top-level
+    // entry per etymology section (e.g. "Bank" the bench vs "Bank" the financial
+    // institution both appear as etymology_number 1 and 2 in the real dump).
+    // Real data is inconsistent about the JSON type here — verified: ~3,355
+    // entries (including "sein") carry it as a numeric *string* ("1") rather
+    // than a number. z.coerce handles both without silently failing the whole
+    // entry's validation (which would drop it from the dictionary entirely).
+    etymology_number: z.coerce.number().optional(),
   })
   .passthrough();
 
@@ -75,6 +83,17 @@ export const RankedLemmaSchema = z.object({
   lemma: z.string(),
   pos: z.string(),
   gender: z.enum(['MASCULINE', 'FEMININE', 'NEUTER']).nullable(),
+  // Lexeme-identity discriminators (see map.ts's lexemeCoreKey) — carried through
+  // so Pass 3 can re-derive the exact same key when it re-streams the raw file
+  // and must route each raw entry's forms to the one builder it actually belongs to.
+  plural: z.string().nullable(),
+  separablePrefix: z.string().nullable(),
+  auxiliary: z.string().nullable(),
+  pastParticiple: z.string().nullable(),
+  // Informational only — never part of lexemeCoreKey. Null when this candidate
+  // merged raw entries from more than one etymology (the "otherwise identical,
+  // only etymology differs" guard).
+  etymologyNumber: z.number().nullable(),
   score: z.number(),
   rank: z.number(),
 });

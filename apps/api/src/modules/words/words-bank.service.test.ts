@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { NotFoundException } from '@nestjs/common';
 import { PrismaClient } from '@wortgarten/database';
@@ -31,12 +32,14 @@ async function createLexeme(params: {
 }) {
   const lexeme = await prisma.lexeme.create({
     data: {
+      id: randomUUID(),
+      sourceKey: randomUUID(),
       language: LANG,
       lemma: params.lemma,
       partOfSpeech: params.partOfSpeech,
       gender: params.gender,
       plural: params.plural,
-      senses: { create: params.senses.map((translation) => ({ translation })) },
+      senses: { create: params.senses.map((translation) => ({ id: randomUUID(), sourceKey: randomUUID(), translation })) },
       forms: { create: params.forms.map((surface) => ({ surface, normalized: foldForLookup(surface) })) },
     },
     include: { senses: true },
