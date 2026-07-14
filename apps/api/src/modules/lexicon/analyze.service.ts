@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { normalizeInput } from '@wortgarten/shared';
+import { clauseFinalTokenIndices, normalizeInput, tokenizeWithOffsets, type TokenSpan } from '@wortgarten/shared';
 import type { Lexeme, Sense } from '@wortgarten/database';
 import type { AnalyzedSenseCandidate, AnalyzedToken, AnalyzeResponse } from '@wortgarten/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { toLexemeSummary } from './lexeme-summary';
 import type { LexemeMatch, SentenceTokenMatch } from './types';
 import { LookupService } from './lookup.service';
-import { tokenizeWithOffsets, type TokenSpan } from './tokenizer';
 
 interface SentenceSpan {
   text: string;
@@ -147,7 +146,8 @@ export class AnalyzeService {
       if (firstIndex !== -1) sentenceStartIndices.add(firstIndex);
     }
 
-    const slots = await this.lookup.lookupSentence(tokens, language, sentenceStartIndices);
+    const clauseFinalIndices = clauseFinalTokenIndices(normalized, spans);
+    const slots = await this.lookup.lookupSentence(tokens, language, sentenceStartIndices, clauseFinalIndices);
 
     const allSenseIds = new Set<string>();
     for (const slot of slots) {

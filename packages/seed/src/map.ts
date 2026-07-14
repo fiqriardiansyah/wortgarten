@@ -57,8 +57,21 @@ export function formOfTargets(entry: KaikkiEntry): string[] {
   return [...targets];
 }
 
-export function isFormOfEntry(entry: KaikkiEntry): boolean {
-  return formOfTargets(entry).length > 0;
+// A form_of target is only ever read from this structured field — never inferred from gloss
+// prose. But the field itself isn't always trustworthy: kaikki's own extraction can mis-parse a
+// sense's English gloss text into a bogus form_of entry (verified live: "sich"'s first sense,
+// glossed "Reflexive pronoun of the third person singular or plural: herself, himself, ...",
+// produced a form_of target of literally "the third person singular or plural" — not a German
+// word, not an entry anywhere in the dump). A word can't be a form of itself either. Filtering to
+// targets that are BOTH a different word AND a real lemma that exists in the dump (`lemmaSet`,
+// built from every entry.word in the filtered kaikki stream) rejects exactly these mis-parses
+// without ever reading prose — "sich" then imports as a normal lemma instead of being dropped.
+export function validFormOfTargets(entry: KaikkiEntry, lemmaSet: ReadonlySet<string>): string[] {
+  return formOfTargets(entry).filter((t) => t !== entry.word && lemmaSet.has(t));
+}
+
+export function isFormOfEntry(entry: KaikkiEntry, lemmaSet: ReadonlySet<string>): boolean {
+  return validFormOfTargets(entry, lemmaSet).length > 0;
 }
 
 // ─── Lexeme identity ────────────────────────────────────────────────────────
@@ -520,13 +533,14 @@ export interface FormOfHarvest {
 }
 
 /** kaikki's standalone inflected-form entries (e.g. "Journals" form_of "Journal") — an extra WordForm source layered onto the target lemma's own `forms` array. */
-export function harvestFormOfForms(entry: KaikkiEntry): FormOfHarvest[] {
+export function harvestFormOfForms(entry: KaikkiEntry, lemmaSet: ReadonlySet<string>): FormOfHarvest[] {
   const out: FormOfHarvest[] = [];
   for (const sense of entry.senses) {
     if (sense.form_of.length === 0) continue;
     const isDiminutive = sense.tags.includes('diminutive');
     const tags = sense.tags.filter((t) => t !== 'form-of' && t !== 'inflection-of');
     for (const fo of sense.form_of) {
+      if (fo.word === entry.word || !lemmaSet.has(fo.word)) continue; // same guard as isFormOfEntry — never harvest a bogus/self target
       out.push({ targetLemma: fo.word, surface: entry.word, features: parseFormTags(tags), isDiminutive });
     }
   }

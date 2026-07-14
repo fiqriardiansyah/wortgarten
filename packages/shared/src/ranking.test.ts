@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PartOfSpeech } from '@wortgarten/database';
+import type { PartOfSpeech } from './lexeme';
 import { isLemmaMatch, rankLexemes } from './ranking';
 
 interface FakeMatch {

@@ -7,6 +7,8 @@ export type {
   Lexeme,
   Sense,
   WordForm,
+  Example,
+  ExampleWord,
   UserWord,
   Attempt,
   Task,
@@ -22,4 +24,5 @@ export type {
   TaskStatus,
   StoryStatus,
   AiSource,
+  ExampleSource,
 } from '../generated/prisma';

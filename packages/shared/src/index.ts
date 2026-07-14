@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 export * from './text';
 export * from './lexeme';
+export * from './tokenizer';
+export * from './ranking';
+export * from './separable';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 

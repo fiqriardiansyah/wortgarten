@@ -1,5 +1,5 @@
-import type { PartOfSpeech } from '@wortgarten/database';
-import { foldForLookup } from '@wortgarten/shared';
+import { foldForLookup } from './text';
+import type { PartOfSpeech } from './lexeme';
 
 export interface RankingContext {
   /** The raw surface as it appeared in the input — casing preserved, not yet folded. */

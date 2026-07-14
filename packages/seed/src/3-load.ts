@@ -26,6 +26,7 @@ import {
   type MappedForm,
   type MappedSense,
 } from './map';
+import { buildLemmaSet } from './lemma-set';
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DEFAULT_IN = path.join(DATA_DIR, 'german.jsonl');
@@ -81,6 +82,8 @@ async function main() {
   }
 
   const rankedFile = RankedFileSchema.parse(JSON.parse(fs.readFileSync(rankedPath, 'utf-8')));
+  const lemmaSet = await buildLemmaSet(inPath);
+  console.log(`[load] lemma set: ${lemmaSet.size.toLocaleString()} distinct words in the dump`);
 
   const builders = new Map<string, LexemeBuilder>();
   const byLemmaText = new Map<string, { identity: LexemeIdentity; builder: LexemeBuilder }[]>();
@@ -136,11 +139,11 @@ async function main() {
     }
     const entry = result.data;
 
-    if (isFormOfEntry(entry)) {
+    if (isFormOfEntry(entry, lemmaSet)) {
       const entryPos = mapPos(entry.pos);
       const entryGender = extractGender(entry, entryPos);
 
-      for (const harvest of harvestFormOfForms(entry)) {
+      for (const harvest of harvestFormOfForms(entry, lemmaSet)) {
         const candidates = (byLemmaText.get(harvest.targetLemma) ?? []).filter((c) => c.identity.pos === entryPos);
         // A diminutive's own gender is always neuter regardless of its base
         // noun's gender — never valid evidence for which target it belongs to.

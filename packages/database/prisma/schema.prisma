@@ -85,6 +85,13 @@ enum AiSource {
   OLLAMA
 }
 
+enum ExampleSource {
+  WIKTIONARY
+  TATOEBA
+  AI
+  USER
+}
+
 // ─── Better Auth ────────────────────────────────────────────────────────────
 
 model User {
@@ -182,8 +189,9 @@ model Lexeme {
   provenance Provenance @default(SEED)
   isVerified Boolean    @default(false)
 
-  senses Sense[]
-  forms  WordForm[]
+  senses       Sense[]
+  forms        WordForm[]
+  exampleWords ExampleWord[]
 
   @@index([language, lemma, partOfSpeech])
   @@index([language, frequencyRank])
@@ -199,9 +207,63 @@ model Sense {
   example     String?
   cefrLevel   String?
 
-  userWords UserWord[]
+  // A sentence that illustrates THIS meaning specifically — set from a sense-exact
+  // Wiktionary example. Distinct from ExampleWord, which indexes every sentence a
+  // word appears in regardless of which sense it's drilling.
+  primaryExampleId String?
+  primaryExample   Example? @relation("SensePrimaryExample", fields: [primaryExampleId], references: [id])
+
+  userWords    UserWord[]
+  exampleWords ExampleWord[]
 
   @@index([lexemeId])
+}
+
+// A German sentence, its English translation, and provenance/flags. Deduped via
+// `normalized` since the same sentence arrives from Wiktionary and Tatoeba alike;
+// `id` is a deterministic content hash of `normalized` (see packages/seed/src/map.ts
+// contentId) so re-seeding never mints a new id for a sentence already stored.
+model Example {
+  id           String        @id
+  text         String
+  translation  String
+  normalized   String        @unique
+  tokenCount   Int
+  source       ExampleSource
+  sourceRef    String? // e.g. "tatoeba:370121/245800" — required for CC-BY attribution
+  isWellFormed Boolean       @default(false) // per SENTENCE: length, punctuation, vocabulary
+
+  words            ExampleWord[]
+  primaryForSenses Sense[]       @relation("SensePrimaryExample")
+
+  @@index([isWellFormed, tokenCount])
+}
+
+// The reverse index: which lexemes appear in which sentences, and whether each
+// pairing is safe to drill (see Part 5 of the sentence-corpus spec — a sentence
+// can be well-formed overall yet unusable for one ambiguous word in it, e.g.
+// "Ich gehe zur Bank." is usable for "gehen" but not for "Bank").
+model ExampleWord {
+  exampleId        String
+  lexemeId         String
+  senseId          String? // null = could not disambiguate which sense this occurrence is
+  position         Int // token index in the sentence (the finite verb's own token, for a separable-verb row)
+  surface          String // the inflected form as it actually appears
+  isUsableForTiles Boolean @default(false) // per PAIR: well-formed AND sense resolved
+
+  // Set only for a reassembled separable verb (e.g. "Ich rufe dich an." → anrufen): the token
+  // index and surface text of the separated prefix, so the session player's tip generator can
+  // highlight both halves ("anrufen splits: Ich rufe dich an."). Null for every ordinary row.
+  prefixPosition Int?
+  prefixSurface  String?
+
+  example Example @relation(fields: [exampleId], references: [id], onDelete: Cascade)
+  lexeme  Lexeme  @relation(fields: [lexemeId], references: [id])
+  sense   Sense?  @relation(fields: [senseId], references: [id])
+
+  @@id([exampleId, lexemeId, position])
+  @@index([lexemeId, isUsableForTiles]) // THE query: "tileable sentences containing this word"
+  @@index([senseId, isUsableForTiles])
 }
 
 model WordForm {

@@ -1,4 +1,4 @@
-import { normalizeInput } from '@wortgarten/shared';
+import { normalizeInput } from './text';
 
 // Letters + combining marks, with intra-word hyphens kept (e.g. "E-Mail").
 // Everything else (whitespace, punctuation) is a delimiter, not a token.

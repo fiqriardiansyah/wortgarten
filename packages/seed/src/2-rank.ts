@@ -16,6 +16,7 @@ import {
   type LexemeIdentity,
 } from './map';
 import { loadFrequencyList } from './frequency';
+import { buildLemmaSet } from './lemma-set';
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DEFAULT_IN = path.join(DATA_DIR, 'german.jsonl');
@@ -59,6 +60,8 @@ async function main() {
   }
 
   const freq = await loadFrequencyList(values.freq as string);
+  const lemmaSet = await buildLemmaSet(inPath);
+  console.log(`[rank] lemma set: ${lemmaSet.size.toLocaleString()} distinct words in the dump`);
   const candidates = new Map<string, Candidate>();
 
   let read = 0;
@@ -83,7 +86,7 @@ async function main() {
 
     // form_of entries aren't lemmas — they're harvested as extra WordForm
     // rows against their target lemma in Pass 3, not scored here.
-    if (isFormOfEntry(entry)) {
+    if (isFormOfEntry(entry, lemmaSet)) {
       formOfSkipped++;
       continue;
     }

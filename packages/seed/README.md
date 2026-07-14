@@ -113,23 +113,20 @@ Streams `german.jsonl` once more, keeps only entries matching a key in
 `ranked.json`, maps each to `Lexeme` / `Sense` / `WordForm` rows (`src/map.ts` —
 see below), and batch-inserts (1000 rows/batch, one transaction per batch).
 
-**Idempotent without `--truncate`:** each batch inserts `Lexeme` rows with
-`skipDuplicates: true` against the `[language, lemma, partOfSpeech, gender]`
-unique constraint, then only inserts that lexeme's `Sense`/`WordForm` children
-if the row was newly created this run (checked by querying which of the
-client-generated IDs actually landed). Re-running the whole pipeline never
-duplicates rows.
-
-`--truncate` clears existing `Lexeme` rows for `--language` first (cascades to
-their `Sense`/`WordForm`) — **never** touches `UserWord`, auth tables, or
-anything personal. Only safe to use before real users have added words from
-this language's dictionary (if any `UserWord` already references a `Sense`
-being cleared, the delete will fail on the FK rather than silently orphan data
-— that's intentional).
+**Idempotent by construction:** `Lexeme`/`Sense`/`WordForm` ids are all
+deterministic content hashes (see `contentId` in `map.ts`), upserted by id —
+re-running the whole pipeline against unchanged data never duplicates or
+re-mints a row. There is no `--truncate` flag; a lemma that drops out of the
+current `ranked.json` (e.g. a `--limit` change, or a ranking fix that changes
+which candidates qualify) is simply not touched by that run and is left as a
+stale row with its last-computed `frequencyRank` — clear `Lexeme`/`Sense`/
+`WordForm`/`ExampleWord` (and any `UserWord` blocking that delete via FK) by
+hand first if you need a fully clean rebuild for accurate rank-based
+measurement.
 
 Flags: `--in <path>` (default `data/german.jsonl`), `--ranked <path>` (default
-`data/ranked.json`), `--language <code>` (default `de`), `--truncate`,
-`--batch-size <n>` (default 1000).
+`data/ranked.json`), `--language <code>` (default `de`), `--batch-size <n>`
+(default 1000).
 
 Prints an end-of-run report: counts inserted, nouns missing gender/plural, verbs
 with/without a separable prefix or auxiliary, and any ranked lemma that matched
@@ -175,6 +172,116 @@ the test. Flag: `--language <code>` (default `de`).
   `apps/api`'s `LookupService` queries with; a mismatch here would silently
   break every lookup in the app. The lemma itself is always included as a form.
   Deduplicated on `(surface, features)` per lexeme.
+- `isFormOfEntry` / `harvestFormOfForms`: read ONLY the structured `form_of`
+  field, never gloss prose — but the field itself isn't always trustworthy.
+  kaikki's own extraction can mis-parse a sense's English gloss text into a
+  bogus `form_of` entry (real example: "sich"'s first sense produced a
+  `form_of` target of literally `"the third person singular or plural"` —
+  lifted from its own gloss, not a German word). A target only counts if it's
+  BOTH a different word than the entry's own AND a real lemma that exists in
+  the dump (`lemma-set.ts`'s `buildLemmaSet`, built from every `entry.word` in
+  the filtered kaikki stream) — otherwise the entry imports as a normal lemma
+  instead of being silently dropped.
+
+## Example sentence corpus (`4-examples.ts` / `5-index.ts`)
+
+Fills `Example` (a German sentence + its English translation, deduped, flagged
+`isWellFormed`) and `ExampleWord` (the reverse index: which lexemes appear in
+which sentences, and whether that specific pairing is safe to drill — see
+`Sense.example`'s ~25% usable rate, which is why this is a table and not a
+column). No AI, no runtime NLP — everything resolves at seed time into stored
+flags. Full design rationale lives in the task spec this was built from; the
+short version:
+
+```
+pnpm --filter @wortgarten/seed run seed:examples --source tatoeba
+pnpm --filter @wortgarten/seed run seed:index
+pnpm --filter @wortgarten/seed run seed:verify
+```
+
+**Windows/pnpm note:** don't add an extra `--` before flags here (unlike the
+passes above) — on this pnpm/Windows combination `pnpm run seed:examples --
+--source tatoeba` forwards a literal `"--"` token into `argv`, which Node's
+`util.parseArgs` treats as an end-of-options marker and silently drops every
+flag after it to positionals. `pnpm run seed:examples --source tatoeba`
+(no extra `--`) passes flags through correctly.
+
+### `seed:examples` (`src/4-examples.ts`) — ingest
+
+`--source tatoeba` streams `data/deu-eng.tsv` (Tatoeba's German–English
+sentence-pairs export, gitignored — download the `deu-eng.tsv` link from
+[tatoeba.org/en/downloads](https://tatoeba.org/en/downloads)), groups by
+`deu_id`, keeps only the lowest `eng_id` per group (the original direct
+translation — later ones are alternate/looser paraphrases), and writes one
+`Example` row per distinct German sentence with `isWellFormed` computed from
+all five rules: 4–10 tokens, starts capital/ends `.!?`, has a real translation,
+not a quotation (Wiktionary-only), and every token resolves to a seeded lexeme
+except at most 2 tokens from `src/proper-noun-allowlist.ts`.
+
+Also prints the top 50 tokens (by frequency, across the whole corpus) that
+resolve to no seeded lexeme — the data step that built the allowlist. If you
+add proper nouns to that file, re-run this pass to pick up the change (content-
+hashed ids mean re-running is always a safe no-op for unchanged sentences).
+
+`--source wiktionary` is not implemented yet — gated on reading the coverage
+report below first (see the task spec's Build order).
+
+### `seed:index` (`src/5-index.ts`) — resolve and index
+
+For every `isWellFormed` `Example`, resolves the German text one sentence at a
+time via `lexicon-index.ts`'s `resolveSentence` — the same
+`resolveSeparableSentence` algorithm (`@wortgarten/shared`) `apps/api`'s
+`LookupService` uses at runtime, including the clause-final positional guard
+and the finite-verb requirement. A German separable verb that splits in the
+sentence (`Ich rufe dich an.`) reassembles into ONE slot attributed to the
+separable lexeme (`anrufen`) — never to the bare stem's other reading
+(`rufen`) and never leaving the prefix (`an`) as an orphaned standalone word.
+Deliberately simpler than the runtime service only in that it has no
+contraction resolution. A 2-token merged slot writes `prefixPosition` /
+`prefixSurface` on its `ExampleWord` row alongside the usual `position`
+(anchored to the finite verb's own token) and `surface`.
+
+Sense resolution uses the English translation as the disambiguation signal
+(`Ich gehe zur Bank.` is usable for `gehen`, not for the polysemous `Bank` —
+same sentence, different `isUsableForTiles` per word). Ambiguity ACROSS
+lexemes is fatal; ambiguity WITHIN one lexeme's senses is not: a token
+resolving to exactly one lexeme is always `isUsableForTiles = true` regardless
+of how many senses it has (`senseId` is a best-effort ranking preference —
+sense-exact sentences served first — never a usability gate); a token
+resolving to several distinct lexemes (a homograph split into separate
+`Lexeme` rows, e.g. "Bank" the bench vs. "Bank" the financial institution)
+must disambiguate the LEXEME from the English side — each candidate lexeme's
+matched senses are reduced to core terms (parentheticals stripped, split on
+`,`/`;`, leading `to ` dropped, light stemming) and tested against the
+sentence's English side; exactly one lexeme with a matching sense wins,
+anything else leaves the token unusable. Fails safe: a missing sentence is a
+gap, a wrong-lexeme sentence is a lie.
+
+Self-healing like `3-load.ts`'s `WordForm` writes: an `ExampleWord` row from a
+previous run that this run no longer produces (e.g. the dictionary changed
+under it) gets deleted, not left stale.
+
+### `seed:verify` — extended
+
+Also runs the sentence-corpus assertions (the "Ich gehe zur Bank." per-word
+flag test, the Bank/Bänke/Banken homograph-split regression against real
+indexed sentences, idempotency, the Tatoeba duplicate-collapse case) and
+prints the coverage report: ingested/deduped counts, well-formed pass rate, %
+of all seeded lexemes and — the number that matters — % of the **top-1,000 by
+frequencyRank** with ≥1 tileable example, median tileable examples per lexeme,
+and the starved list (zero-coverage lexemes by frequency — the AI worker's
+future job queue).
+
+**Verb-coverage fix regression suite** (permanent — each pins a real bug this
+fix removed): every one of the top-500 highest-frequency word forms resolves
+to a seeded `Lexeme` (would have caught `sich`); `sich` itself exists with
+`pos = PRONOUN`; no sentence attached to a base verb is poisoned by a
+clause-final sibling separable-verb prefix (the general form of the
+`rufen`/`anrufen` bug, scanned across every real base+separable pair in the
+seed); `anrufen` has ≥1 tileable example; `rufen` specifically has none
+sourced from a clause-final `an`; "Ich denke an dich." (if present in the
+corpus) does not falsely merge `denke` + `an`; verb coverage in the top-1,000
+is ≥80% (fails the build below that).
 
 ## Attribution (required)
 
@@ -182,6 +289,13 @@ Wiktionary data is **CC-BY-SA / GFDL**. The app must credit Wiktionary and note
 kaikki.org / wiktextract as the extraction source (settings/about page — not yet
 added; do this before shipping the dictionary import). Record the extract date
 and the frequency list's license above once chosen.
+
+Example sentences from the **Tatoeba Project** (tatoeba.org), **CC BY 2.0 FR**.
+Attribution is per-sentence: `Example.sourceRef` stores `tatoeba:<deu_id>/<eng_id>`
+for every Tatoeba-sourced row — required to credit each sentence's contributor,
+not just a line in Settings. Unlike the Wiktionary data above, **CC-BY has no
+share-alike** — cleaner for a commercial launch than the kaikki-derived
+dictionary.
 
 **Share-alike may have implications for redistributing the derived dictionary
 data.** This is not legal advice — review it before any commercial launch, don't

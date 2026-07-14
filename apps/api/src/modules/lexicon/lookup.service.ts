@@ -1,16 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { foldForLookup } from '@wortgarten/shared';
+import {
+  clauseFinalTokenIndices,
+  foldForLookup,
+  isFiniteVerbForm,
+  rankLexemes,
+  resolveSeparableSentence,
+  tokenize,
+  tokenizeWithOffsets,
+} from '@wortgarten/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { resolveContraction } from './contractions';
-import { rankLexemes } from './ranking';
-import { tokenize } from './tokenizer';
 import type { LexemeMatch, SentenceTokenMatch } from './types';
 
-interface PendingSeparableVerb {
-  resultIndex: number;
-  tokenIndex: number;
-  match: LexemeMatch;
-}
+type SeparableLexemeMatch = LexemeMatch & { isFiniteForm: boolean };
 
 @Injectable()
 export class LookupService {
@@ -41,77 +43,44 @@ export class LookupService {
   }
 
   /**
-   * Resolves every token in a sentence. Reassembles German separable verbs:
-   * if a token is a known separable prefix of a verb matched earlier in the
-   * sentence (e.g. "an" after "rufe" → "anrufen"), both tokens collapse into
-   * one match instead of two.
+   * Resolves every token in a sentence. Reassembles German separable verbs: a finite base-verb
+   * match (e.g. "rufe" matching "anrufen") merges with a later, clause-final token that folds to
+   * its separable prefix ("an" in "Ich rufe dich an.") into one slot — see
+   * `resolveSeparableSentence` (`@wortgarten/shared`) for the algorithm and the clause-final guard
+   * that keeps "Ich denke an dich." (mid-clause "an", a plain preposition) from merging.
    *
    * `sentenceStartIndices` marks which token indices open a sentence, so the ranking's casing
    * signal can be suppressed there (a caller with real sentence boundaries — e.g. `AnalyzeService`,
    * which already splits them for `sourceSentence` — should pass this; omitted, only index 0 counts).
+   *
+   * `clauseFinalIndices` gates the separable-verb merge on clause position — pass it whenever the
+   * caller has the original text/offsets (`AnalyzeService` does). Given a plain string `input`,
+   * this method computes it directly. Given a pre-tokenized array with no positional information
+   * and no explicit `clauseFinalIndices`, the merge runs unguarded (legacy behavior).
    */
   async lookupSentence(
     input: string | string[],
     language = 'de',
     sentenceStartIndices?: Set<number>,
+    clauseFinalIndices?: Set<number>,
   ): Promise<SentenceTokenMatch[]> {
-    const tokens = Array.isArray(input) ? input : tokenize(input);
-    const results: SentenceTokenMatch[] = [];
-    const pendingVerbs: PendingSeparableVerb[] = [];
-
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i];
-      const folded = foldForLookup(token);
-      const isSentenceStart = sentenceStartIndices ? sentenceStartIndices.has(i) : i === 0;
-
-      const pendingIndex = pendingVerbs.findIndex(
-        (p) => p.match.lexeme.separablePrefix != null && foldForLookup(p.match.lexeme.separablePrefix) === folded,
-      );
-
-      if (pendingIndex !== -1) {
-        const pending = pendingVerbs[pendingIndex];
-        results[pending.resultIndex] = {
-          tokens: [tokens[pending.tokenIndex], token],
-          tokenIndices: [pending.tokenIndex, i],
-          matches: [pending.match],
-          unknown: false,
-        };
-        // An ambiguous bare-stem token (e.g. "rufe") can queue several candidate
-        // separable verbs at once. Once ANY of them is resolved, that slot is
-        // taken — drop the rest so a later, unrelated prefix token can't clobber
-        // an already-resolved slot and orphan its first token.
-        for (let j = pendingVerbs.length - 1; j >= 0; j--) {
-          if (pendingVerbs[j].resultIndex === pending.resultIndex) pendingVerbs.splice(j, 1);
-        }
-        continue;
-      }
-
-      const matches = await this.lookupForm(token, language, isSentenceStart);
-      const resultIndex = results.length;
-      results.push({
-        tokens: [token],
-        tokenIndices: [i],
-        matches,
-        unknown: matches.length === 0,
-      });
-
-      // A bare stem that's ALSO a complete, self-contained plain verb (e.g.
-      // "komme" is both "kommen" and a conjugated stem of "auskommen") should
-      // resolve to that plain reading rather than gamble on a later token
-      // happening to share some other verb's separable prefix — "Ich komme aus
-      // London" is "kommen" + "aus" (from), not "auskommen" (to get by). Only
-      // queue a separable-verb candidate when the stem has no plain escape hatch.
-      const hasPlainVerbMatch = matches.some((m) => m.lexeme.partOfSpeech === 'VERB' && !m.lexeme.separablePrefix);
-      if (!hasPlainVerbMatch) {
-        for (const match of matches) {
-          if (match.lexeme.partOfSpeech === 'VERB' && match.lexeme.separablePrefix) {
-            pendingVerbs.push({ resultIndex, tokenIndex: i, match });
-          }
-        }
-      }
+    let tokens: string[];
+    let effectiveClauseFinal = clauseFinalIndices;
+    if (Array.isArray(input)) {
+      tokens = input;
+    } else {
+      tokens = tokenize(input);
+      if (!effectiveClauseFinal) effectiveClauseFinal = clauseFinalTokenIndices(input, tokenizeWithOffsets(input));
     }
 
-    return results;
+    const resolve = async (token: string, index: number): Promise<SeparableLexemeMatch[]> => {
+      const isSentenceStart = sentenceStartIndices ? sentenceStartIndices.has(index) : index === 0;
+      const matches = await this.lookupForm(token, language, isSentenceStart);
+      return matches.map((m) => ({ ...m, isFiniteForm: isFiniteVerbForm((m.form.features as { raw?: string[] } | null)?.raw) }));
+    };
+
+    const slots = await resolveSeparableSentence(tokens, resolve, effectiveClauseFinal);
+    return slots.map((s) => ({ tokens: s.tokens, tokenIndices: s.tokenIndices, matches: s.matches, unknown: s.unknown }));
   }
 
   /** Prefer a lexeme the user already has in their word bank; otherwise return all candidates for the UI to offer. */

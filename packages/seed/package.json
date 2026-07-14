@@ -6,6 +6,8 @@
     "seed:filter": "ts-node src/1-filter.ts",
     "seed:rank": "ts-node src/2-rank.ts",
     "seed:load": "ts-node src/3-load.ts",
+    "seed:examples": "ts-node src/4-examples.ts",
+    "seed:index": "ts-node src/5-index.ts",
     "seed:verify": "ts-node src/verify.ts",
     "seed:all": "pnpm run seed:filter && pnpm run seed:rank && pnpm run seed:load",
     "typecheck": "tsc --noEmit"
