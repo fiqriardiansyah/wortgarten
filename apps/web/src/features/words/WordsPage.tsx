@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Search, Sprout } from 'lucide-react';
+import Measure from 'react-measure';
+import Masonry from 'react-responsive-masonry';
 import { Link } from 'react-router-dom';
 import type { WordFilter } from '@wortgarten/shared';
 import { Button } from '@/components/ui/Button';
@@ -11,6 +13,7 @@ import { WordCard } from './components/WordCard';
 import { WordDetails } from './detail/components/WordDetails';
 
 const PAGE_SIZE = 20;
+const TWO_COLUMN_MIN_WIDTH = 560;
 
 export function WordsPage() {
   const [query, setQuery] = useState('');
@@ -35,11 +38,13 @@ export function WordsPage() {
 
   return (
     <div className=''>
-      <div className="flex items-start justify-between gap-8">
+      <div className="flex items-start justify-between gap-8 lg:sticky lg:top-0 lg:z-20 lg:-my-2 lg:bg-page lg:py-2">
         <div><div className="flex items-center gap-2"><h1 className="text-heading font-extrabold text-deep">My Words</h1><Sprout size={21} className="text-primary lg:hidden" /></div><p className="mt-0.5 text-xs text-muted">{total} {total === 1 ? 'word' : 'words'} in your garden</p></div>
         <SearchBox query={query} onChange={handleQueryChange} className="hidden w-72 lg:block" />
       </div>
-      <SearchBox query={query} onChange={handleQueryChange} className="mt-3 lg:hidden" />
+      <div className="sticky top-0 z-20 -mx-4 bg-page px-4 py-3 lg:hidden">
+        <SearchBox query={query} onChange={handleQueryChange} />
+      </div>
       <div className="mt-3"><FilterChips value={filter} onChange={handleFilterChange} /></div>
 
       {isLoading && <p className="mt-8 text-center text-sm text-muted">Loading…</p>}
@@ -47,7 +52,15 @@ export function WordsPage() {
       {!isLoading && items.length === 0 && isFiltered && <p className="mt-8 text-center text-sm text-muted">No words match this search or filter.</p>}
 
       <div className="words-layout mt-4">
-        <div className="words-grid">{items.map((word, i) => <WordCard key={word.id} word={word} index={i} selected={selectedId === word.id} onSelect={setSelectedId} />)}</div>
+        <Measure bounds>
+          {({ measureRef, contentRect }) => (
+            <div ref={measureRef} className="words-grid">
+              <Masonry columnsCount={(contentRect.bounds?.width ?? 0) >= TWO_COLUMN_MIN_WIDTH ? 2 : 1} gutter="0.75rem">
+                {items.map((word, i) => <WordCard key={word.id} word={word} index={i} selected={selectedId === word.id} onSelect={setSelectedId} />)}
+              </Masonry>
+            </div>
+          )}
+        </Measure>
         {selectedId && <div className="words-detail"><WordDetails id={selectedId} sticky onDeleted={() => setSelectedId(null)} /></div>}
       </div>
 

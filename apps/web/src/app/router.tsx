@@ -9,6 +9,7 @@ import { SignupPage } from '@/features/auth/SignupPage';
 import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage';
 import { AddWordsPage } from '@/features/add-words/AddWordsPage';
+import { SessionPage } from '@/features/session/SessionPage';
 import { WordsPage } from '@/features/words/WordsPage';
 import { WordDetailPage } from '@/features/words/detail/WordDetailPage';
 
@@ -70,6 +71,15 @@ export function AppRouter() {
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        <Route
+          path="/session"
+          element={
+            <RequireAuth>
+              <SessionPage />
+            </RequireAuth>
+          }
+        />
 
         <Route
           element={

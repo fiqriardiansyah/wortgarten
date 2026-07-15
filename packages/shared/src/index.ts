@@ -5,6 +5,8 @@ export * from './lexeme';
 export * from './tokenizer';
 export * from './ranking';
 export * from './separable';
+export * from './session-types';
+export * from './grading';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -27,7 +29,7 @@ export const WordSummarySchema = z.object({
 export type WordSummary = z.infer<typeof WordSummarySchema>;
 
 export const SessionSummarySchema = z.object({
-  wordCount: z.number(),
+  wordCount: z.number(), // total tasks when starting a fresh session; tasks left when isActive
   estMinutes: z.number(),
   taskBreakdown: z.object({
     flashcards: z.number(),
@@ -35,6 +37,7 @@ export const SessionSummarySchema = z.object({
     sentenceBuilds: z.number(),
   }),
   previewWords: z.array(z.string()),
+  isActive: z.boolean(), // an ACTIVE DrillSession already exists — CTA is "Resume", not "Start"
 });
 export type SessionSummary = z.infer<typeof SessionSummarySchema>;
 

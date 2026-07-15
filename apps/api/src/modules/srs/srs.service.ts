@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { fsrs as createFsrs, Rating, State, type CardInput, type Grade } from 'ts-fsrs';
 import type { AttemptResult, FsrsRating, TaskType, UserWord, WordLevel } from '@wortgarten/database';
+import { GRADING_MATRIX } from '@wortgarten/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const FAST_RESPONSE_MS = 3000;
-const SLOW_RESPONSE_MS = 8000;
-
-const PASSING_RESULTS: ReadonlySet<AttemptResult> = new Set(['CORRECT', 'CORRECT_WITH_TYPO']);
 
 const RATING_TO_GRADE: Record<FsrsRating, Grade> = {
   AGAIN: Rating.Again,
@@ -22,6 +20,16 @@ const LEVEL_LADDER: WordLevel[] = ['NEW', 'RECOGNIZE', 'RECALL', 'PRODUCE', 'MAS
 /** The subset of UserWord's FSRS columns needed to reconstruct an FSRS card. */
 export type FsrsUserWordState = Pick<UserWord, 'stability' | 'difficulty' | 'dueAt' | 'reps' | 'lapses' | 'lastReviewedAt'>;
 
+/** Everything SrsService.grade needs beyond the graded result itself — the attempt's identity
+ * (for idempotency) and the ladder decision the caller already made (SessionGradingService owns
+ * that decision; grade() is a dumb persister, not a ladder-movement policy). */
+export interface GradeMeta {
+  drillSessionId: string;
+  planItemId: string;
+  isRetry: boolean;
+  nextLevel: WordLevel;
+}
+
 @Injectable()
 export class SrsService {
   // enable_short_term: false — our schema has no `state`/`learning_steps`
@@ -31,12 +39,18 @@ export class SrsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /** fail → AGAIN; pass+fast → EASY; pass+slow → HARD; pass at normal speed → GOOD. */
-  mapToRating(result: AttemptResult, responseTimeMs: number): FsrsRating {
-    if (!PASSING_RESULTS.has(result)) return 'AGAIN';
-    if (responseTimeMs < FAST_RESPONSE_MS) return 'EASY';
-    if (responseTimeMs < SLOW_RESPONSE_MS) return 'GOOD';
-    return 'HARD';
+  /**
+   * Reads its base rating off the shared Part-5 grading matrix (@wortgarten/shared) — the single
+   * table the session grader also reads for ladder movement, so client/server/FSRS can't drift.
+   * One override on top of that base: a fast CORRECT on PICK_MEANING is EASY, not GOOD — typing
+   * time isn't recall time, so the Easy codepath is deliberately PICK_MEANING-only.
+   */
+  mapToRating(result: AttemptResult, responseTimeMs: number, taskType: TaskType): FsrsRating {
+    const base = GRADING_MATRIX[result].fsrsRating;
+    if (result === 'CORRECT' && taskType === 'PICK_MEANING' && responseTimeMs < FAST_RESPONSE_MS) {
+      return 'EASY';
+    }
+    return base;
   }
 
   private toCard(state: FsrsUserWordState): CardInput {
@@ -63,9 +77,14 @@ export class SrsService {
     return this.scheduler.get_retrievability(this.toCard(state), now, false);
   }
 
-  /** Grades one attempt: advances FSRS state on UserWord and records the Attempt it learns from. */
-  async grade(userWord: UserWord, result: AttemptResult, responseTimeMs: number, taskType: TaskType): Promise<UserWord> {
-    const rating = this.mapToRating(result, responseTimeMs);
+  /**
+   * Grades one attempt: advances FSRS state + the mastery ladder on UserWord, and records the
+   * Attempt it learns from. This is the ONLY path that touches FSRS state or `level` — retries and
+   * practice attempts must never call this (see SessionGradingService), which is what keeps "one
+   * FSRS rating per word per session" true structurally rather than by convention.
+   */
+  async grade(userWord: UserWord, result: AttemptResult, responseTimeMs: number, taskType: TaskType, meta: GradeMeta): Promise<UserWord> {
+    const rating = this.mapToRating(result, responseTimeMs, taskType);
     const now = new Date();
     const { card } = this.scheduler.next(this.toCard(userWord), now, RATING_TO_GRADE[rating]);
 
@@ -79,6 +98,7 @@ export class SrsService {
           reps: card.reps,
           lapses: card.lapses,
           lastReviewedAt: now,
+          level: meta.nextLevel,
         },
       }),
       this.prisma.attempt.create({
@@ -88,6 +108,9 @@ export class SrsService {
           result,
           responseTimeMs,
           rating,
+          drillSessionId: meta.drillSessionId,
+          planItemId: meta.planItemId,
+          isRetry: meta.isRetry,
         },
       }),
     ]);

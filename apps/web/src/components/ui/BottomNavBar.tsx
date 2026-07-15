@@ -1,24 +1,32 @@
 import { Link, useMatch } from 'react-router-dom';
-import { Home, BookOpen, BarChart2, Type, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const NAV = [
-  { to: '/', icon: Home, label: 'Home' },
-  { to: '/words', icon: Type, label: 'Words' },
-  { to: '/read', icon: BookOpen, label: 'Read' },
-  { to: '/progress', icon: BarChart2, label: 'Progress' },
+  { to: '/', icon: '🏠', label: 'Home' },
+  { to: '/words', icon: '🌸', label: 'Words' },
+  { to: '/read', icon: '📖', label: 'Read' },
+  { to: '/progress', icon: '📊', label: 'Progress' },
 ];
 
-function NavItem({ to, icon: Icon, label }: { to: string; icon: typeof Home; label: string }) {
+function NavItem({ to, icon, label }: { to: string; icon: string; label: string }) {
   const active = useMatch(to === '/' ? '/' : `${to}/*`);
+
   return (
     <Link
       to={to}
-      className={`flex flex-col items-center gap-0.5 p-2 text-xs font-semibold transition-colors ${
+      aria-current={active ? 'page' : undefined}
+      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-xs transition-colors ${
         active ? 'text-primary' : 'text-muted'
       }`}
     >
-      <Icon size={22} />
-      {label}
+      <span aria-hidden className="text-[20px] leading-none">
+        {icon}
+      </span>
+      <span className={active ? 'font-extrabold' : 'font-semibold'}>{label}</span>
+      <span
+        aria-hidden
+        className={`h-1 w-1 rounded-full ${active ? 'bg-primary' : 'bg-transparent'}`}
+      />
     </Link>
   );
 }
@@ -29,22 +37,26 @@ export function BottomNavBar() {
   const right = NAV.slice(mid);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex items-end justify-around bg-white px-2 pb-safe pt-2 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
+    <nav
+      aria-label="Primary navigation"
+      className="fixed left-4 right-4 z-50 mx-auto flex h-24 max-w-2xl items-center rounded-3xl bg-white px-2 shadow-card"
+      style={{ bottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+    >
       {left.map((item) => (
         <NavItem key={item.to} {...item} />
       ))}
 
-      {/* Raised center Add button */}
       <Link
         to="/add"
-        className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-card transition-transform active:scale-95"
+        aria-label="Add words"
+        className="mx-1 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-card transition-transform active:scale-95"
       >
-        <Plus size={28} />
+        <Plus size={30} strokeWidth={3.5} />
       </Link>
 
       {right.map((item) => (
         <NavItem key={item.to} {...item} />
       ))}
-    </div>
+    </nav>
   );
 }

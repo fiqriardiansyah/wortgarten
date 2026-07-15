@@ -55,10 +55,18 @@ enum TaskType {
 enum AttemptResult {
   CORRECT
   CORRECT_WITH_TYPO
+  MISSING_UMLAUT
+  MISSING_ARTICLE
   WRONG_GENDER
   WRONG_MEANING
   WRONG_FORM
   EMPTY
+}
+
+enum DrillSessionStatus {
+  ACTIVE
+  COMPLETED
+  ABANDONED
 }
 
 enum FsrsRating {
@@ -106,9 +114,10 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  userWords UserWord[]
-  tasks     Task[]
-  stories   Story[]
+  userWords     UserWord[]
+  tasks         Task[]
+  stories       Story[]
+  drillSessions DrillSession[]
 
   @@map("user")
 }
@@ -323,7 +332,36 @@ model Attempt {
   rating         FsrsRating
   answeredAt     DateTime      @default(now())
 
+  drillSessionId String
+  drillSession   DrillSession @relation(fields: [drillSessionId], references: [id], onDelete: Cascade)
+  isRetry        Boolean      @default(false)
+  // Idempotency key: the PlanItem this attempt answers. See DrillSession.plan.
+  planItemId     String
+
+  @@unique([drillSessionId, planItemId])
   @@index([userWordId, answeredAt])
+  @@index([userWordId, taskType, answeredAt])
+}
+
+// A drill run: 10 tasks, chosen by FSRS due-ness, frozen at start. NOT to be
+// confused with Better Auth's `Session` model above (login session) — that one
+// stays untouched. This one is the quiz/review run.
+model DrillSession {
+  id           String             @id @default(cuid())
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       DrillSessionStatus @default(ACTIVE)
+  // Ordered PlanItem[] INCLUDING solutions (server-only — sanitized before it
+  // ever reaches the client). Retries are spliced into this array as the
+  // session progresses; see SessionGradingService.
+  plan         Json
+  currentIndex Int                @default(0)
+  isPractice   Boolean            @default(false)
+  startedAt    DateTime           @default(now())
+  completedAt  DateTime?
+  attempts     Attempt[]
+
+  @@index([userId, status])
 }
 
 // ─── Generated content (tables only — stay empty this task) ────────────────

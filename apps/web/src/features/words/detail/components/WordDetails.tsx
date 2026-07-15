@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fullDisplayForm } from '@wortgarten/shared';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -7,6 +8,7 @@ import { IncompleteBadge } from '@/components/ui/IncompleteBadge';
 import { Input } from '@/components/ui/Input';
 import { partOfSpeechLabel } from '@/lib/partOfSpeech';
 import { ladderLevelChipVariant, ladderLevelLabel } from '@/lib/wordLevel';
+import { usePracticeSession } from '@/features/session/api/usePracticeSession';
 import { useWordDetailQuery } from '../api/useWordDetailQuery';
 import { useUpdateWord } from '../api/useUpdateWord';
 import { useDeleteWord } from '../api/useDeleteWord';
@@ -23,9 +25,16 @@ export function WordDetails({ id, onDeleted, sticky = false }: WordDetailsProps)
   const { data: word, isLoading, isError } = useWordDetailQuery(id);
   const updateWord = useUpdateWord();
   const deleteWord = useDeleteWord();
+  const practiceSession = usePracticeSession();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [customTranslation, setCustomTranslation] = useState('');
   const [note, setNote] = useState('');
+
+  async function handlePracticeNow() {
+    const result = await practiceSession.mutateAsync({ size: 3, userWordId: id });
+    if (result.kind === 'session') navigate('/session', { state: { session: result.session } });
+  }
 
   if (isLoading) return <p className="py-12 text-center text-sm text-muted">Loading…</p>;
   if (isError || !word) return <p className="py-12 text-center text-sm text-muted">Couldn't find that word.</p>;
@@ -95,7 +104,9 @@ export function WordDetails({ id, onDeleted, sticky = false }: WordDetailsProps)
           <Chip variant={ladderLevelChipVariant[word.level]}>{ladderLevelLabel[word.level]}</Chip>
         </div>
         <div className="mt-4"><MasteryLadder level={word.level} /></div>
-        <Button variant="light" className="mt-5 w-full justify-center" disabled>Practice — coming soon</Button>
+        <Button variant="light" className="mt-5 w-full justify-center" disabled={practiceSession.isPending} onClick={handlePracticeNow}>
+          {practiceSession.isPending ? 'Starting…' : 'Practice now'}
+        </Button>
       </Card>
 
       <Card className="mt-4" hover={false}>

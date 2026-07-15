@@ -204,7 +204,7 @@ export function PasteTab() {
 
       <Button
         variant="primary"
-        className="mt-3"
+        className="mt-3 w-full justify-center sm:w-auto"
         onClick={handleAnalyze}
         disabled={!text.trim() || tooLong || analyze.isPending}
       >
@@ -283,17 +283,31 @@ export function PasteTab() {
       )}
 
       {hasAddableTokens && (
-        <div className="mt-3 flex items-end justify-between gap-3">
-          <div className="flex gap-2">
-            <Button variant="outline" className="!px-3 !py-1.5 text-xs" onClick={handleSelectAllNew}>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="order-2 grid grid-cols-2 gap-2 sm:order-1 sm:flex">
+            <Button
+              variant="outline"
+              className="w-full justify-center !px-3 !py-2 text-xs sm:w-auto sm:!py-1.5"
+              onClick={handleSelectAllNew}
+            >
               Select all new
             </Button>
-            <Button variant="outline" className="!px-3 !py-1.5 text-xs" onClick={handleClearSelection}>
+            <Button
+              variant="outline"
+              className="w-full justify-center !px-3 !py-2 text-xs sm:w-auto sm:!py-1.5"
+              onClick={handleClearSelection}
+            >
               Clear
             </Button>
           </div>
-          <div className="text-right">
-            <Button variant="primary" onClick={handleAddSelected} disabled={selected.size === 0} pulse={selected.size > 0}>
+          <div className="order-1 text-center sm:order-2 sm:text-right">
+            <Button
+              variant="primary"
+              className="w-full justify-center sm:w-auto"
+              onClick={handleAddSelected}
+              disabled={selected.size === 0}
+              pulse={selected.size > 0}
+            >
               {addWordsBatch.isPending
                 ? 'Adding…'
                 : selected.size === 0

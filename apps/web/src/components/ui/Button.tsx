@@ -8,6 +8,9 @@ interface ButtonProps {
   variant?: Variant;
   children: ReactNode;
   onClick?: () => void;
+  /** Fires on pointerdown instead of click-complete — pairs with the press-scale spring below to
+   * hide network latency inside motion that's already rendering (design spec, Part 9). */
+  onPointerDown?: () => void;
   icon?: ReactNode;
   pulse?: boolean;
   className?: string;
@@ -26,6 +29,7 @@ export function Button({
   variant = 'primary',
   children,
   onClick,
+  onPointerDown,
   icon,
   pulse = false,
   className = '',
@@ -41,6 +45,7 @@ export function Button({
       animate={pulse && !disabled ? 'pulse' : undefined}
       variants={pulse ? ctaPulseVariants : undefined}
       onClick={disabled ? undefined : onClick}
+      onPointerDown={disabled ? undefined : onPointerDown}
       className={`inline-flex items-center gap-2 rounded-pill px-5 py-2.5 font-sans font-700 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${className}`}
     >
       {children}

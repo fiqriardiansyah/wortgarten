@@ -36,7 +36,6 @@ export function HomePage() {
         greeting={data.greeting}
         daySubtitle={data.daySubtitle}
         streakDays={data.streakDays}
-        userName={data.user.name}
       />
 
       {/* Desktop: two-column grid */}

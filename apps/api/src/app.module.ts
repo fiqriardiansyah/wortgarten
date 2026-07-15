@@ -8,6 +8,7 @@ import { HealthModule } from './health/health.module';
 import { HomeModule } from './home/home.module';
 import { LexiconModule } from './modules/lexicon/lexicon.module';
 import { MeModule } from './me/me.module';
+import { SessionModule } from './modules/session/session.module';
 import { WordsModule } from './modules/words/words.module';
 
 @Module({
@@ -27,6 +28,7 @@ import { WordsModule } from './modules/words/words.module';
     HomeModule,
     LexiconModule,
     MeModule,
+    SessionModule,
     WordsModule,
   ],
 })

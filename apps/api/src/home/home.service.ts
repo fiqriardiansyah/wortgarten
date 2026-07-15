@@ -1,12 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { HomeDashboard, HomeDashboardSchema, type WordLevel as ContractWordLevel } from '@wortgarten/shared';
-import type { WordLevel } from '@wortgarten/database';
+import {
+  HomeDashboard,
+  HomeDashboardSchema,
+  PlanSchema,
+  type SessionSummary,
+  type WordLevel as ContractWordLevel,
+} from '@wortgarten/shared';
+import type { DrillSession, WordLevel } from '@wortgarten/database';
 import { PrismaService } from '../prisma/prisma.service';
+import { SessionBuilderService } from '../modules/session/session-builder.service';
 import { WordsService } from '../modules/words/words.service';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const RUSTY_THRESHOLD = 0.7;
-const SESSION_CAP = 10;
 const MINUTES_PER_TASK = 0.5;
 
 // Collapses the 5-rung learning ladder to the 3-bucket shape the Home
@@ -35,13 +41,14 @@ export class HomeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly words: WordsService,
+    private readonly sessionBuilder: SessionBuilderService,
   ) {}
 
   async getDashboard(userId: string): Promise<HomeDashboard> {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
 
-    const [sessionWords, rusty, collected, byLevel, recentlyAdded] = await Promise.all([
-      this.words.findDue(userId, SESSION_CAP),
+    const [activeSession, rusty, collected, byLevel, recentlyAdded] = await Promise.all([
+      this.prisma.drillSession.findFirst({ where: { userId, status: 'ACTIVE' }, orderBy: { startedAt: 'desc' } }),
       this.words.findRusty(userId, RUSTY_THRESHOLD),
       this.words.countForUser(userId),
       this.words.countByLevel(userId),
@@ -50,10 +57,11 @@ export class HomeService {
 
     const rustyUserWordIds = new Set(rusty.map((r) => r.userWord.id));
 
-    const taskBreakdown = { flashcards: 0, recalls: 0, sentenceBuilds: 0 };
-    for (const word of sessionWords) {
-      taskBreakdown[taskTypeForLevel(word.level)] += 1;
-    }
+    // Same due-first + capped-NEW selection the session builder uses to actually build a session —
+    // sharing that code is what keeps this preview and the real session from ever disagreeing.
+    const sessionSummary = activeSession
+      ? this.buildActiveSessionSummary(activeSession)
+      : await this.buildStartSessionSummary(userId);
 
     const daysSinceJoined = Math.floor((Date.now() - user.createdAt.getTime()) / MS_PER_DAY) + 1;
     const firstName = user.name.split(' ')[0] || user.name;
@@ -62,12 +70,7 @@ export class HomeService {
       greeting: `Hallo, ${firstName}! 👋`,
       daySubtitle: `Day ${daysSinceJoined} of learning German`,
       streakDays: 0, // TODO: no streak-tracking table yet — needs a real model in a later task
-      session: {
-        wordCount: sessionWords.length,
-        estMinutes: Math.ceil(sessionWords.length * MINUTES_PER_TASK),
-        taskBreakdown,
-        previewWords: sessionWords.slice(0, 3).map((w) => w.sense.lexeme.lemma),
-      },
+      session: sessionSummary,
       rusty: {
         count: rusty.length,
         wordsPreview: rusty.slice(0, 3).map((r) => r.userWord.sense.lexeme.lemma),
@@ -109,5 +112,38 @@ export class HomeService {
     };
 
     return HomeDashboardSchema.parse(dashboard);
+  }
+
+  /** "Resume session · N left" — N is the frozen plan's non-retry length minus how far in the user
+   * already got, so it can never disagree with what SessionPage shows after resuming. */
+  private buildActiveSessionSummary(session: DrillSession): SessionSummary {
+    const totalCount = PlanSchema.parse(session.plan).filter((item) => !item.isRetry).length;
+    const remaining = Math.max(0, totalCount - session.currentIndex);
+    return {
+      wordCount: remaining,
+      estMinutes: Math.ceil(remaining * MINUTES_PER_TASK),
+      taskBreakdown: { flashcards: 0, recalls: 0, sentenceBuilds: 0 },
+      previewWords: [],
+      isActive: true,
+    };
+  }
+
+  /** "Start session · N words" — N and the breakdown/preview come straight out of the builder's
+   * own composePlan selection (SessionBuilderService.planPreview), never recomputed separately. */
+  private async buildStartSessionSummary(userId: string): Promise<SessionSummary> {
+    const preview = await this.sessionBuilder.planPreview(userId);
+
+    const taskBreakdown = { flashcards: 0, recalls: 0, sentenceBuilds: 0 };
+    for (const word of preview.words) {
+      taskBreakdown[taskTypeForLevel(word.level)] += 1;
+    }
+
+    return {
+      wordCount: preview.total,
+      estMinutes: Math.ceil(preview.total * MINUTES_PER_TASK),
+      taskBreakdown,
+      previewWords: preview.words.slice(0, 3).map((w) => w.sense.lexeme.lemma),
+      isActive: false,
+    };
   }
 }

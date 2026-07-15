@@ -11,23 +11,34 @@ const LANG = 'de-srs-fixture';
 const pureSrs = new SrsService({} as unknown as PrismaService);
 
 describe('SrsService.mapToRating', () => {
-  it('fail results always map to AGAIN, regardless of speed', () => {
-    expect(pureSrs.mapToRating('WRONG_MEANING', 500)).toBe('AGAIN');
-    expect(pureSrs.mapToRating('EMPTY', 20000)).toBe('AGAIN');
-    expect(pureSrs.mapToRating('WRONG_GENDER', 1000)).toBe('AGAIN');
-    expect(pureSrs.mapToRating('WRONG_FORM', 1000)).toBe('AGAIN');
+  it('WRONG_MEANING and EMPTY map to AGAIN — the only results that do', () => {
+    expect(pureSrs.mapToRating('WRONG_MEANING', 500, 'PICK_MEANING')).toBe('AGAIN');
+    expect(pureSrs.mapToRating('EMPTY', 500, 'TYPE_WORD')).toBe('AGAIN');
   });
 
-  it('fast pass maps to EASY', () => {
-    expect(pureSrs.mapToRating('CORRECT', 999)).toBe('EASY');
+  it('grammar/keyboard errors map to HARD, not AGAIN — the word is known, the shape was wrong', () => {
+    expect(pureSrs.mapToRating('WRONG_GENDER', 1000, 'TYPE_WORD')).toBe('HARD');
+    expect(pureSrs.mapToRating('WRONG_FORM', 1000, 'TYPE_WORD')).toBe('HARD');
+    expect(pureSrs.mapToRating('MISSING_ARTICLE', 1000, 'TYPE_WORD')).toBe('HARD');
+    expect(pureSrs.mapToRating('MISSING_UMLAUT', 1000, 'TYPE_WORD')).toBe('HARD');
   });
 
-  it('normal-speed pass maps to GOOD', () => {
-    expect(pureSrs.mapToRating('CORRECT', 5000)).toBe('GOOD');
+  it('CORRECT_WITH_TYPO always maps to HARD, regardless of speed', () => {
+    expect(pureSrs.mapToRating('CORRECT_WITH_TYPO', 500, 'TYPE_WORD')).toBe('HARD');
+    expect(pureSrs.mapToRating('CORRECT_WITH_TYPO', 9000, 'TYPE_WORD')).toBe('HARD');
   });
 
-  it('slow pass maps to HARD', () => {
-    expect(pureSrs.mapToRating('CORRECT_WITH_TYPO', 9000)).toBe('HARD');
+  it('a fast CORRECT on PICK_MEANING maps to EASY — the one Easy codepath, and it is PICK_MEANING-only', () => {
+    expect(pureSrs.mapToRating('CORRECT', 999, 'PICK_MEANING')).toBe('EASY');
+  });
+
+  it('a fast CORRECT on TYPE_WORD or BUILD_SENTENCE stays GOOD — typing time is not recall time', () => {
+    expect(pureSrs.mapToRating('CORRECT', 999, 'TYPE_WORD')).toBe('GOOD');
+    expect(pureSrs.mapToRating('CORRECT', 999, 'BUILD_SENTENCE')).toBe('GOOD');
+  });
+
+  it('a normal-speed or slow CORRECT on PICK_MEANING is GOOD, not EASY', () => {
+    expect(pureSrs.mapToRating('CORRECT', 5000, 'PICK_MEANING')).toBe('GOOD');
   });
 });
 
@@ -86,6 +97,7 @@ describe('SrsService.grade (integration)', () => {
   const lexemeIds: string[] = [];
   let testUserId: string;
   let userWord: UserWord;
+  let drillSessionId: string;
 
   beforeAll(async () => {
     const lexeme = await prisma.lexeme.create({
@@ -109,39 +121,61 @@ describe('SrsService.grade (integration)', () => {
     userWord = await prisma.userWord.create({
       data: { userId: testUserId, senseId: lexeme.senses[0].id },
     });
+
+    const drillSession = await prisma.drillSession.create({
+      data: { userId: testUserId, plan: [] },
+    });
+    drillSessionId = drillSession.id;
   });
 
   afterAll(async () => {
+    await prisma.attempt.deleteMany({ where: { userWordId: userWord.id } });
+    await prisma.drillSession.delete({ where: { id: drillSessionId } });
     await prisma.userWord.deleteMany({ where: { userId: testUserId } });
     await prisma.user.delete({ where: { id: testUserId } });
     await prisma.lexeme.deleteMany({ where: { id: { in: lexemeIds } } });
     await prisma.$disconnect();
   });
 
-  it('advances FSRS state and records the response time + rating used', async () => {
+  it('advances FSRS state, the ladder, and records the response time + rating used', async () => {
     const before = new Date();
-    const updated = await srs.grade(userWord, 'CORRECT', 1200, 'PICK_MEANING');
+    const updated = await srs.grade(userWord, 'CORRECT', 1200, 'PICK_MEANING', {
+      drillSessionId,
+      planItemId: 'plan-item-1',
+      isRetry: false,
+      nextLevel: 'RECOGNIZE',
+    });
 
     expect(updated.reps).toBe(1);
     expect(updated.stability).toBeGreaterThan(0);
     expect(updated.dueAt.getTime()).toBeGreaterThan(before.getTime());
     expect(updated.lastReviewedAt).not.toBeNull();
+    expect(updated.level).toBe('RECOGNIZE');
 
     const attempts = await prisma.attempt.findMany({ where: { userWordId: userWord.id } });
     expect(attempts).toHaveLength(1);
     expect(attempts[0].responseTimeMs).toBe(1200);
-    expect(attempts[0].rating).toBe('EASY'); // 1200ms is under the fast threshold
+    expect(attempts[0].rating).toBe('EASY'); // fast CORRECT on PICK_MEANING
     expect(attempts[0].result).toBe('CORRECT');
     expect(attempts[0].taskType).toBe('PICK_MEANING');
+    expect(attempts[0].drillSessionId).toBe(drillSessionId);
+    expect(attempts[0].planItemId).toBe('plan-item-1');
+    expect(attempts[0].isRetry).toBe(false);
 
     userWord = updated;
   });
 
-  it('records a lapse when a reviewed card is later graded AGAIN', async () => {
+  it('records a lapse and drops the ladder when a reviewed card is later graded WRONG_MEANING', async () => {
     const beforeLapses = userWord.lapses;
-    const failed = await srs.grade(userWord, 'WRONG_MEANING', 4000, 'PICK_MEANING');
+    const failed = await srs.grade(userWord, 'WRONG_MEANING', 4000, 'PICK_MEANING', {
+      drillSessionId,
+      planItemId: 'plan-item-2',
+      isRetry: false,
+      nextLevel: 'NEW',
+    });
 
     expect(failed.lapses).toBeGreaterThan(beforeLapses);
+    expect(failed.level).toBe('NEW');
 
     const attempts = await prisma.attempt.findMany({
       where: { userWordId: userWord.id },
@@ -150,5 +184,16 @@ describe('SrsService.grade (integration)', () => {
     expect(attempts).toHaveLength(2);
     expect(attempts[1].rating).toBe('AGAIN');
     expect(attempts[1].result).toBe('WRONG_MEANING');
+  });
+
+  it('the same (drillSessionId, planItemId) cannot be graded twice — the DB unique constraint enforces idempotency', async () => {
+    await expect(
+      srs.grade(userWord, 'CORRECT', 1000, 'PICK_MEANING', {
+        drillSessionId,
+        planItemId: 'plan-item-1', // reused from the first test
+        isRetry: false,
+        nextLevel: 'RECOGNIZE',
+      }),
+    ).rejects.toThrow();
   });
 });

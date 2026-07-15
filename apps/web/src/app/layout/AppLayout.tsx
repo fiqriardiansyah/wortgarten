@@ -3,6 +3,8 @@ import { LogOut, Sprout } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { BottomNavBar } from '@/components/ui/BottomNavBar';
 import { Avatar } from '@/components/ui/Avatar';
+import { StreakPill } from '@/components/ui/StreakPill';
+import { useHomeQuery } from '@/features/home/api/useHomeQuery';
 import { authClient } from '@/lib/authClient';
 
 const SPARKLES = [
@@ -28,6 +30,7 @@ function Sparkle({ top, left, size, opacity }: { top: string; left: string; size
 export function AppLayout() {
   const navigate = useNavigate();
   const { data: session } = authClient.useSession();
+  const { data: home } = useHomeQuery();
   const user = session?.user;
 
   async function handleLogout() {
@@ -53,6 +56,7 @@ export function AppLayout() {
           <span className="font-extrabold text-deep">Wortgarten</span>
         </div>
         <div className="flex items-center gap-2">
+          <StreakPill days={home?.streakDays ?? 0} compact />
           <Avatar name={user?.name} src={user?.image ?? undefined} size="sm" />
           <button
             onClick={handleLogout}
@@ -66,7 +70,7 @@ export function AppLayout() {
 
       {/* Main content */}
       <main className="lg:ml-72 min-h-screen">
-        <div className="mx-auto max-w-5xl px-4 py-6 pb-24 lg:pb-8 lg:px-8">
+        <div className="mx-auto max-w-5xl px-4 py-6 pb-32 lg:pb-8 lg:px-8">
           <Outlet />
         </div>
       </main>

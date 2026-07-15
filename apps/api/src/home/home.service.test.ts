@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient } from '@wortgarten/database';
 import { HomeDashboardSchema } from '@wortgarten/shared';
 import type { PrismaService } from '../prisma/prisma.service';
+import { SessionBuilderService } from '../modules/session/session-builder.service';
 import { SrsService } from '../modules/srs/srs.service';
 import { WordsService } from '../modules/words/words.service';
 import { HomeService } from './home.service';
@@ -12,7 +13,8 @@ const LANG = 'de-home-fixture';
 const prisma = new PrismaClient();
 const srs = new SrsService(prisma as unknown as PrismaService);
 const words = new WordsService(prisma as unknown as PrismaService, srs);
-const homeService = new HomeService(prisma as unknown as PrismaService, words);
+const sessionBuilder = new SessionBuilderService(prisma as unknown as PrismaService, srs);
+const homeService = new HomeService(prisma as unknown as PrismaService, words, sessionBuilder);
 
 describe('HomeService.getDashboard — empty state', () => {
   let emptyUserId: string;
@@ -75,6 +77,10 @@ describe('HomeService.getDashboard — with data', () => {
           senseId: lexeme.senses[0].id,
           level,
           dueAt: new Date(Date.now() + dueOffsetMs),
+          // composePlan's "due reviewed" bucket requires reps > 0, and FSRS requires a real
+          // lastReviewedAt whenever reps > 0 (the pair SrsService.grade always sets together).
+          reps: level === 'NEW' ? 0 : 1,
+          lastReviewedAt: level === 'NEW' ? null : new Date(Date.now() - 24 * 60 * 60 * 1000),
         },
       });
     }
