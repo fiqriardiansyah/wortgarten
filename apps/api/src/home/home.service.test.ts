@@ -7,6 +7,7 @@ import { SessionBuilderService } from '../modules/session/session-builder.servic
 import { SrsService } from '../modules/srs/srs.service';
 import { WordsService } from '../modules/words/words.service';
 import { HomeService } from './home.service';
+import { StreakService } from '../streak/streak.service';
 
 const LANG = 'de-home-fixture';
 
@@ -14,7 +15,8 @@ const prisma = new PrismaClient();
 const srs = new SrsService(prisma as unknown as PrismaService);
 const words = new WordsService(prisma as unknown as PrismaService, srs);
 const sessionBuilder = new SessionBuilderService(prisma as unknown as PrismaService, srs);
-const homeService = new HomeService(prisma as unknown as PrismaService, words, sessionBuilder);
+const streaks = new StreakService(prisma as unknown as PrismaService);
+const homeService = new HomeService(prisma as unknown as PrismaService, words, sessionBuilder, streaks);
 
 describe('HomeService.getDashboard — empty state', () => {
   let emptyUserId: string;
@@ -44,6 +46,7 @@ describe('HomeService.getDashboard — empty state', () => {
     expect(dashboard.recentlyAdded).toEqual([]);
     expect(dashboard.user.name).toBe('Fresh User');
     expect(dashboard.daySubtitle).toBe('Day 1 of learning German');
+    expect(dashboard.streak.current).toBe(0);
   });
 });
 

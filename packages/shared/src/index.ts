@@ -275,10 +275,19 @@ export type UpdateWordRequest = z.infer<typeof UpdateWordRequestSchema>;
 
 // ─── Home dashboard ───────────────────────────────────────────────────────────
 
+export const StreakSchema = z.object({
+  current: z.number().int().nonnegative(),
+  longest: z.number().int().nonnegative(),
+  freezesBanked: z.number().int().min(0).max(2),
+  learnedToday: z.boolean(),
+  freezeSavedYesterday: z.boolean(),
+});
+export type Streak = z.infer<typeof StreakSchema>;
+
 export const HomeDashboardSchema = z.object({
   greeting: z.string(),
   daySubtitle: z.string(),
-  streakDays: z.number(),
+  streak: StreakSchema,
   session: SessionSummarySchema,
   rusty: RustyGroupSchema,
   quest: QuestSchema,

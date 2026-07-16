@@ -10,6 +10,7 @@ import type { DrillSession, WordLevel } from '@wortgarten/database';
 import { PrismaService } from '../prisma/prisma.service';
 import { SessionBuilderService } from '../modules/session/session-builder.service';
 import { WordsService } from '../modules/words/words.service';
+import { isValidTimeZone, StreakService } from '../streak/streak.service';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const RUSTY_THRESHOLD = 0.7;
@@ -42,17 +43,22 @@ export class HomeService {
     private readonly prisma: PrismaService,
     private readonly words: WordsService,
     private readonly sessionBuilder: SessionBuilderService,
+    private readonly streaks: StreakService,
   ) {}
 
-  async getDashboard(userId: string): Promise<HomeDashboard> {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+  async getDashboard(userId: string, reportedTimezone?: string): Promise<HomeDashboard> {
+    let user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (reportedTimezone && reportedTimezone !== user.timezone && isValidTimeZone(reportedTimezone)) {
+      user = await this.prisma.user.update({ where: { id: userId }, data: { timezone: reportedTimezone } });
+    }
 
-    const [activeSession, rusty, collected, byLevel, recentlyAdded] = await Promise.all([
+    const [activeSession, rusty, collected, byLevel, recentlyAdded, streak] = await Promise.all([
       this.prisma.drillSession.findFirst({ where: { userId, status: 'ACTIVE' }, orderBy: { startedAt: 'desc' } }),
       this.words.findRusty(userId, RUSTY_THRESHOLD),
       this.words.countForUser(userId),
       this.words.countByLevel(userId),
       this.words.recentlyAdded(userId, 3),
+      this.streaks.computeStreak(userId, user.timezone),
     ]);
 
     const rustyUserWordIds = new Set(rusty.map((r) => r.userWord.id));
@@ -69,7 +75,7 @@ export class HomeService {
     const dashboard: HomeDashboard = {
       greeting: `Hallo, ${firstName}! 👋`,
       daySubtitle: `Day ${daysSinceJoined} of learning German`,
-      streakDays: 0, // TODO: no streak-tracking table yet — needs a real model in a later task
+      streak,
       session: sessionSummary,
       rusty: {
         count: rusty.length,

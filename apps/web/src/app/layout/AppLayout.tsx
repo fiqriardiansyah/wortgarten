@@ -56,7 +56,7 @@ export function AppLayout() {
           <span className="font-extrabold text-deep">Wortgarten</span>
         </div>
         <div className="flex items-center gap-2">
-          <StreakPill days={home?.streakDays ?? 0} compact />
+          <StreakPill days={home?.streak.current ?? 0} compact />
           <Avatar name={user?.name} src={user?.image ?? undefined} size="sm" />
           <button
             onClick={handleLogout}

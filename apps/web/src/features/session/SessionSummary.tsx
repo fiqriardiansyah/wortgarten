@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { StatNumber } from '@/components/ui/StatNumber';
 import { cardEnterTransition, cardEnterVariants } from '@/design/motion';
+import { useHomeQuery } from '@/features/home/api/useHomeQuery';
 
 interface SessionSummaryProps {
   summary: SessionCompleteResponse;
@@ -35,6 +36,7 @@ function secondCardContent(summary: SessionCompleteResponse): { label: string } 
  * one of three honest nudges, or nothing. */
 export function SessionSummary({ summary, onPracticeMore, practicePending }: SessionSummaryProps) {
   const navigate = useNavigate();
+  const { data: home } = useHomeQuery();
   const secondCard = secondCardContent(summary);
 
   return (
@@ -46,6 +48,12 @@ export function SessionSummary({ summary, onPracticeMore, practicePending }: Ses
       </motion.div>
       <h1 className="mt-3 text-heading font-extrabold text-deep">Session done!</h1>
       <p className="mt-1 text-muted">{minutesLabel(summary.elapsedMs)}</p>
+
+      {home?.streak.learnedToday && (
+        <p className="mt-3 font-extrabold text-gold">
+          🔥 {home.streak.current}
+        </p>
+      )}
 
       <Card hover={false} className="mt-6">
         <div className="flex items-center justify-around">

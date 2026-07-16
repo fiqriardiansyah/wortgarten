@@ -111,6 +111,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   emailVerified Boolean   @default(false)
   image         String?
+  timezone      String    @default("UTC")
   sessions      Session[]
   accounts      Account[]
 
@@ -118,8 +119,19 @@ model User {
   tasks         Task[]
   stories       Story[]
   drillSessions DrillSession[]
+  streak        UserStreak?
 
   @@map("user")
+}
+
+model UserStreak {
+  userId          String    @id
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  current         Int       @default(0)
+  longest         Int       @default(0)
+  freezesBanked   Int       @default(0)
+  lastLearningDay DateTime?
+  lastComputedAt  DateTime?
 }
 
 model Session {

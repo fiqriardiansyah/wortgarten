@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Headers } from '@nestjs/common';
 import { Session, UserSession } from '@thallesp/nestjs-better-auth';
 import { HomeService } from './home.service';
 
@@ -7,7 +7,7 @@ export class HomeController {
   constructor(private readonly homeService: HomeService) {}
 
   @Get()
-  getDashboard(@Session() session: UserSession) {
-    return this.homeService.getDashboard(session.user.id);
+  getDashboard(@Session() session: UserSession, @Headers('x-timezone') timezone?: string) {
+    return this.homeService.getDashboard(session.user.id, timezone);
   }
 }

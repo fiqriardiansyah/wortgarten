@@ -1,6 +1,7 @@
 export { PrismaClient, Prisma } from '../generated/prisma';
 export type {
   User,
+  UserStreak,
   Session,
   Account,
   Verification,

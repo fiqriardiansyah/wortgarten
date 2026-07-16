@@ -35,7 +35,7 @@ export function HomePage() {
       <GreetingHeader
         greeting={data.greeting}
         daySubtitle={data.daySubtitle}
-        streakDays={data.streakDays}
+        streak={data.streak}
       />
 
       {/* Desktop: two-column grid */}
