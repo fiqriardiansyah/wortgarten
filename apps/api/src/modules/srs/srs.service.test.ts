@@ -151,6 +151,7 @@ describe('SrsService.grade (integration)', () => {
     expect(updated.dueAt.getTime()).toBeGreaterThan(before.getTime());
     expect(updated.lastReviewedAt).not.toBeNull();
     expect(updated.level).toBe('RECOGNIZE');
+    expect(updated.statsByMode).toEqual({ PICK_MEANING: { total: 1, correct: 1 } });
 
     const attempts = await prisma.attempt.findMany({ where: { userWordId: userWord.id } });
     expect(attempts).toHaveLength(1);
@@ -176,6 +177,7 @@ describe('SrsService.grade (integration)', () => {
 
     expect(failed.lapses).toBeGreaterThan(beforeLapses);
     expect(failed.level).toBe('NEW');
+    expect(failed.statsByMode).toEqual({ PICK_MEANING: { total: 2, correct: 1 } });
 
     const attempts = await prisma.attempt.findMany({
       where: { userWordId: userWord.id },

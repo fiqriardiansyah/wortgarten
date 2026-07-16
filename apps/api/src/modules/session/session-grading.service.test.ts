@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient } from '@wortgarten/database';
-import { foldForLookup } from '@wortgarten/shared';
+import { foldForLookup, resultIsCorrect, StatsByModeSchema } from '@wortgarten/shared';
 import type { PrismaService } from '../../prisma/prisma.service';
 import { LookupService } from '../lexicon/lookup.service';
 import { SrsService } from '../srs/srs.service';
@@ -169,6 +169,7 @@ describe('session grading — WRONG_GENDER / MISSING_ARTICLE / MISSING_UMLAUT (a
 describe('session grading — retry mechanics and idempotency (acceptance 4-5, 19)', () => {
   it('a failed retry does not restore the ladder; two honest Attempt rows; duplicate submits are idempotent', async () => {
     const before = await prisma.userWord.findUniqueOrThrow({ where: { id: fensterUserWordId } });
+    const beforeTypeStats = StatsByModeSchema.parse(before.statsByMode).TYPE_WORD ?? { total: 0, correct: 0 };
     const { response: fail, session, item } = await submitOne(fensterUserWordId, 'komplett falsch');
     expect(fail.result).toBe('WRONG_MEANING');
     expect(fail.requeued).toBe(true);
@@ -206,6 +207,10 @@ describe('session grading — retry mechanics and idempotency (acceptance 4-5, 1
 
     const finalWord = await prisma.userWord.findUniqueOrThrow({ where: { id: fensterUserWordId } });
     expect(finalWord.level).toBe(afterFail.level); // looks wrong, is correct: the retry does not restore the level
+    expect(StatsByModeSchema.parse(finalWord.statsByMode).TYPE_WORD).toEqual({
+      total: beforeTypeStats.total + 1,
+      correct: beforeTypeStats.correct,
+    });
   });
 });
 
@@ -232,6 +237,7 @@ describe('session grading — incomplete nouns and practice sessions (acceptance
 
   it('an isPractice session records the Attempt but never touches FSRS state or the ladder', async () => {
     const before = await prisma.userWord.findUniqueOrThrow({ where: { id: werkzeugUserWordId } });
+    const beforeTypeStats = StatsByModeSchema.parse(before.statsByMode).TYPE_WORD ?? { total: 0, correct: 0 };
 
     const plan = await builder.composePracticePlan(userId, 1, werkzeugUserWordId);
     const item = plan[0];
@@ -239,7 +245,7 @@ describe('session grading — incomplete nouns and practice sessions (acceptance
     const practiceSession = await prisma.drillSession.create({
       data: { userId, plan: plan as unknown as object, status: 'ACTIVE', currentIndex: 0, isPractice: true },
     });
-    await grading.submitAttempt(practiceSession, {
+    const response = await grading.submitAttempt(practiceSession, {
       planItemId: item.id,
       response: { taskType: 'TYPE_WORD', text: item.solution.lemma },
       responseTimeMs: 1000,
@@ -249,6 +255,10 @@ describe('session grading — incomplete nouns and practice sessions (acceptance
     expect(after.dueAt.getTime()).toBe(before.dueAt.getTime());
     expect(after.stability).toBe(before.stability);
     expect(after.level).toBe(before.level);
+    expect(StatsByModeSchema.parse(after.statsByMode).TYPE_WORD).toEqual({
+      total: beforeTypeStats.total + 1,
+      correct: beforeTypeStats.correct + (resultIsCorrect(response.result) ? 1 : 0),
+    });
 
     const attemptRow = await prisma.attempt.findFirst({ where: { drillSessionId: practiceSession.id } });
     expect(attemptRow).not.toBeNull(); // Attempt IS written, just never touches FSRS

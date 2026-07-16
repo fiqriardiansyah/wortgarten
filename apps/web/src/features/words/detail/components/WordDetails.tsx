@@ -8,11 +8,13 @@ import { IncompleteBadge } from '@/components/ui/IncompleteBadge';
 import { Input } from '@/components/ui/Input';
 import { partOfSpeechLabel } from '@/lib/partOfSpeech';
 import { ladderLevelChipVariant, ladderLevelLabel } from '@/lib/wordLevel';
+import { ApiError } from '@/lib/apiClient';
 import { usePracticeSession } from '@/features/session/api/usePracticeSession';
 import { useWordDetailQuery } from '../api/useWordDetailQuery';
 import { useUpdateWord } from '../api/useUpdateWord';
 import { useDeleteWord } from '../api/useDeleteWord';
 import { MasteryLadder } from './MasteryLadder';
+import { ModeStatsBars } from './ModeStatsBars';
 
 interface WordDetailsProps {
   id: string;
@@ -22,7 +24,7 @@ interface WordDetailsProps {
 
 /** The single source of truth for word-detail content in both page and panel views. */
 export function WordDetails({ id, onDeleted, sticky = false }: WordDetailsProps) {
-  const { data: word, isLoading, isError } = useWordDetailQuery(id);
+  const { data: word, error, isLoading, isError } = useWordDetailQuery(id);
   const updateWord = useUpdateWord();
   const deleteWord = useDeleteWord();
   const practiceSession = usePracticeSession();
@@ -31,13 +33,21 @@ export function WordDetails({ id, onDeleted, sticky = false }: WordDetailsProps)
   const [customTranslation, setCustomTranslation] = useState('');
   const [note, setNote] = useState('');
 
+  console.log({ word })
+
   async function handlePracticeNow() {
     const result = await practiceSession.mutateAsync({ size: 3, userWordId: id });
     if (result.kind === 'session') navigate('/session', { state: { session: result.session } });
   }
 
   if (isLoading) return <p className="py-12 text-center text-sm text-muted">Loading…</p>;
-  if (isError || !word) return <p className="py-12 text-center text-sm text-muted">Couldn't find that word.</p>;
+  if (isError || !word) {
+
+    const message = error instanceof ApiError && error.status === 404
+      ? "Couldn't find that word."
+      : "Couldn't load that word. Please try again.";
+    return <p className="py-12 text-center text-sm text-muted">{message}</p>;
+  }
 
   function startEditing() {
     setCustomTranslation(word!.translation);
@@ -111,13 +121,7 @@ export function WordDetails({ id, onDeleted, sticky = false }: WordDetailsProps)
 
       <Card className="mt-4" hover={false}>
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">History</p>
-        {word.attempts.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">Nothing drilled yet — history will show up once you start practicing.</p>
-        ) : (
-          <div className="mt-3 flex flex-col gap-2">
-            {word.attempts.map((attempt) => <div key={attempt.id} className="flex items-center justify-between text-sm"><span className="text-deep">{attempt.taskType}</span><span className="text-muted">{attempt.result}</span></div>)}
-          </div>
-        )}
+        <ModeStatsBars stats={word.statsByMode} />
       </Card>
     </div>
   );

@@ -172,10 +172,29 @@ describe('WordsService.getWordDetail / updateWord / deleteWord — cross-user is
     userBWordId = bWord.id;
   });
 
-  it('getWordDetail returns full detail with an empty attempts history', async () => {
+  it('getWordDetail returns full detail with empty mode stats', async () => {
     const detail = await words.getWordDetail(userAId, userAWordId);
-    expect(detail.attempts).toEqual([]);
+    expect(detail.statsByMode).toEqual({});
     expect(detail.lexeme.lemma).toBeTruthy();
+  });
+
+  it('recomputes partial mode stats from first attempts only', async () => {
+    const drillSession = await prisma.drillSession.create({ data: { userId: userAId, plan: [] } });
+    await prisma.attempt.createMany({
+      data: [
+        { userWordId: userAWordId, drillSessionId: drillSession.id, planItemId: 'pick-correct', taskType: 'PICK_MEANING', result: 'CORRECT', responseTimeMs: 1000, rating: 'GOOD', isRetry: false },
+        { userWordId: userAWordId, drillSessionId: drillSession.id, planItemId: 'pick-wrong', taskType: 'PICK_MEANING', result: 'WRONG_MEANING', responseTimeMs: 1000, rating: 'AGAIN', isRetry: false },
+        { userWordId: userAWordId, drillSessionId: drillSession.id, planItemId: 'pick-retry', taskType: 'PICK_MEANING', result: 'CORRECT', responseTimeMs: 1000, rating: 'GOOD', isRetry: true },
+        { userWordId: userAWordId, drillSessionId: drillSession.id, planItemId: 'type-correct', taskType: 'TYPE_WORD', result: 'CORRECT_WITH_TYPO', responseTimeMs: 1000, rating: 'HARD', isRetry: false },
+      ],
+    });
+
+    const recomputed = await words.recomputeStatsFromAttempts(userAWordId);
+    expect(recomputed).toEqual({
+      PICK_MEANING: { total: 2, correct: 1 },
+      TYPE_WORD: { total: 1, correct: 1 },
+    });
+    expect((await words.getWordDetail(userAId, userAWordId)).statsByMode).toEqual(recomputed);
   });
 
   it('getWordDetail throws NotFoundException for another user’s word id', async () => {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { StatsByModeSchema } from './session-types';
 
 export * from './text';
 export * from './lexeme';
@@ -243,13 +244,6 @@ export const WordsListResponseSchema = z.object({
 });
 export type WordsListResponse = z.infer<typeof WordsListResponseSchema>;
 
-export const WordDetailAttemptSchema = z.object({
-  id: z.string(),
-  taskType: z.string(),
-  result: z.string(),
-  answeredAt: z.string(),
-});
-
 export const WordDetailSchema = z.object({
   id: z.string(),
   lexeme: LexemeSummarySchema,
@@ -265,7 +259,7 @@ export const WordDetailSchema = z.object({
   isIncomplete: z.boolean(),
   addedAt: z.string(),
   dueAt: z.string(),
-  attempts: z.array(WordDetailAttemptSchema),
+  statsByMode: StatsByModeSchema,
 });
 export type WordDetail = z.infer<typeof WordDetailSchema>;
 

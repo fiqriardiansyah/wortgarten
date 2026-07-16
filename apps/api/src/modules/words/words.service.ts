@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { Prisma, WordLevel } from '@wortgarten/database';
-import { isIncomplete } from '@wortgarten/shared';
-import type { AddWordSourceType, WordCard, WordDetail, WordFilter } from '@wortgarten/shared';
+import { DrillTaskTypeSchema, isIncomplete, resultIsCorrect, StatsByModeSchema } from '@wortgarten/shared';
+import type { AddWordSourceType, StatsByMode, WordCard, WordDetail, WordFilter } from '@wortgarten/shared';
 import { foldForLookup } from '@wortgarten/shared';
+import { ZodError } from 'zod';
 import { toLexemeSummary } from '../lexicon/lexeme-summary';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SrsService } from '../srs/srs.service';
@@ -17,7 +18,6 @@ const userWordWithLexeme = {
 
 const userWordDetailInclude = {
   sense: { include: { lexeme: { include: { senses: true } } } },
-  attempts: { orderBy: { answeredAt: 'desc' } },
 } as const;
 
 export interface AddWordInput {
@@ -37,6 +37,8 @@ export interface ListWordsParams {
 
 @Injectable()
 export class WordsService {
+  private readonly logger = new Logger(WordsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly srs: SrsService,
@@ -218,6 +220,15 @@ export class WordsService {
 
     const retrievability = this.srs.retrievability(userWord, now);
     const lexeme = userWord.sense.lexeme;
+    let statsByMode: StatsByMode;
+    try {
+      statsByMode = StatsByModeSchema.parse(userWord.statsByMode);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid statsByMode for UserWord ${userWord.id}`, error.stack);
+      }
+      throw error;
+    }
 
     return {
       id: userWord.id,
@@ -240,13 +251,39 @@ export class WordsService {
       isIncomplete: isIncomplete(lexeme),
       addedAt: userWord.addedAt.toISOString(),
       dueAt: userWord.dueAt.toISOString(),
-      attempts: userWord.attempts.map((attempt) => ({
-        id: attempt.id,
-        taskType: attempt.taskType,
-        result: attempt.result,
-        answeredAt: attempt.answeredAt.toISOString(),
-      })),
+      statsByMode,
     };
+  }
+
+  /** Rebuilds the display cache from its source of truth. Retry attempts and unsupported legacy modes are ignored. */
+  async recomputeStatsFromAttempts(userWordId: string): Promise<StatsByMode> {
+    const rows = await this.prisma.attempt.groupBy({
+      by: ['taskType', 'result'],
+      where: {
+        userWordId,
+        isRetry: false,
+        taskType: { in: DrillTaskTypeSchema.options },
+      },
+      _count: { _all: true },
+    });
+
+    const stats: StatsByMode = {};
+    for (const row of rows) {
+      const parsedMode = DrillTaskTypeSchema.safeParse(row.taskType);
+      if (!parsedMode.success) continue;
+      const mode = parsedMode.data;
+      const current = stats[mode] ?? { total: 0, correct: 0 };
+      current.total += row._count._all;
+      if (resultIsCorrect(row.result)) current.correct += row._count._all;
+      stats[mode] = current;
+    }
+
+    const parsed = StatsByModeSchema.parse(stats);
+    await this.prisma.userWord.update({
+      where: { id: userWordId },
+      data: { statsByMode: parsed as Prisma.InputJsonValue },
+    });
+    return parsed;
   }
 
   /** Only customTranslation/note are user-editable — dictionary data (lexeme/sense) never is. */

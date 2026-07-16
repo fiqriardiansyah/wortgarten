@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { fsrs as createFsrs, Rating, State, type CardInput, type Grade } from 'ts-fsrs';
-import type { AttemptResult, FsrsRating, TaskType, UserWord, WordLevel } from '@wortgarten/database';
+import type { AttemptResult, FsrsRating, UserWord, WordLevel } from '@wortgarten/database';
 import { GRADING_MATRIX } from '@wortgarten/shared';
+import type { DrillTaskType } from '@wortgarten/shared';
 import { PrismaService } from '../../prisma/prisma.service';
+import { incrementStatsByMode } from '../words/stats-by-mode';
 
 const FAST_RESPONSE_MS = 3000;
 
@@ -45,7 +47,7 @@ export class SrsService {
    * One override on top of that base: a fast CORRECT on PICK_MEANING is EASY, not GOOD — typing
    * time isn't recall time, so the Easy codepath is deliberately PICK_MEANING-only.
    */
-  mapToRating(result: AttemptResult, responseTimeMs: number, taskType: TaskType): FsrsRating {
+  mapToRating(result: AttemptResult, responseTimeMs: number, taskType: DrillTaskType): FsrsRating {
     const base = GRADING_MATRIX[result].fsrsRating;
     if (result === 'CORRECT' && taskType === 'PICK_MEANING' && responseTimeMs < FAST_RESPONSE_MS) {
       return 'EASY';
@@ -83,25 +85,13 @@ export class SrsService {
    * practice attempts must never call this (see SessionGradingService), which is what keeps "one
    * FSRS rating per word per session" true structurally rather than by convention.
    */
-  async grade(userWord: UserWord, result: AttemptResult, responseTimeMs: number, taskType: TaskType, meta: GradeMeta): Promise<UserWord> {
+  async grade(userWord: UserWord, result: AttemptResult, responseTimeMs: number, taskType: DrillTaskType, meta: GradeMeta): Promise<UserWord> {
     const rating = this.mapToRating(result, responseTimeMs, taskType);
     const now = new Date();
     const { card } = this.scheduler.next(this.toCard(userWord), now, RATING_TO_GRADE[rating]);
 
-    const [updated] = await this.prisma.$transaction([
-      this.prisma.userWord.update({
-        where: { id: userWord.id },
-        data: {
-          stability: card.stability,
-          difficulty: card.difficulty,
-          dueAt: card.due,
-          reps: card.reps,
-          lapses: card.lapses,
-          lastReviewedAt: now,
-          level: meta.nextLevel,
-        },
-      }),
-      this.prisma.attempt.create({
+    return this.prisma.$transaction(async (tx) => {
+      await tx.attempt.create({
         data: {
           userWordId: userWord.id,
           taskType,
@@ -112,10 +102,22 @@ export class SrsService {
           planItemId: meta.planItemId,
           isRetry: meta.isRetry,
         },
-      }),
-    ]);
+      });
+      if (!meta.isRetry) await incrementStatsByMode(tx, userWord.id, taskType, result);
 
-    return updated;
+      return tx.userWord.update({
+        where: { id: userWord.id },
+        data: {
+          stability: card.stability,
+          difficulty: card.difficulty,
+          dueAt: card.due,
+          reps: card.reps,
+          lapses: card.lapses,
+          lastReviewedAt: now,
+          level: meta.nextLevel,
+        },
+      });
+    });
   }
 
   /** The ladder is plain code, independent of FSRS: pass moves up one rung, fail moves down one. */

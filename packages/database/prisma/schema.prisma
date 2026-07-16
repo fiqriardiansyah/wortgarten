@@ -312,6 +312,10 @@ model UserWord {
   sourceType        String?
   note              String?
 
+  // Display-only aggregate cache rebuilt from non-retry Attempt rows when needed.
+  // Shape: { PICK_MEANING?: { total, correct }, TYPE_WORD?: { total, correct }, BUILD_SENTENCE?: { total, correct } }
+  statsByMode Json @default("{}")
+
   addedAt DateTime @default(now())
 
   attempts Attempt[]

@@ -21,6 +21,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { LookupService } from '../lexicon/lookup.service';
 import { SrsService } from '../srs/srs.service';
+import { incrementStatsByMode } from '../words/stats-by-mode';
 
 const MAX_RETRIES_PER_SESSION = 4;
 const RETRY_LOOKAHEAD = 3;
@@ -77,17 +78,20 @@ export class SessionGradingService {
       });
     } else {
       const rating = this.srs.mapToRating(result, request.responseTimeMs, item.taskType);
-      await this.prisma.attempt.create({
-        data: {
-          userWordId: userWord.id,
-          taskType: item.taskType,
-          result,
-          responseTimeMs: request.responseTimeMs,
-          rating,
-          drillSessionId: session.id,
-          planItemId: item.id,
-          isRetry: item.isRetry,
-        },
+      await this.prisma.$transaction(async (tx) => {
+        await tx.attempt.create({
+          data: {
+            userWordId: userWord.id,
+            taskType: item.taskType,
+            result,
+            responseTimeMs: request.responseTimeMs,
+            rating,
+            drillSessionId: session.id,
+            planItemId: item.id,
+            isRetry: item.isRetry,
+          },
+        });
+        if (!item.isRetry) await incrementStatsByMode(tx, userWord.id, item.taskType, result);
       });
     }
 

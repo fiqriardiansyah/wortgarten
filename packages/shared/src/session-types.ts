@@ -35,6 +35,51 @@ export type AttemptResult = z.infer<typeof AttemptResultSchema>;
 export const DrillTaskTypeSchema = z.enum(['PICK_MEANING', 'TYPE_WORD', 'BUILD_SENTENCE']);
 export type DrillTaskType = z.infer<typeof DrillTaskTypeSchema>;
 
+export const DRILL_TASK_TYPES = DrillTaskTypeSchema.options;
+
+export const TASK_TYPE_LABELS = {
+  PICK_MEANING: 'Recognizing',
+  TYPE_WORD: 'Recalling',
+  BUILD_SENTENCE: 'Using in a sentence',
+} satisfies Record<DrillTaskType, string>;
+
+export const TASK_TYPE_ICONS = {
+  PICK_MEANING: '👁',
+  TYPE_WORD: '⌨',
+  BUILD_SENTENCE: '🧩',
+} satisfies Record<DrillTaskType, string>;
+
+export const ATTEMPT_RESULT_LABELS = {
+  CORRECT: '✓',
+  CORRECT_WITH_TYPO: '✓',
+  MISSING_UMLAUT: '✕',
+  MISSING_ARTICLE: '✕',
+  WRONG_GENDER: '✕',
+  WRONG_MEANING: '✕',
+  WRONG_FORM: '✕',
+  EMPTY: '✕',
+} satisfies Record<AttemptResult, string>;
+
+/** Semantic alias for consumers that treat the display label as an icon. */
+export const ATTEMPT_RESULT_SYMBOLS = ATTEMPT_RESULT_LABELS;
+
+export function resultIsCorrect(result: AttemptResult): boolean {
+  return result === 'CORRECT' || result === 'CORRECT_WITH_TYPO';
+}
+
+const ModeStatSchema = z.object({
+  total: z.number().int().nonnegative(),
+  correct: z.number().int().nonnegative(),
+});
+
+/** Display-only aggregate cache. Every key is optional because new and partially-practiced words are common. */
+export const StatsByModeSchema = z.object({
+  PICK_MEANING: ModeStatSchema.optional(),
+  TYPE_WORD: ModeStatSchema.optional(),
+  BUILD_SENTENCE: ModeStatSchema.optional(),
+});
+export type StatsByMode = z.infer<typeof StatsByModeSchema>;
+
 export const DrillSessionStatusSchema = z.enum(['ACTIVE', 'COMPLETED', 'ABANDONED']);
 export type DrillSessionStatusValue = z.infer<typeof DrillSessionStatusSchema>;
 
