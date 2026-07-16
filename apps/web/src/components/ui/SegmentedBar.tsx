@@ -10,14 +10,17 @@ interface Segment {
 interface SegmentedBarProps {
   segments: Segment[];
   className?: string;
+  /** For use on a colored (e.g. primary) card background — swaps the track and label text for
+   * readable light variants instead of the default gray-100/muted/deep trio. */
+  onDark?: boolean;
 }
 
-export function SegmentedBar({ segments, className = '' }: SegmentedBarProps) {
+export function SegmentedBar({ segments, className = '', onDark = false }: SegmentedBarProps) {
   const total = segments.reduce((s, seg) => s + seg.count, 0);
 
   return (
     <div className={className}>
-      <div className="flex h-3 w-full overflow-hidden rounded-pill bg-gray-100">
+      <div className={`flex h-3 w-full overflow-hidden rounded-pill ${onDark ? 'bg-white/20' : 'bg-gray-100'}`}>
         {segments.map((seg, i) => {
           const pct = total > 0 ? (seg.count / total) * 100 : 0;
           return (
@@ -36,8 +39,8 @@ export function SegmentedBar({ segments, className = '' }: SegmentedBarProps) {
         {segments.map((seg) => (
           <div key={seg.label} className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: seg.color }} />
-            <span className="text-xs text-muted">
-              {seg.label} <span className="font-semibold text-deep">{seg.count}</span>
+            <span className={`text-xs ${onDark ? 'text-white/80' : 'text-muted'}`}>
+              {seg.label} <span className={`font-semibold ${onDark ? 'text-white' : 'text-deep'}`}>{seg.count}</span>
             </span>
           </div>
         ))}

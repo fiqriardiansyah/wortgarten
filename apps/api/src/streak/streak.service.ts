@@ -1,18 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
-import type { Streak } from '@wortgarten/shared';
+import type { Streak, StreakWeek, StreakWeekDayState } from '@wortgarten/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
 const MAX_FREEZES = 2;
+
+export type CalendarDayState = 'completed' | 'frozen';
 
 interface ReplayedStreak {
   current: number;
   longest: number;
   freezesBanked: number;
+  totalLearningDays: number;
   learnedToday: boolean;
   lastLearningDayKey: string | null;
   freezeSpentProtectingToday: boolean;
+  dayStates: Record<string, CalendarDayState>;
 }
 
 export function isValidTimeZone(timezone: string): boolean {
@@ -49,12 +53,14 @@ export function replayLearningDays(learningDayKeys: string[], todayKey: string):
   let totalLearningDays = 0;
   let lastLearningDayKey: string | null = null;
   let freezeSpentProtectingToday = false;
+  const dayStates: Record<string, CalendarDayState> = {};
 
   for (const day of distinctDays) {
     if (lastLearningDayKey) {
       const gap = localDaysBetween(lastLearningDayKey, day);
       if (gap === 2 && freezesBanked > 0) {
         freezesBanked -= 1;
+        dayStates[format(addDays(parseISO(lastLearningDayKey), 1), 'yyyy-MM-dd')] = 'frozen';
         if (day === todayKey) freezeSpentProtectingToday = true;
       } else if (gap >= 2) {
         current = 0;
@@ -65,6 +71,7 @@ export function replayLearningDays(learningDayKeys: string[], todayKey: string):
     totalLearningDays += 1;
     longest = Math.max(longest, current);
     lastLearningDayKey = day;
+    dayStates[day] = 'completed';
 
     if (totalLearningDays % 7 === 0) {
       freezesBanked = Math.min(MAX_FREEZES, freezesBanked + 1);
@@ -77,6 +84,7 @@ export function replayLearningDays(learningDayKeys: string[], todayKey: string):
     if (trailingGap === 2 && freezesBanked > 0) {
       freezesBanked -= 1;
       freezeSpentProtectingToday = true;
+      dayStates[format(addDays(parseISO(lastLearningDayKey), 1), 'yyyy-MM-dd')] = 'frozen';
     } else if (trailingGap >= 2) {
       current = 0;
     }
@@ -86,21 +94,85 @@ export function replayLearningDays(learningDayKeys: string[], todayKey: string):
     current,
     longest,
     freezesBanked,
+    totalLearningDays,
     learnedToday,
     lastLearningDayKey,
     freezeSpentProtectingToday,
+    dayStates,
   };
+}
+
+/** Renders the last `windowDays` calendar days (ending today, inclusive) from the day-state map
+ * `replayLearningDays` already computed — no extra DB query needed. Days with no learning and no
+ * spent freeze render 'muted'. */
+export function buildStreakCalendar(
+  dayStates: Record<string, CalendarDayState>,
+  todayKey: string,
+  windowDays: number,
+): { date: string; state: CalendarDayState | 'muted' }[] {
+  const days: { date: string; state: CalendarDayState | 'muted' }[] = [];
+  for (let i = windowDays - 1; i >= 0; i--) {
+    const date = format(addDays(parseISO(todayKey), -i), 'yyyy-MM-dd');
+    days.push({ date, state: dayStates[date] ?? 'muted' });
+  }
+  return days;
+}
+
+const WEEKDAY_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const;
+
+/** Projects the canonical replay into the user's current Monday-first calendar week. */
+export function buildStreakWeek(streak: StreakWithCalendar): StreakWeek {
+  const today = parseISO(streak.todayKey);
+  const monday = addDays(today, -((today.getDay() + 6) % 7));
+  let freezeSpentThisWeek: StreakWeek['freezeSpentThisWeek'] = null;
+
+  const days = WEEKDAY_LABELS.map((label, index) => {
+    const date = addDays(monday, index);
+    const dateKey = format(date, 'yyyy-MM-dd');
+    const isToday = dateKey === streak.todayKey;
+    const replayedState = streak.dayStates[dateKey];
+    const isLearned = replayedState === 'completed';
+    let state: StreakWeekDayState;
+
+    if (isToday) state = 'today';
+    else if (replayedState === 'completed') state = 'learned';
+    else if (replayedState === 'frozen') state = 'frozen';
+    else if (dateKey > streak.todayKey) state = 'future';
+    else state = 'missed';
+
+    if (replayedState === 'frozen') {
+      freezeSpentThisWeek = { dayLabel: format(date, 'EEEE') };
+    }
+
+    return { label, state, isToday, isLearned };
+  });
+
+  return {
+    todayLabel: format(today, 'EEE, d MMMM'),
+    currentStreak: streak.current,
+    freezesLeft: streak.freezesBanked,
+    days,
+    freezeSpentThisWeek,
+  };
+}
+
+/** Adds fields Progress's Consistency card needs (aggregate streak + a rendered calendar) on top
+ * of the plain Streak contract Home speaks — same computation, wider return shape. */
+export interface StreakWithCalendar extends Streak {
+  totalLearningDays: number;
+  todayKey: string;
+  dayStates: Record<string, CalendarDayState>;
 }
 
 @Injectable()
 export class StreakService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async computeStreak(userId: string, timezone: string, now = new Date()): Promise<Streak> {
+  async computeStreak(userId: string, timezone: string, now = new Date()): Promise<StreakWithCalendar> {
     return this.recomputeFromHistory(userId, timezone, now);
   }
 
-  async recomputeFromHistory(userId: string, timezone?: string, now = new Date()): Promise<Streak> {
+  async recomputeFromHistory(userId: string, timezone?: string, now = new Date()): Promise<StreakWithCalendar> {
     const resolvedTimezone = timezone ?? (await this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { timezone: true } })).timezone;
     const safeTimezone = isValidTimeZone(resolvedTimezone) ? resolvedTimezone : 'UTC';
     const [sessions, previous] = await Promise.all([
@@ -152,6 +224,9 @@ export class StreakService {
       freezesBanked: replayed.freezesBanked,
       learnedToday: replayed.learnedToday,
       freezeSavedYesterday: replayed.freezeSpentProtectingToday && !snapshotAlreadyMatches,
+      totalLearningDays: replayed.totalLearningDays,
+      todayKey,
+      dayStates: replayed.dayStates,
     };
   }
 }

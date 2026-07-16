@@ -300,3 +300,80 @@ export const HomeDashboardSchema = z.object({
   }),
 });
 export type HomeDashboard = z.infer<typeof HomeDashboardSchema>;
+
+// ─── Progress dashboard ────────────────────────────────────────────────────
+
+export const StreakDayStateSchema = z.enum(['completed', 'frozen', 'muted']);
+export type StreakDayState = z.infer<typeof StreakDayStateSchema>;
+
+export const StreakDaySchema = z.object({
+  date: z.string(), // yyyy-MM-dd, user-local
+  state: StreakDayStateSchema,
+});
+export type StreakDay = z.infer<typeof StreakDaySchema>;
+
+export const ProgressStreakSchema = StreakSchema.extend({
+  totalLearningDays: z.number().int().nonnegative(),
+  calendar: z.array(StreakDaySchema),
+});
+export type ProgressStreak = z.infer<typeof ProgressStreakSchema>;
+
+export const StreakWeekDayStateSchema = z.enum(['learned', 'frozen', 'today', 'future', 'missed']);
+export type StreakWeekDayState = z.infer<typeof StreakWeekDayStateSchema>;
+
+export const StreakWeekDaySchema = z.object({
+  label: z.enum(['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']),
+  state: StreakWeekDayStateSchema,
+  isToday: z.boolean(),
+  isLearned: z.boolean(),
+});
+export type StreakWeekDay = z.infer<typeof StreakWeekDaySchema>;
+
+export const StreakWeekSchema = z.object({
+  todayLabel: z.string(),
+  currentStreak: z.number().int().nonnegative(),
+  freezesLeft: z.number().int().min(0).max(2),
+  days: z.array(StreakWeekDaySchema).length(7),
+  freezeSpentThisWeek: z
+    .object({
+      dayLabel: z.string(),
+    })
+    .nullable()
+    .optional(),
+});
+export type StreakWeek = z.infer<typeof StreakWeekSchema>;
+
+export const MilestoneStatusSchema = z.enum(['done', 'current', 'locked']);
+export type MilestoneStatus = z.infer<typeof MilestoneStatusSchema>;
+
+export const ProblemWordSchema = z.object({
+  userWordId: z.string(),
+  displayForm: z.string(), // "der Hund", or bare lemma for non-nouns
+  translation: z.string(),
+  misses: z.number().int().positive(),
+});
+export type ProblemWord = z.infer<typeof ProblemWordSchema>;
+
+export const GrowthBarSchema = z.object({
+  label: z.string(), // e.g. "Jul 10"
+  count: z.number().int().nonnegative(),
+});
+export type GrowthBar = z.infer<typeof GrowthBarSchema>;
+
+export const GrowthSchema = z.object({
+  windowDays: z.number().int().positive(),
+  totalInWindow: z.number().int().nonnegative(),
+  bars: z.array(GrowthBarSchema),
+});
+export type Growth = z.infer<typeof GrowthSchema>;
+
+export const ProgressDashboardSchema = z.object({
+  daySubtitle: z.string(), // "Day N of learning German" — account age, timezone-aware
+  garden: GardenStatsSchema,
+  streak: ProgressStreakSchema,
+  // Optional during rolling deploys so a newer web client can still render an older API response.
+  streakWeek: StreakWeekSchema.optional(),
+  problemWords: z.array(ProblemWordSchema),
+  growth: GrowthSchema,
+});
+export type ProgressDashboard = z.infer<typeof ProgressDashboardSchema>;

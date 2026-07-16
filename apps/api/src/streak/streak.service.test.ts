@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PrismaService } from '../prisma/prisma.service';
-import { localDateKey, localDayRange, replayLearningDays, StreakService } from './streak.service';
+import { buildStreakWeek, localDateKey, localDayRange, replayLearningDays, StreakService } from './streak.service';
 
 function days(start: number, end: number): string[] {
   return Array.from({ length: end - start + 1 }, (_, index) => `2026-07-${String(start + index).padStart(2, '0')}`);
@@ -44,6 +44,48 @@ describe('timezone helpers', () => {
   it('uses real local midnights across DST rather than fixed 24-hour days', () => {
     const range = localDayRange('2026-03-08', 'America/New_York');
     expect(range.end.getTime() - range.start.getTime()).toBe(23 * 60 * 60 * 1000);
+  });
+});
+
+describe('buildStreakWeek', () => {
+  it('renders the current week Monday-first and keeps learned-today information', () => {
+    const replayed = replayLearningDays(['2026-07-13', '2026-07-15'], '2026-07-15');
+    const week = buildStreakWeek({
+      ...replayed,
+      freezeSavedYesterday: false,
+      todayKey: '2026-07-15',
+    });
+
+    expect(week.todayLabel).toBe('Wed, 15 July');
+    expect(week.days).toEqual([
+      { label: 'Mo', state: 'learned', isToday: false, isLearned: true },
+      { label: 'Tu', state: 'missed', isToday: false, isLearned: false },
+      { label: 'We', state: 'today', isToday: true, isLearned: true },
+      { label: 'Th', state: 'future', isToday: false, isLearned: false },
+      { label: 'Fr', state: 'future', isToday: false, isLearned: false },
+      { label: 'Sa', state: 'future', isToday: false, isLearned: false },
+      { label: 'Su', state: 'future', isToday: false, isLearned: false },
+    ]);
+  });
+
+  it('names a freeze spent this week and safely renders empty history', () => {
+    const frozenReplay = replayLearningDays([...days(6, 12), '2026-07-14'], '2026-07-14');
+    const frozenWeek = buildStreakWeek({
+      ...frozenReplay,
+      freezeSavedYesterday: false,
+      todayKey: '2026-07-14',
+    });
+    expect(frozenWeek.freezeSpentThisWeek).toEqual({ dayLabel: 'Monday' });
+    expect(frozenWeek.days[0]).toMatchObject({ state: 'frozen', isLearned: false });
+
+    const emptyReplay = replayLearningDays([], '2026-07-15');
+    const emptyWeek = buildStreakWeek({
+      ...emptyReplay,
+      freezeSavedYesterday: false,
+      todayKey: '2026-07-15',
+    });
+    expect(emptyWeek).toMatchObject({ currentStreak: 0, freezesLeft: 0, freezeSpentThisWeek: null });
+    expect(emptyWeek.days).toHaveLength(7);
   });
 });
 

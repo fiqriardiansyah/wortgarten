@@ -12,6 +12,7 @@ import { AddWordsPage } from '@/features/add-words/AddWordsPage';
 import { SessionPage } from '@/features/session/SessionPage';
 import { WordsPage } from '@/features/words/WordsPage';
 import { WordDetailPage } from '@/features/words/detail/WordDetailPage';
+import { ProgressPage } from '@/features/progress/ProgressPage';
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -92,7 +93,7 @@ export function AppRouter() {
           <Route path="/words" element={<WordsPage />} />
           <Route path="/words/:id" element={<WordDetailPage />} />
           <Route path="/read" element={<Placeholder title="Read" />} />
-          <Route path="/progress" element={<Placeholder title="Progress" />} />
+          <Route path="/progress" element={<ProgressPage />} />
           <Route path="/add" element={<AddWordsPage />} />
         </Route>
       </Routes>

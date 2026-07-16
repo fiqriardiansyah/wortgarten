@@ -103,13 +103,16 @@ export class SessionBuilderService {
     return { reviewSlice, newSlice };
   }
 
-  /** "Practice 5 more" / Word detail's "Practice now" — no due-ness filter, optionally pinned to
-   * one word. Practice sessions still produce real PlanItems; SessionGradingService is what skips
-   * FSRS for them (isPractice on the DrillSession, not anything special about the plan itself). */
-  async composePracticePlan(userId: string, size: number, userWordId?: string): Promise<PlanItem[]> {
-    const words = userWordId
+  /** "Practice 5 more" / Word detail's "Practice now" / Progress's "Practice these 5" — no
+   * due-ness filter, optionally pinned to one word or an exact set of words. Practice sessions
+   * still produce real PlanItems; SessionGradingService is what skips FSRS for them (isPractice
+   * on the DrillSession, not anything special about the plan itself). */
+  async composePracticePlan(userId: string, size: number, userWordId?: string, userWordIds?: string[]): Promise<PlanItem[]> {
+    const pinnedIds = userWordIds && userWordIds.length > 0 ? userWordIds : userWordId ? [userWordId] : null;
+
+    const words = pinnedIds
       ? await this.prisma.userWord.findMany({
-          where: { userId, id: userWordId },
+          where: { userId, id: { in: pinnedIds } },
           include: { sense: { include: { lexeme: true } } },
         })
       : await this.prisma.userWord.findMany({
@@ -118,7 +121,7 @@ export class SessionBuilderService {
           take: size * 3, // headroom to sample from
         });
 
-    const selected = userWordId ? words : shuffle(words).slice(0, size);
+    const selected = pinnedIds ? words : shuffle(words).slice(0, size);
     return this.buildPlanItems(userId, selected as UserWordWithLexeme[]);
   }
 

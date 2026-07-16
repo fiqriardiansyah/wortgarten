@@ -292,5 +292,8 @@ export type SessionCompleteResponse = z.infer<typeof SessionCompleteResponseSche
 export const PracticeSessionRequestSchema = z.object({
   size: z.number().int().min(1).max(10),
   userWordId: z.string().optional(),
+  // Pins the session to exactly these words (e.g. Progress's "Practice these 5") — takes
+  // precedence over userWordId when both are present.
+  userWordIds: z.array(z.string()).min(1).max(10).optional(),
 });
 export type PracticeSessionRequest = z.infer<typeof PracticeSessionRequestSchema>;

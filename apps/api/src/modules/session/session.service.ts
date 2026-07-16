@@ -115,7 +115,7 @@ export class SessionService {
   }
 
   async practice(userId: string, request: PracticeSessionRequest): Promise<CreateSessionResponse> {
-    const plan = await this.builder.composePracticePlan(userId, request.size, request.userWordId);
+    const plan = await this.builder.composePracticePlan(userId, request.size, request.userWordId, request.userWordIds);
     if (plan.length === 0) return { kind: 'nothing_due' };
 
     const created = await this.prisma.drillSession.create({
