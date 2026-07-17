@@ -9,7 +9,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { SrsService } from '../srs/srs.service';
 
 const LEVELS: WordLevel[] = ['NEW', 'RECOGNIZE', 'RECALL', 'PRODUCE', 'MASTERED'];
-const RUSTY_THRESHOLD = 0.7;
+// The one rusty/retrievability threshold — HomeService and SessionBuilderService's rescue
+// selection both import this instead of redeclaring 0.7, so the card, Progress, and the actual
+// rescue session pool can never disagree on what counts as rusty.
+export const RUSTY_THRESHOLD = 0.7;
 const DEFAULT_PAGE_SIZE = 20;
 
 const userWordWithLexeme = {

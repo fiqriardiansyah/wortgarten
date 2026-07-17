@@ -4,6 +4,7 @@ import type { Lexeme, PartOfSpeech, Sense, UserWord } from '@wortgarten/database
 import { displayForm, isIncomplete, pluralDisplayForm, tokenize, type PlanItem } from '@wortgarten/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { localDateKey, localDayRange } from '../../streak/streak.service';
+import { RUSTY_THRESHOLD, WordsService } from '../words/words.service';
 import { SrsService } from '../srs/srs.service';
 
 export const SESSION_MAX_TASKS = 10;
@@ -50,6 +51,7 @@ export class SessionBuilderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly srs: SrsService,
+    private readonly words: WordsService,
   ) {}
 
   /** The main "10 tasks a day" composition: due-first by lowest retrievability, backfilled with NEW
@@ -139,6 +141,17 @@ export class SessionBuilderService {
       where: { userId, level: { not: 'NEW' }, dueAt: { gt: now }, id: { notIn: await this.touchedTodayUserWordIds(userId, now) } },
     });
     return { total: Math.min(total, size) };
+  }
+
+  /** Rescue: worst-retrievability-first, rusty words only, capped at `size` — the rest surface
+   * next time rather than padding the session with non-rusty words. Reuses WordsService.findRusty
+   * (same threshold, same sort) so the Home card's count and the actual rescue session can never
+   * disagree. This is a real session — the caller keeps isPractice:false so grading feeds FSRS and
+   * moves the ladder normally, same as composePlan. */
+  async composeRescuePlan(userId: string, size = SESSION_MAX_TASKS, now: Date = new Date()): Promise<PlanItem[]> {
+    const rusty = await this.words.findRusty(userId, RUSTY_THRESHOLD, now);
+    const selected = rusty.slice(0, size).map((r) => r.userWord) as UserWordWithLexeme[];
+    return this.buildPlanItems(userId, selected);
   }
 
   /** Every userWord with a non-retry attempt today, in the user's own timezone — the practice

@@ -127,6 +127,19 @@ export class SessionService {
     return { kind: 'session', session: await this.toDrillSessionResponse(created) };
   }
 
+  /** Rescue: a real session (isPractice:false — feeds FSRS, moves the ladder) scoped to only
+   * rusty words. 0 rusty is reported the same way as "nothing due", never built as an empty
+   * session. */
+  async rescue(userId: string): Promise<CreateSessionResponse> {
+    const plan = await this.builder.composeRescuePlan(userId);
+    if (plan.length === 0) return { kind: 'nothing_due' };
+
+    const created = await this.prisma.drillSession.create({
+      data: { userId, plan: plan as unknown as Prisma.InputJsonValue, status: 'ACTIVE', currentIndex: 0, isPractice: false },
+    });
+    return { kind: 'session', session: await this.toDrillSessionResponse(created) };
+  }
+
   private async getOwnedActiveSession(userId: string, sessionId: string): Promise<DrillSession> {
     const session = await this.prisma.drillSession.findUnique({ where: { id: sessionId } });
     if (!session || session.userId !== userId) throw new NotFoundException('Session not found');

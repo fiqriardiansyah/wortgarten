@@ -9,11 +9,10 @@ import {
 import type { DrillSession, WordLevel } from '@wortgarten/database';
 import { PrismaService } from '../prisma/prisma.service';
 import { SessionBuilderService } from '../modules/session/session-builder.service';
-import { WordsService } from '../modules/words/words.service';
+import { RUSTY_THRESHOLD, WordsService } from '../modules/words/words.service';
 import { isValidTimeZone, StreakService } from '../streak/streak.service';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const RUSTY_THRESHOLD = 0.7;
 const MINUTES_PER_TASK = 0.5;
 
 // Collapses the 5-rung learning ladder to the 3-bucket shape the Home

@@ -14,7 +14,7 @@ const LANG = 'de-home-fixture';
 const prisma = new PrismaClient();
 const srs = new SrsService(prisma as unknown as PrismaService);
 const words = new WordsService(prisma as unknown as PrismaService, srs);
-const sessionBuilder = new SessionBuilderService(prisma as unknown as PrismaService, srs);
+const sessionBuilder = new SessionBuilderService(prisma as unknown as PrismaService, srs, words);
 const streaks = new StreakService(prisma as unknown as PrismaService);
 const homeService = new HomeService(prisma as unknown as PrismaService, words, sessionBuilder, streaks);
 

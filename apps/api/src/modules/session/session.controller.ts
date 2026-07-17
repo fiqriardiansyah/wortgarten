@@ -35,6 +35,12 @@ export class SessionController {
     return CreateSessionResponseSchema.parse(result);
   }
 
+  @Post('rescue')
+  async rescue(@Session() session: UserSession) {
+    const result = await this.sessionService.rescue(session.user.id);
+    return CreateSessionResponseSchema.parse(result);
+  }
+
   @Post(':id/attempts')
   async submitAttempt(@Param('id') id: string, @Body() body: unknown, @Session() session: UserSession) {
     const input = parseOrBadRequest(SubmitAttemptRequestSchema, body);

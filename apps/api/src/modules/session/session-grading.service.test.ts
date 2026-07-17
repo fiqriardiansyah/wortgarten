@@ -5,6 +5,7 @@ import { foldForLookup, resultIsCorrect, StatsByModeSchema } from '@wortgarten/s
 import type { PrismaService } from '../../prisma/prisma.service';
 import { LookupService } from '../lexicon/lookup.service';
 import { SrsService } from '../srs/srs.service';
+import { WordsService } from '../words/words.service';
 import { SessionBuilderService } from './session-builder.service';
 import { SessionGradingService } from './session-grading.service';
 
@@ -20,7 +21,8 @@ const prisma = new PrismaClient();
 const prismaService = prisma as unknown as PrismaService;
 const srs = new SrsService(prismaService);
 const lookup = new LookupService(prismaService);
-const builder = new SessionBuilderService(prismaService, srs);
+const words = new WordsService(prismaService, srs);
+const builder = new SessionBuilderService(prismaService, srs, words);
 const grading = new SessionGradingService(prismaService, srs, lookup);
 
 const lexemeIds: string[] = [];
