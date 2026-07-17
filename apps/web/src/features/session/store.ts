@@ -21,6 +21,10 @@ interface SessionStoreState {
   reset: () => void;
 }
 
+export function nextTaskIndex(serverIndex: number, tasksLength: number): number {
+  return Math.min(serverIndex, tasksLength);
+}
+
 export const useSessionStore = create<SessionStoreState>((set, get) => ({
   sessionId: null,
   tasks: [],
@@ -69,7 +73,9 @@ export const useSessionStore = create<SessionStoreState>((set, get) => ({
     const { lastAttempt, tasks } = get();
     if (!lastAttempt) return;
     set({
-      currentIndex: Math.min(lastAttempt.currentIndex, tasks.length - 1),
+      // `tasks.length` is the valid terminal cursor. Clamping to the last array index resurrected
+      // an already-answered final retry and caused an endless duplicate-submit/correction loop.
+      currentIndex: nextTaskIndex(lastAttempt.currentIndex, tasks.length),
       phase: 'task',
       taskStartedAtMs: Date.now(),
     });

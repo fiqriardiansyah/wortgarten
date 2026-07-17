@@ -1,4 +1,4 @@
-import type { ZodSchema } from 'zod';
+import type { ZodType, ZodTypeDef } from 'zod';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
 
@@ -12,7 +12,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiFetch<T>(path: string, schema: ZodSchema<T>, init?: RequestInit): Promise<T> {
+export async function apiFetch<T>(path: string, schema: ZodType<T, ZodTypeDef, unknown>, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, init);
   if (!res.ok) {
     throw new ApiError(`API ${path} returned ${res.status}`, res.status);
@@ -30,7 +30,7 @@ export async function apiFetch<T>(path: string, schema: ZodSchema<T>, init?: Req
 export async function apiSend<T>(
   method: 'POST' | 'PATCH' | 'DELETE',
   path: string,
-  schema: ZodSchema<T>,
+  schema: ZodType<T, ZodTypeDef, unknown>,
   body?: unknown,
 ): Promise<T> {
   return apiFetch(path, schema, {

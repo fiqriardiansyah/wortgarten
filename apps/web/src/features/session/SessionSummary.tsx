@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { Sprout } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { SessionCompleteResponse } from '@wortgarten/shared';
 import { Button } from '@/components/ui/Button';
@@ -9,8 +10,14 @@ import { useHomeQuery } from '@/features/home/api/useHomeQuery';
 
 interface SessionSummaryProps {
   summary: SessionCompleteResponse;
+  onStartNext: () => void;
+  startNextPending: boolean;
   onPracticeMore: () => void;
   practicePending: boolean;
+}
+
+function wordsLabel(n: number): string {
+  return `${n} word${n === 1 ? '' : 's'}`;
 }
 
 function minutesLabel(elapsedMs: number): string {
@@ -34,7 +41,7 @@ function secondCardContent(summary: SessionCompleteResponse): { label: string } 
 /** Screen 5. `correct` counts first attempts only — a retried-and-passed word is honestly not
  * "correct". There is deliberately no quest card here (no quest table exists); the second slot is
  * one of three honest nudges, or nothing. */
-export function SessionSummary({ summary, onPracticeMore, practicePending }: SessionSummaryProps) {
+export function SessionSummary({ summary, onStartNext, startNextPending, onPracticeMore, practicePending }: SessionSummaryProps) {
   const navigate = useNavigate();
   const { data: home } = useHomeQuery();
   const secondCard = secondCardContent(summary);
@@ -86,17 +93,52 @@ export function SessionSummary({ summary, onPracticeMore, practicePending }: Ses
         </Card>
       )}
 
-      <Button className="mt-6 w-full justify-center" onClick={() => navigate('/', { replace: true })}>
-        Done
-      </Button>
-      <button
-        type="button"
-        onClick={onPracticeMore}
-        disabled={practicePending}
-        className="mt-3 text-sm font-semibold text-primary hover:underline disabled:opacity-60"
-      >
-        Practice 5 more
-      </button>
+      {summary.nextSessionCount > 0 ? (
+        <>
+          <Button className="mt-6 w-full justify-center" disabled={startNextPending} onClick={onStartNext}>
+            Start next session · {wordsLabel(summary.nextSessionCount)}
+          </Button>
+          <button
+            type="button"
+            onClick={() => navigate('/', { replace: true })}
+            className="mt-3 text-sm font-semibold text-muted hover:underline"
+          >
+            Done
+          </button>
+        </>
+      ) : (
+        <>
+          <Card hover={false} className="mt-6">
+            <p className="flex items-center justify-center gap-2 font-extrabold text-deep">
+              <Sprout size={20} /> Nothing's due
+            </p>
+            <p className="mt-1 text-sm text-muted">Your words are sticking. German grows when you meet new ones.</p>
+          </Card>
+          <Button className="mt-4 w-full justify-center" onClick={() => navigate('/add')}>
+            + Add words
+          </Button>
+          {summary.practiceCount > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={onPracticeMore}
+                disabled={practicePending}
+                className="mt-3 text-sm font-semibold text-primary hover:underline disabled:opacity-60"
+              >
+                Practice {wordsLabel(summary.practiceCount)}
+              </button>
+              <p className="mt-1 text-xs text-muted">Just review — these aren't due yet.</p>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => navigate('/', { replace: true })}
+            className="mt-3 text-sm font-semibold text-muted hover:underline"
+          >
+            Done
+          </button>
+        </>
+      )}
     </div>
   );
 }

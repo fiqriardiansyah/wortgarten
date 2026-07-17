@@ -85,7 +85,15 @@ export type DrillSessionStatusValue = z.infer<typeof DrillSessionStatusSchema>;
 
 // ─── Task payloads (client-safe — no solution) ────────────────────────────────
 
-export const PickMeaningOptionSchema = z.object({ id: z.string(), translation: z.string() });
+/** The option identity is the dictionary sense. `label` is display-only and must never be graded.
+ * The preprocess keeps already-frozen active plans from before the field rename resumable. */
+export const PickMeaningOptionSchema = z.preprocess((value) => {
+  if (value && typeof value === 'object' && 'id' in value && 'translation' in value) {
+    const legacy = value as { id: unknown; translation: unknown };
+    return { senseId: legacy.id, label: legacy.translation };
+  }
+  return value;
+}, z.object({ senseId: z.string(), label: z.string() }));
 
 export const PickMeaningPayloadSchema = z.object({
   prompt: z.string(), // displayForm, e.g. "die Katze"
@@ -113,13 +121,19 @@ export type BuildSentencePayload = z.infer<typeof BuildSentencePayloadSchema>;
 
 // ─── Solutions (server-only — never serialized to the client) ────────────────
 
-export const PickMeaningSolutionSchema = z.object({
-  correctOptionId: z.string(),
+export const PickMeaningSolutionSchema = z.preprocess((value) => {
+  if (value && typeof value === 'object' && 'correctOptionId' in value && 'translation' in value) {
+    const legacy = value as Record<string, unknown>;
+    return { ...legacy, correctSenseId: legacy.correctOptionId, correctLabel: legacy.translation };
+  }
+  return value;
+}, z.object({
+  correctSenseId: z.string(),
+  correctLabel: z.string(),
   lemma: z.string(),
   partOfSpeech: PartOfSpeechSchema,
   gender: GenderSchema.nullable(),
-  translation: z.string(),
-});
+}));
 export type PickMeaningSolution = z.infer<typeof PickMeaningSolutionSchema>;
 
 export const TypeWordSolutionSchema = z.object({
@@ -232,11 +246,18 @@ export type CreateSessionResponse = z.infer<typeof CreateSessionResponseSchema>;
 
 // ─── Submitting an attempt ────────────────────────────────────────────────
 
-export const TaskResponseSchema = z.discriminatedUnion('taskType', [
-  z.object({ taskType: z.literal('PICK_MEANING'), selectedOptionId: z.string().nullable() }),
+const CanonicalTaskResponseSchema = z.discriminatedUnion('taskType', [
+  z.object({ taskType: z.literal('PICK_MEANING'), chosenSenseId: z.string().nullable() }),
   z.object({ taskType: z.literal('TYPE_WORD'), text: z.string() }),
   z.object({ taskType: z.literal('BUILD_SENTENCE'), tileIds: z.array(z.string()) }),
 ]);
+export const TaskResponseSchema = z.preprocess((value) => {
+  if (value && typeof value === 'object' && 'taskType' in value && value.taskType === 'PICK_MEANING' && 'selectedOptionId' in value) {
+    const legacy = value as Record<string, unknown>;
+    return { ...legacy, chosenSenseId: legacy.selectedOptionId };
+  }
+  return value;
+}, CanonicalTaskResponseSchema);
 export type TaskResponse = z.infer<typeof TaskResponseSchema>;
 
 export const SubmitAttemptRequestSchema = z.object({
@@ -286,6 +307,12 @@ export const SessionCompleteResponseSchema = z.object({
   elapsedMs: z.number(),
   masteredWords: z.array(MasteredWordSchema),
   secondCard: SecondCardSlotSchema,
+  // The real next session's size (same selection code as planPreview/composePlan) — the summary
+  // screen's "Start next session" CTA count is never a guess.
+  nextSessionCount: z.number().int().nonnegative(),
+  // Words eligible for an optional practice session: not due, not NEW, and not touched by any
+  // attempt already made today. 0 means the practice option must not be offered at all.
+  practiceCount: z.number().int().nonnegative(),
 });
 export type SessionCompleteResponse = z.infer<typeof SessionCompleteResponseSchema>;
 

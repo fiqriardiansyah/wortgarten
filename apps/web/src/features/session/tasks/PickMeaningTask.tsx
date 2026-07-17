@@ -7,7 +7,7 @@ import { pressSpring } from '@/design/motion';
 interface PickMeaningTaskProps {
   payload: PickMeaningPayload;
   disabled: boolean;
-  onSelect: (optionId: string) => void;
+  onSelect: (senseId: string) => void;
 }
 
 /** Screen 1. Numbers aren't decoration — they're the 1-4 keyboard shortcut affordance. */
@@ -24,16 +24,16 @@ export function PickMeaningTask({ payload, disabled, onSelect }: PickMeaningTask
       <div className="mt-4 flex flex-col gap-2">
         {payload.options.map((option, i) => (
           <motion.button
-            key={option.id}
+            key={option.senseId}
             type="button"
             disabled={disabled}
             whileTap={disabled ? undefined : { scale: 0.96 }}
             transition={pressSpring}
-            onPointerDown={() => !disabled && onSelect(option.id)}
+            onPointerDown={() => !disabled && onSelect(option.senseId)}
             className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 text-left shadow-card transition-colors hover:brightness-95 disabled:opacity-60"
           >
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-lilac text-xs font-bold text-primary">{i + 1}</span>
-            <span className="font-semibold text-deep">{option.translation}</span>
+            <span className="font-semibold text-deep">{option.label}</span>
           </motion.button>
         ))}
       </div>

@@ -6,6 +6,7 @@ import { LinearProgress } from '@/components/ui/LinearProgress';
 import { fetchActiveSession } from './api/useActiveSession';
 import { useAbandonSession } from './api/useAbandonSession';
 import { useCompleteSession } from './api/useCompleteSession';
+import { useCreateSession } from './api/useCreateSession';
 import { usePracticeSession } from './api/usePracticeSession';
 import { useSubmitAttempt } from './api/useSubmitAttempt';
 import { CorrectionCard } from './CorrectionCard';
@@ -60,6 +61,7 @@ export function SessionShell() {
   const submitAttempt = useSubmitAttempt(store.sessionId ?? '');
   const completeSession = useCompleteSession(store.sessionId ?? '');
   const abandonSession = useAbandonSession(store.sessionId ?? '');
+  const createSession = useCreateSession();
   const practiceSession = usePracticeSession();
 
   const [pickSelected, setPickSelected] = useState<string | null>(null);
@@ -91,9 +93,9 @@ export function SessionShell() {
     store.applyAttempt(result);
   }
 
-  function handlePickSelect(optionId: string) {
-    setPickSelected(optionId);
-    void submitResponse({ taskType: 'PICK_MEANING', selectedOptionId: optionId });
+  function handlePickSelect(senseId: string) {
+    setPickSelected(senseId);
+    void submitResponse({ taskType: 'PICK_MEANING', chosenSenseId: senseId });
   }
 
   function handleCheck() {
@@ -117,8 +119,19 @@ export function SessionShell() {
     navigate('/', { replace: true });
   }
 
+  async function handleStartNext() {
+    const result = await createSession.mutateAsync();
+    if (result.kind === 'session') {
+      store.hydrate(result.session);
+      setSummary(null);
+    } else {
+      navigate('/', { replace: true });
+    }
+  }
+
   async function handlePracticeMore() {
-    const result = await practiceSession.mutateAsync({ size: 5 });
+    if (!summary) return;
+    const result = await practiceSession.mutateAsync({ size: summary.practiceCount });
     if (result.kind === 'session') {
       store.hydrate(result.session);
       setSummary(null);
@@ -141,7 +154,7 @@ export function SessionShell() {
       if (!task) return;
       if (task.taskType === 'PICK_MEANING' && /^[1-4]$/.test(event.key)) {
         const option = task.payload.options[Number(event.key) - 1];
-        if (option) handlePickSelect(option.id);
+        if (option) handlePickSelect(option.senseId);
         return;
       }
       if (event.key === 'Enter') handleCheck();
@@ -156,7 +169,13 @@ export function SessionShell() {
   if (summary) {
     return (
       <FullscreenLayout>
-        <SessionSummary summary={summary} onPracticeMore={handlePracticeMore} practicePending={practiceSession.isPending} />
+        <SessionSummary
+          summary={summary}
+          onStartNext={handleStartNext}
+          startNextPending={createSession.isPending}
+          onPracticeMore={handlePracticeMore}
+          practicePending={practiceSession.isPending}
+        />
       </FullscreenLayout>
     );
   }
@@ -170,7 +189,7 @@ export function SessionShell() {
   }
 
   const userAnswerLabel =
-    task.taskType === 'TYPE_WORD' ? typedText : task.taskType === 'PICK_MEANING' ? task.payload.options.find((o) => o.id === pickSelected)?.translation : undefined;
+    task.taskType === 'TYPE_WORD' ? typedText : task.taskType === 'PICK_MEANING' ? task.payload.options.find((o) => o.senseId === pickSelected)?.label : undefined;
 
   return (
     <FullscreenLayout onExit={handleExit} progress={store.practicedCount} total={store.totalCount}>

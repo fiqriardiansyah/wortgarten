@@ -23,8 +23,9 @@ import { LookupService } from '../lexicon/lookup.service';
 import { SrsService } from '../srs/srs.service';
 import { incrementStatsByMode } from '../words/stats-by-mode';
 
-const MAX_RETRIES_PER_SESSION = 4;
-const RETRY_LOOKAHEAD = 3;
+const MAX_RETRIES_PER_WORD_PER_SESSION = 4;
+// Inserting at +4 leaves three intervening cards before the retry.
+const RETRY_LOOKAHEAD = 4;
 const PASSING_RESULTS: ReadonlySet<AttemptResult> = new Set(['CORRECT', 'CORRECT_WITH_TYPO']);
 
 @Injectable()
@@ -97,9 +98,11 @@ export class SessionGradingService {
 
     let requeued = false;
     let insertedRetryTask: SessionTask | undefined;
-    const retriesSoFar = plan.filter((p) => p.isRetry).length;
+    // Derive the counter from the persisted frozen plan, never from client/Zustand state. Scope
+    // it to this word so misses on other words cannot consume its retry allowance.
+    const retriesSoFar = plan.filter((p) => p.isRetry && p.userWordId === item.userWordId).length;
 
-    if (matrixEntry.requeue && !item.isRetry && retriesSoFar < MAX_RETRIES_PER_SESSION) {
+    if (matrixEntry.requeue && !item.isRetry && retriesSoFar < MAX_RETRIES_PER_WORD_PER_SESSION) {
       const retryItem: PlanItem = { ...item, id: `${item.id}-retry`, isRetry: true };
       const insertAt = Math.min(itemIndex + RETRY_LOOKAHEAD, plan.length);
       plan.splice(insertAt, 0, retryItem);
@@ -170,7 +173,11 @@ export class SessionGradingService {
   private async gradeResponse(item: PlanItem, response: SubmitAttemptRequest['response']): Promise<{ result: AttemptResult; detail?: CorrectionContext }> {
     if (item.taskType === 'PICK_MEANING') {
       if (response.taskType !== 'PICK_MEANING') throw new BadRequestException('taskType mismatch');
-      return { result: gradePickMeaning({ selectedOptionId: response.selectedOptionId, correctOptionId: item.solution.correctOptionId }) };
+      const result = gradePickMeaning({ chosenSenseId: response.chosenSenseId, correctSenseId: item.solution.correctSenseId });
+      if (response.chosenSenseId === item.solution.correctSenseId && result !== 'CORRECT') {
+        throw new Error('PICK_MEANING invariant violated: correct sense was not graded CORRECT');
+      }
+      return { result };
     }
 
     if (item.taskType === 'BUILD_SENTENCE') {

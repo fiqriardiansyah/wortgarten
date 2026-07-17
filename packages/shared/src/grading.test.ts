@@ -94,9 +94,22 @@ describe('gradeTypeWord — der Fenster / bare Fenster / schon-schön (acceptanc
 
 describe('gradePickMeaning / gradeBuildSentence', () => {
   it('pick meaning: match, mismatch, empty', () => {
-    expect(gradePickMeaning({ selectedOptionId: 'a', correctOptionId: 'a' })).toBe('CORRECT');
-    expect(gradePickMeaning({ selectedOptionId: 'b', correctOptionId: 'a' })).toBe('WRONG_MEANING');
-    expect(gradePickMeaning({ selectedOptionId: null, correctOptionId: 'a' })).toBe('EMPTY');
+    expect(gradePickMeaning({ chosenSenseId: 'a', correctSenseId: 'a' })).toBe('CORRECT');
+    expect(gradePickMeaning({ chosenSenseId: 'b', correctSenseId: 'a' })).toBe('WRONG_MEANING');
+    expect(gradePickMeaning({ chosenSenseId: null, correctSenseId: 'a' })).toBe('EMPTY');
+  });
+
+  it('pick meaning: the correct sense stays correct across every display position', () => {
+    const shuffledOrders = [
+      ['correct', 'b', 'c', 'd'],
+      ['b', 'correct', 'c', 'd'],
+      ['b', 'c', 'correct', 'd'],
+      ['b', 'c', 'd', 'correct'],
+    ];
+    for (const options of shuffledOrders) {
+      const chosenSenseId = options[options.indexOf('correct')];
+      expect(gradePickMeaning({ chosenSenseId, correctSenseId: 'correct' })).toBe('CORRECT');
+    }
   });
 
   it('build sentence: exact order, wrong order, empty', () => {
@@ -155,6 +168,7 @@ describe('buildCorrection', () => {
     senseId: 'sense1',
     lexemeId: 'lex-fenster',
     isRetry: false,
+    levelAtPlanTime: 'RECALL',
     taskType: 'TYPE_WORD',
     payload: { prompt: 'window', partOfSpeech: 'NOUN', requiresArticle: true },
     solution: fensterSolution,

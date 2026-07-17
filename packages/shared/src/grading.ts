@@ -72,9 +72,9 @@ const GENDER_WORD: Record<Gender, string> = { MASCULINE: 'masculine', FEMININE: 
 
 // ─── PICK_MEANING ─────────────────────────────────────────────────────────────
 
-export function gradePickMeaning(input: { selectedOptionId: string | null; correctOptionId: string }): AttemptResult {
-  if (!input.selectedOptionId) return 'EMPTY';
-  return input.selectedOptionId === input.correctOptionId ? 'CORRECT' : 'WRONG_MEANING';
+export function gradePickMeaning(input: { chosenSenseId: string | null; correctSenseId: string }): AttemptResult {
+  if (!input.chosenSenseId) return 'EMPTY';
+  return input.chosenSenseId === input.correctSenseId ? 'CORRECT' : 'WRONG_MEANING';
 }
 
 // ─── BUILD_SENTENCE ───────────────────────────────────────────────────────────
@@ -173,10 +173,10 @@ export function buildCorrection(item: PlanItem, result: AttemptResult, context: 
   if (item.taskType === 'PICK_MEANING') {
     const solution = item.solution as PickMeaningSolution;
     if (result === 'EMPTY') {
-      return { correctAnswer: solution.translation, tip: `You left it blank — it's "${solution.translation}".` };
+      return { correctAnswer: solution.correctLabel, tip: `You left it blank — it's "${solution.correctLabel}".` };
     }
     // WRONG_MEANING: the only other reachable result for PICK_MEANING
-    return { correctAnswer: solution.translation, tip: solution.translation };
+    return { correctAnswer: solution.correctLabel, tip: solution.correctLabel };
   }
 
   if (item.taskType === 'TYPE_WORD') {

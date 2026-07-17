@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { PrismaClient } from '@wortgarten/database';
 import { foldForLookup, resultIsCorrect, StatsByModeSchema } from '@wortgarten/shared';
 import type { PrismaService } from '../../prisma/prisma.service';
@@ -30,6 +30,7 @@ let fensterSenseId: string;
 let schoenUserWordId: string;
 let incompleteUserWordId: string;
 let werkzeugUserWordId: string;
+let bankBenchUserWordId: string;
 let bankFinancialUserWordId: string;
 let seeSeaUserWordId: string;
 
@@ -105,7 +106,8 @@ beforeAll(async () => {
   // the user's bank, same as the real reported repro.
   const bankBench = await createLexeme({ lemma: 'Bank', partOfSpeech: 'NOUN', gender: 'FEMININE', plural: 'Bänke', senses: ['bench'], forms: ['Bank'] });
   const bankFinancial = await createLexeme({ lemma: 'Bank', partOfSpeech: 'NOUN', gender: 'FEMININE', plural: 'Banken', senses: ['bank (financial institution)'], forms: ['Bank'] });
-  await prisma.userWord.create({ data: { userId, senseId: bankBench.senses[0].id, level: 'NEW' } });
+  const bankBenchUw = await prisma.userWord.create({ data: { userId, senseId: bankBench.senses[0].id, level: 'NEW' } });
+  bankBenchUserWordId = bankBenchUw.id;
   const bankFinancialUw = await prisma.userWord.create({ data: { userId, senseId: bankFinancial.senses[0].id, level: 'NEW' } });
   bankFinancialUserWordId = bankFinancialUw.id;
 
@@ -168,6 +170,7 @@ describe('session grading — WRONG_GENDER / MISSING_ARTICLE / MISSING_UMLAUT (a
 
 describe('session grading — retry mechanics and idempotency (acceptance 4-5, 19)', () => {
   it('a failed retry does not restore the ladder; two honest Attempt rows; duplicate submits are idempotent', async () => {
+    const gradeSpy = vi.spyOn(srs, 'grade');
     const before = await prisma.userWord.findUniqueOrThrow({ where: { id: fensterUserWordId } });
     const beforeTypeStats = StatsByModeSchema.parse(before.statsByMode).TYPE_WORD ?? { total: 0, correct: 0 };
     const { response: fail, session, item } = await submitOne(fensterUserWordId, 'komplett falsch');
@@ -211,6 +214,46 @@ describe('session grading — retry mechanics and idempotency (acceptance 4-5, 1
       total: beforeTypeStats.total + 1,
       correct: beforeTypeStats.correct,
     });
+    expect(gradeSpy).toHaveBeenCalledTimes(1); // first attempt only; the retry never touches FSRS
+    gradeSpy.mockRestore();
+  });
+
+  it('persists a per-word retry cap in the frozen plan and never requeues a failed retry', async () => {
+    const [template] = await builder.composePracticePlan(userId, 1, fensterUserWordId);
+    if (template.taskType !== 'TYPE_WORD') throw new Error('expected TYPE_WORD');
+    const originals = Array.from({ length: 5 }, (_, index) => ({ ...template, id: `${template.id}-original-${index}` }));
+    let session = await prisma.drillSession.create({
+      data: { userId, plan: originals as unknown as object, status: 'ACTIVE', currentIndex: 0, isPractice: true },
+    });
+
+    const requeueResults: boolean[] = [];
+    for (const original of originals) {
+      const response = await grading.submitAttempt(session, {
+        planItemId: original.id,
+        response: { taskType: 'TYPE_WORD', text: 'wrong' },
+        responseTimeMs: 1000,
+      });
+      requeueResults.push(response.requeued);
+      session = await prisma.drillSession.findUniqueOrThrow({ where: { id: session.id } });
+    }
+    expect(requeueResults).toEqual([true, true, true, true, false]);
+
+    const plan = session.plan as unknown as Array<{ id: string; userWordId: string; isRetry: boolean }>;
+    const retries = plan.filter((item) => item.isRetry && item.userWordId === fensterUserWordId);
+    expect(retries).toHaveLength(4);
+
+    const practicedBeforeRetry = await prisma.attempt.count({ where: { drillSessionId: session.id, isRetry: false } });
+    const failedRetry = await grading.submitAttempt(session, {
+      planItemId: retries[0].id,
+      response: { taskType: 'TYPE_WORD', text: 'still wrong' },
+      responseTimeMs: 1000,
+    });
+    expect(failedRetry.requeued).toBe(false);
+    expect(failedRetry.practicedCount).toBe(practicedBeforeRetry);
+
+    const finalSession = await prisma.drillSession.findUniqueOrThrow({ where: { id: session.id } });
+    const finalPlan = finalSession.plan as unknown as Array<{ isRetry: boolean; userWordId: string }>;
+    expect(finalPlan.filter((item) => item.isRetry && item.userWordId === fensterUserWordId)).toHaveLength(4);
   });
 });
 
@@ -225,7 +268,7 @@ describe('session grading — incomplete nouns and practice sessions (acceptance
     });
     const response = await grading.submitAttempt(session, {
       planItemId: item.id,
-      response: { taskType: 'PICK_MEANING', selectedOptionId: item.solution.correctOptionId },
+      response: { taskType: 'PICK_MEANING', chosenSenseId: item.solution.correctSenseId },
       responseTimeMs: 2000,
     });
     expect(response.result).toBe('CORRECT');
@@ -274,11 +317,12 @@ describe('session builder — PICK_MEANING on a homograph pair does not offer tw
     // Same lemma + same gender -> the bare prompt would be ambiguous -> disambiguating hint required.
     expect(item.payload.prompt).toBe('die Bank (die Banken)');
 
-    const optionSenses = await prisma.sense.findMany({ where: { id: { in: item.payload.options.map((o) => o.id) } } });
+    const optionSenses = await prisma.sense.findMany({ where: { id: { in: item.payload.options.map((o) => o.senseId) } } });
     expect(optionSenses.some((s) => s.translation === 'bench')).toBe(false); // the sibling sense never leaks in as a distractor
 
     // Exactly one option resolves to the target sense.
-    expect(item.payload.options.filter((o) => o.id === item.solution.correctOptionId)).toHaveLength(1);
+    expect(item.payload.options.filter((o) => o.senseId === item.solution.correctSenseId)).toHaveLength(1);
+    expect(new Set(item.payload.options.map((o) => o.label)).size).toBe(item.payload.options.length);
   });
 
   it('der See / die See: different genders already disambiguate the prompt text, but distractor exclusion still holds', async () => {
@@ -287,7 +331,7 @@ describe('session builder — PICK_MEANING on a homograph pair does not offer tw
     if (item.taskType !== 'PICK_MEANING') throw new Error('expected PICK_MEANING');
 
     expect(item.payload.prompt).toBe('die See'); // article alone already disambiguates -> no hint needed
-    const optionSenses = await prisma.sense.findMany({ where: { id: { in: item.payload.options.map((o) => o.id) } } });
+    const optionSenses = await prisma.sense.findMany({ where: { id: { in: item.payload.options.map((o) => o.senseId) } } });
     expect(optionSenses.some((s) => s.translation === 'lake')).toBe(false); // der See's sense never leaks in
   });
 
@@ -299,9 +343,24 @@ describe('session builder — PICK_MEANING on a homograph pair does not offer tw
     });
     const response = await grading.submitAttempt(session, {
       planItemId: item.id,
-      response: { taskType: 'PICK_MEANING', selectedOptionId: item.solution.correctOptionId },
+      response: { taskType: 'PICK_MEANING', chosenSenseId: item.solution.correctSenseId },
       responseTimeMs: 1500,
     });
     expect(response.result).toBe('CORRECT');
+  });
+
+  it('selecting the bench sense of the die Bank homograph grades CORRECT', async () => {
+    const [item] = await builder.composePracticePlan(userId, 1, bankBenchUserWordId);
+    if (item.taskType !== 'PICK_MEANING') throw new Error('expected PICK_MEANING');
+    const session = await prisma.drillSession.create({
+      data: { userId, plan: [item] as unknown as object, status: 'ACTIVE', currentIndex: 0, isPractice: false },
+    });
+    const response = await grading.submitAttempt(session, {
+      planItemId: item.id,
+      response: { taskType: 'PICK_MEANING', chosenSenseId: item.solution.correctSenseId },
+      responseTimeMs: 1500,
+    });
+    expect(response.result).toBe('CORRECT');
+    expect(new Set(item.payload.options.map((option) => option.label)).size).toBe(item.payload.options.length);
   });
 });

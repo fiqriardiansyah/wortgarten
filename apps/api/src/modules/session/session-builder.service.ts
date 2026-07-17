@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import type { Lexeme, PartOfSpeech, Sense, UserWord } from '@wortgarten/database';
 import { displayForm, isIncomplete, pluralDisplayForm, tokenize, type PlanItem } from '@wortgarten/shared';
 import { PrismaService } from '../../prisma/prisma.service';
+import { localDateKey, localDayRange } from '../../streak/streak.service';
 import { SrsService } from '../srs/srs.service';
 
 export const SESSION_MAX_TASKS = 10;
@@ -103,11 +104,16 @@ export class SessionBuilderService {
     return { reviewSlice, newSlice };
   }
 
-  /** "Practice 5 more" / Word detail's "Practice now" / Progress's "Practice these 5" — no
-   * due-ness filter, optionally pinned to one word or an exact set of words. Practice sessions
-   * still produce real PlanItems; SessionGradingService is what skips FSRS for them (isPractice
-   * on the DrillSession, not anything special about the plan itself). */
-  async composePracticePlan(userId: string, size: number, userWordId?: string, userWordIds?: string[]): Promise<PlanItem[]> {
+  /** Word detail's "Practice now" / Progress's "Practice these 5" pin to an exact set of words —
+   * no due-ness filter, since the user explicitly chose them. Unpinned (session summary's
+   * "Practice N more") instead samples the practice pool: not due, not NEW, and not touched by
+   * any attempt already made today — so chaining "Practice more" repeatedly can never loop back
+   * to a word from an earlier round in the same day (only today's own selection recurses; the
+   * exclusion is derived fresh from the Attempt table every call, not from a client-passed list,
+   * so it can't go stale across a chain of practice sessions). Practice sessions still produce
+   * real PlanItems; SessionGradingService is what skips FSRS for them (isPractice on the
+   * DrillSession, not anything special about the plan itself). */
+  async composePracticePlan(userId: string, size: number, userWordId?: string, userWordIds?: string[], now: Date = new Date()): Promise<PlanItem[]> {
     const pinnedIds = userWordIds && userWordIds.length > 0 ? userWordIds : userWordId ? [userWordId] : null;
 
     const words = pinnedIds
@@ -116,13 +122,39 @@ export class SessionBuilderService {
           include: { sense: { include: { lexeme: true } } },
         })
       : await this.prisma.userWord.findMany({
-          where: { userId },
+          where: { userId, level: { not: 'NEW' }, dueAt: { gt: now }, id: { notIn: await this.touchedTodayUserWordIds(userId, now) } },
           include: { sense: { include: { lexeme: true } } },
           take: size * 3, // headroom to sample from
         });
 
     const selected = pinnedIds ? words : shuffle(words).slice(0, size);
     return this.buildPlanItems(userId, selected as UserWordWithLexeme[]);
+  }
+
+  /** The real count "Practice N more" would offer — same pool filter as the unpinned branch of
+   * composePracticePlan, so the count a user sees can never disagree with what pressing the
+   * button actually starts. */
+  async practicePoolPreview(userId: string, size = SESSION_MAX_TASKS, now: Date = new Date()): Promise<{ total: number }> {
+    const total = await this.prisma.userWord.count({
+      where: { userId, level: { not: 'NEW' }, dueAt: { gt: now }, id: { notIn: await this.touchedTodayUserWordIds(userId, now) } },
+    });
+    return { total: Math.min(total, size) };
+  }
+
+  /** Every userWord with a non-retry attempt today, in the user's own timezone — the practice
+   * pool's exclusion set. Derived fresh from Attempt every call (not passed in from the client),
+   * so a chain of "Practice more" clicks can't resurface a word from an earlier round today: each
+   * round's own attempts widen the exclusion for the next one automatically. */
+  private async touchedTodayUserWordIds(userId: string, now: Date): Promise<string[]> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { timezone: true } });
+    const todayKey = localDateKey(now, user.timezone);
+    const { start } = localDayRange(todayKey, user.timezone);
+    const attempts = await this.prisma.attempt.findMany({
+      where: { isRetry: false, answeredAt: { gte: start }, userWord: { userId } },
+      select: { userWordId: true },
+      distinct: ['userWordId'],
+    });
+    return attempts.map((a) => a.userWordId);
   }
 
   /** Round-robin merge so NEW words aren't all clustered at the end. Distinct userWordIds throughout,
@@ -203,6 +235,7 @@ export class SessionBuilderService {
 
   private async buildPickMeaning(userId: string, userWord: UserWordWithLexeme, lexeme: Lexeme) {
     const targetSense = userWord.sense;
+    const correctLabel = userWord.customTranslation ?? targetSense.translation;
     const bandLow = (lexeme.frequencyRank ?? 3000) - FREQUENCY_BAND;
     const bandHigh = (lexeme.frequencyRank ?? 3000) + FREQUENCY_BAND;
 
@@ -224,6 +257,8 @@ export class SessionBuilderService {
     const distractorSenses = new Map<string, Sense>();
     for (const c of shuffle(bankCandidates)) {
       if (distractorSenses.size >= 3) break;
+      if (c.sense.translation === correctLabel) continue;
+      if ([...distractorSenses.values()].some((sense) => sense.translation === c.sense.translation)) continue;
       distractorSenses.set(c.sense.id, c.sense);
     }
 
@@ -237,6 +272,8 @@ export class SessionBuilderService {
       });
       for (const s of shuffle(generalCandidates)) {
         if (distractorSenses.size >= 3) break;
+        if (s.translation === correctLabel) continue;
+        if ([...distractorSenses.values()].some((sense) => sense.translation === s.translation)) continue;
         distractorSenses.set(s.id, s);
       }
     }
@@ -249,6 +286,8 @@ export class SessionBuilderService {
       });
       for (const s of shuffle(wideCandidates)) {
         if (distractorSenses.size >= 3) break;
+        if (s.translation === correctLabel) continue;
+        if ([...distractorSenses.values()].some((sense) => sense.translation === s.translation)) continue;
         distractorSenses.set(s.id, s);
       }
     }
@@ -257,8 +296,8 @@ export class SessionBuilderService {
     const isNew = userWord.level === 'NEW' && attemptCount === 0;
 
     const options = shuffle([
-      { id: targetSense.id, translation: userWord.customTranslation ?? targetSense.translation },
-      ...[...distractorSenses.values()].map((s) => ({ id: s.id, translation: s.translation })),
+      { senseId: targetSense.id, label: correctLabel },
+      ...[...distractorSenses.values()].map((s) => ({ senseId: s.id, label: s.translation })),
     ]);
 
     // The prompt itself is only ambiguous when a sibling lexeme would render an IDENTICAL display
@@ -276,11 +315,11 @@ export class SessionBuilderService {
     return {
       payload: { prompt, partOfSpeech: lexeme.partOfSpeech, options, isNew },
       solution: {
-        correctOptionId: targetSense.id,
+        correctSenseId: targetSense.id,
+        correctLabel,
         lemma: lexeme.lemma,
         partOfSpeech: lexeme.partOfSpeech,
         gender: lexeme.gender,
-        translation: userWord.customTranslation ?? targetSense.translation,
       },
     };
   }

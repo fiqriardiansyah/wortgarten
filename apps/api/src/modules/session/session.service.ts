@@ -101,6 +101,7 @@ export class SessionService {
     }
 
     const secondCard = await this.buildSecondCardSlot(userId);
+    const [nextPreview, practicePool] = await Promise.all([this.builder.planPreview(userId), this.builder.practicePoolPreview(userId)]);
 
     await this.prisma.drillSession.update({ where: { id: sessionId }, data: { status: 'COMPLETED', completedAt: new Date() } });
 
@@ -111,6 +112,8 @@ export class SessionService {
       elapsedMs: Date.now() - session.startedAt.getTime(),
       masteredWords,
       secondCard,
+      nextSessionCount: nextPreview.total,
+      practiceCount: practicePool.total,
     };
   }
 
