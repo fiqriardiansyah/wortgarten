@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import type { PickMeaningPayload } from '@wortgarten/shared';
 import { Card } from '@/components/ui/Card';
+import { SpeakButton } from '@/components/ui/SpeakButton';
 import { partOfSpeechLabel } from '@/lib/partOfSpeech';
 import { pressSpring } from '@/design/motion';
 
@@ -17,7 +18,10 @@ export function PickMeaningTask({ payload, disabled, onSelect }: PickMeaningTask
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">What does this mean?</p>
 
       <Card hover={false} className="mt-3 text-center">
-        <p className="text-hero-sm font-extrabold text-deep">{payload.prompt}</p>
+        <div className="flex items-center justify-center gap-2">
+          <p className="text-hero-sm font-extrabold text-deep">{payload.prompt}</p>
+          <SpeakButton text={payload.prompt} size={20} />
+        </div>
         <p className="mt-1 text-sm text-muted">{partOfSpeechLabel[payload.partOfSpeech]}</p>
       </Card>
 

@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import type { SubmitAttemptResponse } from '@wortgarten/shared';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { SpeakButton } from '@/components/ui/SpeakButton';
 import { cardEnterTransition, cardEnterVariants } from '@/design/motion';
 import { EmphasizedAnswer, RichText } from './richText';
 
@@ -34,7 +35,8 @@ export function CorrectionCard({ userAnswerLabel, attempt, onGotIt }: Correction
             <RichText text={correction.tip} />
           ) : (
             <>
-              Correct: <EmphasizedAnswer answer={correction.correctAnswer} emphasize={correction.emphasize} />
+              Correct: <EmphasizedAnswer answer={correction.correctAnswer} emphasize={correction.emphasize} />{' '}
+              <SpeakButton text={correction.correctAnswer} size={16} className="align-middle" />
             </>
           )}
         </p>

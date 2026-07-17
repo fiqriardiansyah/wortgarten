@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { SessionCompleteResponse } from '@wortgarten/shared';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { SpeakButton } from '@/components/ui/SpeakButton';
 import { StatNumber } from '@/components/ui/StatNumber';
 import { cardEnterTransition, cardEnterVariants } from '@/design/motion';
 import { useHomeQuery } from '@/features/home/api/useHomeQuery';
@@ -79,8 +80,9 @@ export function SessionSummary({ summary, onStartNext, startNextPending, onPract
           transition={cardEnterTransition(i + 1)}
         >
           <Card hover={false} className="mt-4 bg-gold/10">
-            <p className="font-extrabold text-gold">
+            <p className="flex items-center justify-center gap-1.5 font-extrabold text-gold">
               🏆 {word.displayForm} is now gold!
+              <SpeakButton text={word.displayForm} size={16} />
             </p>
             <p className="mt-1 text-sm text-deep">You used it in a sentence — it's truly yours now.</p>
           </Card>

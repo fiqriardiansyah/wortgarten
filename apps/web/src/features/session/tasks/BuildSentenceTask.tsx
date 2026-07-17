@@ -1,5 +1,6 @@
 import type { BuildSentencePayload } from '@wortgarten/shared';
 import { Card } from '@/components/ui/Card';
+import { SpeakButton } from '@/components/ui/SpeakButton';
 
 interface BuildSentenceTaskProps {
   payload: BuildSentencePayload;
@@ -44,15 +45,23 @@ export function BuildSentenceTask({ payload, selectedIds, disabled, onChange }: 
 
       <div className="mt-4 flex flex-wrap gap-2">
         {available.map((tile) => (
-          <button
-            key={tile.id}
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange([...selectedIds, tile.id])}
-            className="rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-deep shadow-card hover:brightness-95 disabled:opacity-60"
-          >
-            {tile.surface}
-          </button>
+          // Wrapped in a div (not nested in the tile <button>) so the SpeakButton can sit beside
+          // it — hearing one tile's pronunciation doesn't reveal the sentence's word order.
+          <div key={tile.id} className="relative">
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange([...selectedIds, tile.id])}
+              className="rounded-lg bg-white py-1.5 pl-3 pr-6 text-sm font-semibold text-deep shadow-card hover:brightness-95 disabled:opacity-60"
+            >
+              {tile.surface}
+            </button>
+            <SpeakButton
+              text={tile.surface}
+              size={11}
+              className="absolute right-1 top-1/2 -translate-y-1/2"
+            />
+          </div>
         ))}
       </div>
     </div>

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fullDisplayForm } from '@wortgarten/shared';
+import { displayForm, fullDisplayForm } from '@wortgarten/shared';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { IncompleteBadge } from '@/components/ui/IncompleteBadge';
 import { Input } from '@/components/ui/Input';
+import { SpeakButton } from '@/components/ui/SpeakButton';
 import { partOfSpeechLabel } from '@/lib/partOfSpeech';
 import { ladderLevelChipVariant, ladderLevelLabel } from '@/lib/wordLevel';
 import { ApiError } from '@/lib/apiClient';
@@ -32,8 +33,6 @@ export function WordDetails({ id, onDeleted, sticky = false }: WordDetailsProps)
   const [isEditing, setIsEditing] = useState(false);
   const [customTranslation, setCustomTranslation] = useState('');
   const [note, setNote] = useState('');
-
-  console.log({ word })
 
   async function handlePracticeNow() {
     const result = await practiceSession.mutateAsync({ size: 3, userWordId: id });
@@ -72,6 +71,7 @@ export function WordDetails({ id, onDeleted, sticky = false }: WordDetailsProps)
       <Card hover={false}>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-heading-sm font-extrabold text-deep">{fullDisplayForm(word.lexeme)}</h1>
+          <SpeakButton text={displayForm(word.lexeme)} size={20} />
           <Chip variant="lilac">{partOfSpeechLabel[word.lexeme.partOfSpeech]}</Chip>
           {word.isIncomplete && <IncompleteBadge />}
         </div>
