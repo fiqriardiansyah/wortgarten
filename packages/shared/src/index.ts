@@ -52,13 +52,24 @@ export const RustyGroupSchema = z.object({
 });
 export type RustyGroup = z.infer<typeof RustyGroupSchema>;
 
-export const StoryTeaserSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  coverage: z.string(),
-  minutes: z.number(),
-});
-export type StoryTeaser = z.infer<typeof StoryTeaserSchema>;
+// Home's one story card, discriminated by which of the 3 real states applies — never a single
+// shape with zeroed-out fields (the "0% your words" bug class). Exactly one variant is ever true:
+// a READY unread story, a pending generation, or too few known words to generate one yet.
+export const HomeStoryCardSchema = z.discriminatedUnion('state', [
+  z.object({
+    state: z.literal('ready'),
+    id: z.string(),
+    title: z.string(),
+    estMinutes: z.number(),
+    // Gates the "100% your words" badge — mirrors Story.coverageKnownPct === 100 exactly
+    // (see packages/shared/src/story.ts). Never render a badge for a lower percentage.
+    isFullyKnown: z.boolean(),
+    isNewToday: z.boolean(),
+  }),
+  z.object({ state: z.literal('generating') }),
+  z.object({ state: z.literal('locked'), wordsToGo: z.number() }),
+]);
+export type HomeStoryCard = z.infer<typeof HomeStoryCardSchema>;
 
 export const QuestSchema = z.object({
   label: z.string(),
@@ -295,7 +306,7 @@ export const HomeDashboardSchema = z.object({
   rusty: RustyGroupSchema,
   quest: QuestSchema,
   garden: GardenStatsSchema,
-  story: StoryTeaserSchema,
+  story: HomeStoryCardSchema,
   recentlyAdded: z.array(WordSummarySchema),
   user: z.object({
     name: z.string(),

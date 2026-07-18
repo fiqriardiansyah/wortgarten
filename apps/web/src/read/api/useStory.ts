@@ -43,10 +43,10 @@ export function useMarkWordKnown(storyId: string) {
       if (ctx?.previous) queryClient.setQueryData(storyKey, ctx.previous);
     },
     // Deliberately does NOT invalidate `storyKey` on success. `paragraphs` is a frozen snapshot
-    // written once at generation time (the worker's overnight tokenMap) and never recomputed
-    // server-side — a refetch here would return the original `status: 'new'` and stomp the
-    // optimistic flip right back. The client-side flip in `onMutate` IS the durable state for
-    // this token in this story from here on.
+    // written once at generation time (the worker's overnight tokenMap); StoriesService reconciles
+    // `status: 'new'` tokens against the live bank on every read, so a refetch here would already
+    // show `known` — but the optimistic flip renders instantly without waiting on a round trip,
+    // so there's nothing to gain by forcing one.
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['words'] });
       queryClient.invalidateQueries({ queryKey: ['home'] });

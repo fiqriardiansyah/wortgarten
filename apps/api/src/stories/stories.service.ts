@@ -26,7 +26,19 @@ function computeReadingLevel(wordsUnlocked: number): ReadingLevel {
   };
 }
 
-function toContractStory(row: StoryRow, isNewToday: boolean): Story {
+// The tokenMap's `status` is frozen at generation time and never rewritten when a "new" word is
+// later added to the bank (see useStory.ts's markLexemeKnown — that flip only lives in the
+// client's query cache and is gone on reload). Reconcile against the live bank on every read so a
+// word added via "+ Add to my words" shows as known even after a full page refresh.
+function toContractStory(row: StoryRow, isNewToday: boolean, knownLexemeIds: Set<string>): Story {
+  const paragraphs = (row.paragraphs as unknown as StoryParagraph[]).map((paragraph) => ({
+    tokens: paragraph.tokens.map((token) =>
+      token.status === 'new' && token.lexemeId && knownLexemeIds.has(token.lexemeId)
+        ? { ...token, status: 'known' as const }
+        : token,
+    ),
+  }));
+
   return {
     id: row.id,
     title: row.title,
@@ -36,9 +48,9 @@ function toContractStory(row: StoryRow, isNewToday: boolean): Story {
     estMinutes: row.estMinutes,
     isNewToday,
     coverageKnownPct: row.coverageKnownPct,
-    paragraphs: row.paragraphs as unknown as StoryParagraph[],
+    paragraphs,
     translation: row.translation,
-    newWords: row.newWords,
+    newWords: row.newWords.filter((lexemeId) => !knownLexemeIds.has(lexemeId)),
     glossary: row.glossary as unknown as Record<string, StoryGlossaryEntry>,
     createdAt: row.createdAt.toISOString(),
     isRead: row.readAt !== null,
@@ -76,7 +88,8 @@ export class StoriesService {
     const hasUnread = rows.some((r) => r.readAt === null);
     const firstUnreadIndex = rows.findIndex((r) => r.readAt === null);
 
-    const stories = rows.map((row, i) => toContractStory(row, i === firstUnreadIndex));
+    const knownLexemeIds = await this.words.getKnownLexemeIds(userId);
+    const stories = rows.map((row, i) => toContractStory(row, i === firstUnreadIndex, knownLexemeIds));
 
     // Dormant users and users already sitting on an unread story never trigger a new one here —
     // isEligibleForNewStory enforces both. Fire-and-forget: a 1-30s AI call has no business
@@ -95,11 +108,13 @@ export class StoriesService {
       throw new NotFoundException('Story not found');
     }
 
+    const knownLexemeIds = await this.words.getKnownLexemeIds(userId);
+
     if (!row.readAt) {
       const updated = await this.prisma.story.update({ where: { id }, data: { readAt: new Date() } });
-      return StorySchema.parse(toContractStory(updated, false));
+      return StorySchema.parse(toContractStory(updated, false, knownLexemeIds));
     }
 
-    return StorySchema.parse(toContractStory(row, false));
+    return StorySchema.parse(toContractStory(row, false, knownLexemeIds));
   }
 }

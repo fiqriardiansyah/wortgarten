@@ -8,5 +8,6 @@ import { StoriesService } from './stories.service';
   imports: [AiModule, WordsModule],
   controllers: [StoriesController],
   providers: [StoriesService],
+  exports: [StoriesService],
 })
 export class StoriesModule {}

@@ -51,6 +51,16 @@ export class WordsService {
     return this.prisma.userWord.count({ where: { userId } });
   }
 
+  /** Every lexemeId the user has ever added, regardless of sense — used to reconcile "new" story
+   * tokens against the bank at read-time (the frozen tokenMap snapshot never learns of adds itself). */
+  async getKnownLexemeIds(userId: string): Promise<Set<string>> {
+    const rows = await this.prisma.userWord.findMany({
+      where: { userId },
+      select: { sense: { select: { lexemeId: true } } },
+    });
+    return new Set(rows.map((row) => row.sense.lexemeId));
+  }
+
   async countByLevel(userId: string): Promise<Record<WordLevel, number>> {
     const rows = await this.prisma.userWord.groupBy({
       by: ['level'],

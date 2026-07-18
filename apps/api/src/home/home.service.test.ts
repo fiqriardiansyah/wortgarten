@@ -2,21 +2,30 @@ import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient } from '@wortgarten/database';
 import { HomeDashboardSchema } from '@wortgarten/shared';
+import { AiService, FakeAdapter, type AiRouterPort } from '@wortgarten/ai';
 import type { PrismaService } from '../prisma/prisma.service';
 import { SessionBuilderService } from '../modules/session/session-builder.service';
 import { SrsService } from '../modules/srs/srs.service';
 import { WordsService } from '../modules/words/words.service';
 import { HomeService } from './home.service';
 import { StreakService } from '../streak/streak.service';
+import { StoriesService } from '../stories/stories.service';
 
 const LANG = 'de-home-fixture';
+
+// No test user here has a recent drill session, so isEligibleForNewStory always short-circuits
+// to false — this fake router/adapters exist only to satisfy StoriesService's constructor, never
+// actually get called.
+const fakeRouter: AiRouterPort = { decide: async () => 'OLLAMA', recordGroqSuccess: async () => {} };
 
 const prisma = new PrismaClient();
 const srs = new SrsService(prisma as unknown as PrismaService);
 const words = new WordsService(prisma as unknown as PrismaService, srs);
 const sessionBuilder = new SessionBuilderService(prisma as unknown as PrismaService, srs, words);
 const streaks = new StreakService(prisma as unknown as PrismaService);
-const homeService = new HomeService(prisma as unknown as PrismaService, words, sessionBuilder, streaks);
+const aiService = new AiService(fakeRouter, new FakeAdapter('GROQ', ['{}']), new FakeAdapter('OLLAMA', ['{}']), 0);
+const stories = new StoriesService(prisma as unknown as PrismaService, aiService, words);
+const homeService = new HomeService(prisma as unknown as PrismaService, words, sessionBuilder, streaks, stories);
 
 describe('HomeService.getDashboard — empty state', () => {
   let emptyUserId: string;
@@ -47,6 +56,8 @@ describe('HomeService.getDashboard — empty state', () => {
     expect(dashboard.user.name).toBe('Fresh User');
     expect(dashboard.daySubtitle).toBe('Day 1 of learning German');
     expect(dashboard.streak.current).toBe(0);
+    // A brand-new user has 0 known words — real "locked" state, never a fake 0%/0 min story.
+    expect(dashboard.story).toEqual({ state: 'locked', wordsToGo: 15 });
   });
 });
 
@@ -110,5 +121,8 @@ describe('HomeService.getDashboard — with data', () => {
     expect(dashboard.garden.segments).toEqual({ new: 1, learning: 1, mastered: 1 });
     expect(dashboard.recentlyAdded).toHaveLength(3);
     expect(dashboard.recentlyAdded.map((w) => w.german).sort()).toEqual(['Baum', 'Fenster', 'Katze']);
+    // Katze (RECALL) + Baum (MASTERED) are known; Fenster (NEW) isn't — 2 known, 13 short of the
+    // same MIN_KNOWN_WORDS_FOR_STORY floor story generation uses.
+    expect(dashboard.story).toEqual({ state: 'locked', wordsToGo: 13 });
   });
 });

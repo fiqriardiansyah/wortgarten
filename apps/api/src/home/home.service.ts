@@ -3,14 +3,18 @@ import {
   HomeDashboard,
   HomeDashboardSchema,
   PlanSchema,
+  type HomeStoryCard,
   type SessionSummary,
+  type Story,
   type WordLevel as ContractWordLevel,
 } from '@wortgarten/shared';
+import { MIN_KNOWN_WORDS_FOR_STORY } from '@wortgarten/ai';
 import type { DrillSession, WordLevel } from '@wortgarten/database';
 import { PrismaService } from '../prisma/prisma.service';
 import { SessionBuilderService } from '../modules/session/session-builder.service';
 import { RUSTY_THRESHOLD, WordsService } from '../modules/words/words.service';
 import { isValidTimeZone, StreakService } from '../streak/streak.service';
+import { StoriesService } from '../stories/stories.service';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const MINUTES_PER_TASK = 0.5;
@@ -43,6 +47,7 @@ export class HomeService {
     private readonly words: WordsService,
     private readonly sessionBuilder: SessionBuilderService,
     private readonly streaks: StreakService,
+    private readonly stories: StoriesService,
   ) {}
 
   async getDashboard(userId: string, reportedTimezone?: string): Promise<HomeDashboard> {
@@ -51,14 +56,19 @@ export class HomeService {
       user = await this.prisma.user.update({ where: { id: userId }, data: { timezone: reportedTimezone } });
     }
 
-    const [activeSession, rusty, collected, byLevel, recentlyAdded, streak] = await Promise.all([
+    const [activeSession, rusty, collected, byLevel, recentlyAdded, streak, library] = await Promise.all([
       this.prisma.drillSession.findFirst({ where: { userId, status: 'ACTIVE' }, orderBy: { startedAt: 'desc' } }),
       this.words.findRusty(userId, RUSTY_THRESHOLD),
       this.words.countForUser(userId),
       this.words.countByLevel(userId),
       this.words.recentlyAdded(userId, 3),
       this.streaks.computeStreak(userId, user.timezone),
+      // Same StoriesService the Read page's GET /stories uses — Home and Read can never disagree
+      // about whether a story exists. Also carries the same lazy-generation side effect.
+      this.stories.listForUser(userId),
     ]);
+    const knownWordCount = byLevel.RECOGNIZE + byLevel.RECALL + byLevel.PRODUCE + byLevel.MASTERED;
+    const storyCard = this.buildStoryCard(library.stories, knownWordCount);
 
     const rustyUserWordIds = new Set(rusty.map((r) => r.userWord.id));
 
@@ -97,13 +107,7 @@ export class HomeService {
           mastered: byLevel.MASTERED,
         },
       },
-      story: {
-        // TODO: no story generation yet — placeholder until the worker/AI task lands
-        id: 'placeholder',
-        title: 'Your first story is on its way',
-        coverage: '0%',
-        minutes: 0,
-      },
+      story: storyCard,
       recentlyAdded: recentlyAdded.map((w) => ({
         german: w.sense.lexeme.lemma,
         native: w.customTranslation ?? w.sense.translation,
@@ -150,5 +154,34 @@ export class HomeService {
       previewWords: preview.words.slice(0, 3).map((w) => w.sense.lexeme.lemma),
       isActive: false,
     };
+  }
+
+  /** Same 3 states as the Read page's own hero/generating split (ReadPage.tsx), so the two
+   * screens can never disagree about whether a story exists. `library.stories` already comes
+   * from StoriesService.listForUser — the exact same source GET /stories serves. */
+  private buildStoryCard(stories: Story[], knownWordCount: number): HomeStoryCard {
+    const ready = stories.find((s) => s.status === 'READY' && s.isNewToday);
+    if (ready) {
+      return {
+        state: 'ready',
+        id: ready.id,
+        title: ready.title,
+        estMinutes: ready.estMinutes,
+        isFullyKnown: ready.coverageKnownPct === 100,
+        isNewToday: ready.isNewToday,
+      };
+    }
+
+    const generating = stories.find((s) => s.status === 'GENERATING');
+    if (generating) return { state: 'generating' };
+
+    if (knownWordCount < MIN_KNOWN_WORDS_FOR_STORY) {
+      return { state: 'locked', wordsToGo: MIN_KNOWN_WORDS_FOR_STORY - knownWordCount };
+    }
+
+    // Enough known words, no unread story, none in flight — one is eligible to be generated
+    // (listForUser already fired that lazy trigger above). Honest "coming soon", not a lie about
+    // missing words.
+    return { state: 'generating' };
   }
 }
