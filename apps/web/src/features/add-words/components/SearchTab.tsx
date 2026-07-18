@@ -20,7 +20,7 @@ function ResultCard({ result, index }: { result: LexiconSearchResult; index: num
   return (
     <Card index={index}>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-bold text-deep">{displayForm(lexeme)}</span>
+        <span className="font-bold text-ink">{displayForm(lexeme)}</span>
         <Chip variant="lilac">{partOfSpeechLabel[lexeme.partOfSpeech]}</Chip>
         {plural && <span className="text-sm text-muted">{plural}</span>}
         {isIncomplete(lexeme) && <IncompleteBadge />}
@@ -28,9 +28,9 @@ function ResultCard({ result, index }: { result: LexiconSearchResult; index: num
       <div className="mt-3 flex flex-col gap-2">
         {senses.map((sense) => (
           <div key={sense.id} className="flex items-center justify-between gap-3">
-            <span className="text-sm text-deep">{sense.translation}</span>
+            <span className="text-sm text-ink">{sense.translation}</span>
             {sense.inBank ? (
-              <span className="text-xs font-semibold text-success">✓ in your words</span>
+              <span className="text-xs font-semibold text-teal">✓ in your words</span>
             ) : (
               <Button
                 variant="outline"
@@ -66,7 +66,7 @@ export function SearchTab() {
 
       {!query.trim() && (
         <div className="mt-8 text-center text-muted">
-          <p className="font-semibold text-deep">Collect words you meet in real life</p>
+          <p className="font-semibold text-ink">Collect words you meet in real life</p>
           <p className="mt-1 text-sm">
             Search a word in German or English — pick the meaning you want to keep.
           </p>

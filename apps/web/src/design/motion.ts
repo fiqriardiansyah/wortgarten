@@ -17,9 +17,9 @@ export const cardEnterVariants: Variants = {
 };
 
 export const cardEnterTransition = (index = 0): Transition => ({
-  duration: 0.35,
+  duration: 0.25,
   ease: 'easeOut',
-  delay: index * 0.06,
+  delay: index * 0.08,
 });
 
 export const ctaPulseVariants: Variants = {
@@ -35,5 +35,11 @@ export const ctaPulseVariants: Variants = {
 
 export const ringFillTransition: Transition = {
   duration: 0.8,
+  ease: 'easeOut',
+};
+
+/** Linear progress bars fill on this exact timing per the sketch-theme spec (§7). */
+export const progressFillTransition: Transition = {
+  duration: 0.7,
   ease: 'easeOut',
 };

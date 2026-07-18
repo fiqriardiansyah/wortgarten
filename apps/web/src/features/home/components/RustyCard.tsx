@@ -31,11 +31,11 @@ export function RustyCard({ rusty, index }: RustyCardProps) {
     <Card index={index}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-coral/10">
+          <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-coral-soft">
             <AlertTriangle size={18} className="text-coral" />
           </div>
           <div>
-            <h3 className="font-bold text-deep">{headline}</h3>
+            <h3 className="font-bold text-ink">{headline}</h3>
             <p className="mt-0.5 text-sm text-muted">{preview}</p>
           </div>
         </div>

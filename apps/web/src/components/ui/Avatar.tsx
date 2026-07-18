@@ -26,7 +26,7 @@ export function Avatar({ name, src, size = 'md', className = '' }: AvatarProps) 
 
   return (
     <div
-      className={`flex items-center justify-center rounded-full bg-lilac font-bold text-primary ${sizeClasses[size]} ${className}`}
+      className={`flex items-center justify-center rounded-full bg-teal-soft font-bold text-teal-deep ${sizeClasses[size]} ${className}`}
     >
       {initial}
     </div>

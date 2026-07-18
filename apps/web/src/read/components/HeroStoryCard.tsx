@@ -42,7 +42,7 @@ export function HeroStoryCard({ story, index }: HeroStoryCardProps) {
         </span>
       </div>
 
-      <h2 className="mt-3 text-heading font-extrabold text-deep">{story.title}</h2>
+      <h2 className="mt-3 text-heading font-extrabold text-ink">{story.title}</h2>
       {story.blurb && <p className="mt-1 text-sm text-muted">{story.blurb}</p>}
 
       <div className="mt-3 flex flex-wrap gap-1.5">

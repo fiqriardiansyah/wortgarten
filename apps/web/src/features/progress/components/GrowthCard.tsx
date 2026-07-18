@@ -14,7 +14,7 @@ export function GrowthCard({ growth, index }: GrowthCardProps) {
   return (
     <Card index={index}>
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-bold text-deep">Your growth</h3>
+        <h3 className="font-bold text-ink">Your growth</h3>
         <span className="text-xs text-muted">last {growth.windowDays}d</span>
       </div>
 
@@ -23,7 +23,7 @@ export function GrowthCard({ growth, index }: GrowthCardProps) {
           <motion.div
             key={bar.label}
             className="flex-1 rounded-t-md"
-            style={{ backgroundColor: tokens.colors.primary }}
+            style={{ backgroundColor: tokens.color.teal }}
             initial={{ height: 0 }}
             animate={{ height: `${(bar.count / max) * 100}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}

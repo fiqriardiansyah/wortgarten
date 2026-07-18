@@ -10,10 +10,10 @@ import { StreakDetailCard } from './components/StreakDetailCard';
 function Skeleton() {
   return (
     <div className="animate-pulse space-y-4">
-      <div className="h-10 w-1/2 rounded-card bg-card/60" />
-      <div className="h-40 rounded-card bg-card/60" />
-      <div className="h-40 rounded-card bg-card/60" />
-      <div className="h-40 rounded-card bg-card/60" />
+      <div className="h-10 w-1/2 rounded-sketch bg-card/60" />
+      <div className="h-40 rounded-sketch bg-card/60" />
+      <div className="h-40 rounded-sketch bg-card/60" />
+      <div className="h-40 rounded-sketch bg-card/60" />
     </div>
   );
 }

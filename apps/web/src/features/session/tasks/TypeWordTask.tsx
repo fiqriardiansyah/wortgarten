@@ -3,6 +3,7 @@ import type { TypeWordPayload } from '@wortgarten/shared';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { partOfSpeechLabel } from '@/lib/partOfSpeech';
+import { tokens } from '@/design/tokens';
 
 const UMLAUT_KEYS = ['ä', 'ö', 'ü', 'ß'];
 
@@ -33,7 +34,7 @@ export function TypeWordTask({ payload, value, disabled, inputRef, onChange }: T
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">Type the German word</p>
 
       <Card hover={false} className="mt-3 text-center">
-        <p className="text-hero-sm font-extrabold text-deep">{payload.prompt}</p>
+        <p className="text-hero-sm font-extrabold text-ink">{payload.prompt}</p>
         <p className="mt-1 text-sm text-muted">
           {partOfSpeechLabel[payload.partOfSpeech]}
           {payload.requiresArticle && " · don't forget der/die/das!"}
@@ -59,7 +60,8 @@ export function TypeWordTask({ payload, value, disabled, inputRef, onChange }: T
             type="button"
             disabled={disabled}
             onClick={() => insertChar(ch)}
-            className="h-9 w-9 rounded-lg bg-lilac font-bold text-primary hover:brightness-95 disabled:opacity-60"
+            className="flex items-center justify-center font-bold hover:brightness-95 disabled:opacity-60"
+            style={{ width: 52, height: 44, borderRadius: tokens.sketch.cornerRadius, backgroundColor: tokens.color.tealSoft, color: tokens.color.teal }}
           >
             {ch}
           </button>

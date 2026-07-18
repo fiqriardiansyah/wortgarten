@@ -9,13 +9,13 @@ export function AddWordsPage() {
 
   return (
     <div>
-      <h1 className="text-heading font-bold text-deep">+ Add words</h1>
+      <h1 className="text-heading font-bold text-ink">+ Add words</h1>
 
-      <div className="mt-4 inline-flex rounded-pill bg-lilac p-1">
+      <div className="mt-4 inline-flex rounded-pill bg-teal-soft p-1">
         <button
           onClick={() => setTab('search')}
           className={`rounded-pill px-4 py-1.5 text-sm font-semibold transition-colors ${
-            tab === 'search' ? 'bg-white text-primary shadow-card' : 'text-muted'
+            tab === 'search' ? 'border-2 border-teal bg-surface text-teal' : 'border-2 border-transparent text-muted'
           }`}
         >
           Search
@@ -23,7 +23,7 @@ export function AddWordsPage() {
         <button
           onClick={() => setTab('paste')}
           className={`rounded-pill px-4 py-1.5 text-sm font-semibold transition-colors ${
-            tab === 'paste' ? 'bg-white text-primary shadow-card' : 'text-muted'
+            tab === 'paste' ? 'border-2 border-teal bg-surface text-teal' : 'border-2 border-transparent text-muted'
           }`}
         >
           Paste text

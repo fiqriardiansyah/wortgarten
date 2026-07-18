@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SpeakButton } from '@/components/ui/SpeakButton';
 import { cardEnterTransition, cardEnterVariants } from '@/design/motion';
+import { tokens } from '@/design/tokens';
 import { EmphasizedAnswer, RichText } from './richText';
 
 interface CorrectionCardProps {
@@ -28,9 +29,9 @@ export function CorrectionCard({ userAnswerLabel, attempt, onGotIt }: Correction
         </p>
       )}
 
-      <Card hover={false} className="mt-3 bg-coral/10">
+      <Card hover={false} className="mt-3" fill={tokens.color.coralSoft} stroke={tokens.color.coral}>
         {!isLightToast && <p className="text-sm font-extrabold text-coral">Not quite!</p>}
-        <p className={isLightToast ? 'font-semibold text-deep' : 'mt-1 font-semibold text-deep'}>
+        <p className={isLightToast ? 'font-semibold text-ink' : 'mt-1 font-semibold text-ink'}>
           {isLightToast ? (
             <RichText text={correction.tip} />
           ) : (
@@ -41,7 +42,7 @@ export function CorrectionCard({ userAnswerLabel, attempt, onGotIt }: Correction
           )}
         </p>
         {!isLightToast && (
-          <p className="mt-2 text-sm text-deep">
+          <p className="mt-2 text-sm text-ink">
             <RichText text={correction.tip} />
           </p>
         )}

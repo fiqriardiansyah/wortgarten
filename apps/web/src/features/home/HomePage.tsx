@@ -10,10 +10,10 @@ import { RecentlyAddedCard } from './components/RecentlyAddedCard';
 function Skeleton() {
   return (
     <div className="animate-pulse space-y-4">
-      <div className="h-16 w-2/3 rounded-card bg-card/60" />
-      <div className="h-48 rounded-card bg-card/60" />
-      <div className="h-24 rounded-card bg-card/60" />
-      <div className="h-24 rounded-card bg-card/60" />
+      <div className="h-16 w-2/3 rounded-sketch bg-card/60" />
+      <div className="h-48 rounded-sketch bg-card/60" />
+      <div className="h-24 rounded-sketch bg-card/60" />
+      <div className="h-24 rounded-sketch bg-card/60" />
     </div>
   );
 }

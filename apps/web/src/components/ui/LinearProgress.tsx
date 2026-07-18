@@ -1,4 +1,6 @@
 import { motion } from 'motion/react';
+import { tokens } from '@/design/tokens';
+import { progressFillTransition } from '@/design/motion';
 
 interface LinearProgressProps {
   value: number;
@@ -7,17 +9,20 @@ interface LinearProgressProps {
   className?: string;
 }
 
-export function LinearProgress({ value, max, color = '#3DDC97', className = '' }: LinearProgressProps) {
+export function LinearProgress({ value, max, color = tokens.concept.progress.fill, className = '' }: LinearProgressProps) {
   const pct = Math.min((value / max) * 100, 100);
 
   return (
-    <div className={`h-2.5 w-full overflow-hidden rounded-pill bg-gray-100 ${className}`}>
+    <div
+      className={`w-full overflow-hidden rounded-pill ${className}`}
+      style={{ height: tokens.component.progressBar.height, backgroundColor: tokens.concept.progress.track }}
+    >
       <motion.div
         className="h-full rounded-pill"
         style={{ backgroundColor: color }}
         initial={{ width: 0 }}
         animate={{ width: `${pct}%` }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        transition={progressFillTransition}
       />
     </div>
   );

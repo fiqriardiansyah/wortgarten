@@ -1,5 +1,6 @@
 import { StreakPill } from '@/components/ui/StreakPill';
 import type { Streak } from '@wortgarten/shared';
+import { tokens } from '@/design/tokens';
 
 interface GreetingHeaderProps {
   greeting: string;
@@ -12,7 +13,9 @@ export function GreetingHeader({ greeting, daySubtitle, streak }: GreetingHeader
     <div className="mb-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-[28px] font-extrabold text-deep leading-tight">{greeting}</h1>
+          <h1 className="text-[28px] font-extrabold leading-tight" style={{ color: tokens.color.ink }}>
+            {greeting}
+          </h1>
           <p className="mt-0.5 text-sm text-muted">{daySubtitle}</p>
         </div>
         {/* Desktop streak */}
@@ -21,7 +24,11 @@ export function GreetingHeader({ greeting, daySubtitle, streak }: GreetingHeader
         </div>
       </div>
       {streak.freezeSavedYesterday && (
-        <p className="mt-3 rounded-card bg-lilac px-4 py-3 text-sm font-semibold text-deep" role="status">
+        <p
+          className="mt-3 rounded-sketch px-4 py-3 text-sm font-semibold"
+          style={{ backgroundColor: tokens.color.tealSoft, color: tokens.color.tealDeep }}
+          role="status"
+        >
           ❄️ A freeze saved your {streak.current}-day streak.
         </p>
       )}

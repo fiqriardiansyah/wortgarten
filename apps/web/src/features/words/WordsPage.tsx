@@ -1,12 +1,14 @@
+import { Button } from '@/components/ui/Button';
+import { IllustrationSlot } from '@/components/ui/IllustrationSlot';
+import { Input } from '@/components/ui/Input';
+import { tokens } from '@/design/tokens';
+import { useDebouncedValue } from '@/lib/useDebouncedValue';
+import type { WordFilter } from '@wortgarten/shared';
+import { Sprout } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Search, Sprout } from 'lucide-react';
 import Measure from 'react-measure';
 import Masonry from 'react-responsive-masonry';
 import { Link } from 'react-router-dom';
-import type { WordFilter } from '@wortgarten/shared';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { useDebouncedValue } from '@/lib/useDebouncedValue';
 import { useWordsQuery } from './api/useWordsQuery';
 import { FilterChips } from './components/FilterChips';
 import { WordCard } from './components/WordCard';
@@ -38,17 +40,24 @@ export function WordsPage() {
 
   return (
     <div className=''>
-      <div className="flex items-start justify-between gap-8 lg:sticky lg:top-0 lg:z-20 lg:-my-2 lg:bg-page lg:py-2">
-        <div><div className="flex items-center gap-2"><h1 className="text-heading font-extrabold text-deep">My Words</h1><Sprout size={21} className="text-primary lg:hidden" /></div><p className="mt-0.5 text-xs text-muted">{total} {total === 1 ? 'word' : 'words'} in your garden</p></div>
+      <div className="flex items-start justify-between gap-8 lg:sticky lg:top-0 lg:z-20 lg:-my-2 lg:py-2" style={{ backgroundColor: tokens.color.bg }}>
+        <div><div className="flex items-center gap-2"><h1 className="text-heading font-extrabold text-ink">My Words</h1><Sprout size={21} className="lg:hidden" style={{ color: tokens.color.teal }} /></div><p className="mt-0.5 text-xs text-muted">{total} {total === 1 ? 'word' : 'words'} in your garden</p></div>
         <SearchBox query={query} onChange={handleQueryChange} className="hidden w-72 lg:block" />
       </div>
-      <div className="sticky top-0 z-20 -mx-4 bg-page px-4 py-3 lg:hidden">
+      <div className="sticky top-0 z-20 -mx-4 px-4 py-3 lg:hidden" style={{ backgroundColor: tokens.color.bg }}>
         <SearchBox query={query} onChange={handleQueryChange} />
       </div>
       <div className="mt-3"><FilterChips value={filter} onChange={handleFilterChange} /></div>
 
       {isLoading && <p className="mt-8 text-center text-sm text-muted">Loading…</p>}
-      {!isLoading && items.length === 0 && !isFiltered && <div className="mt-12 text-center text-muted"><p className="font-semibold text-deep">Your garden is empty — for now</p><p className="mt-1 text-sm">Words you meet in real life will grow here. Start with your first one.</p><Link to="/add"><Button variant="primary" className="mt-4">+ Add words</Button></Link></div>}
+      {!isLoading && items.length === 0 && !isFiltered && (
+        <div className="mt-8 flex flex-col items-center text-center text-muted">
+          <IllustrationSlot label="empty word bank" height={140} width={220} />
+          <p className="mt-4 font-semibold text-ink">Your garden is empty — for now</p>
+          <p className="mt-1 text-sm">Words you meet in real life will grow here. Start with your first one.</p>
+          <Link to="/add"><Button variant="primary" className="mt-4">+ Add words</Button></Link>
+        </div>
+      )}
       {!isLoading && items.length === 0 && isFiltered && <p className="mt-8 text-center text-sm text-muted">No words match this search or filter.</p>}
 
       <div className="words-layout mt-4">
@@ -70,5 +79,15 @@ export function WordsPage() {
 }
 
 function SearchBox({ query, onChange, className = '' }: { query: string; onChange: (value: string) => void; className?: string }) {
-  return <div className={`relative ${className}`}><Search size={15} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" /><Input value={query} onChange={(e) => onChange(e.target.value)} placeholder="Search — try ‘dog’ or ‘hund’" className="rounded-pill border-0 pl-10 shadow-none" /></div>;
+  return (
+    <div className={`relative ${className}`}>
+      <Input
+        value={query}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Search - try ‘dog’ or ‘hund’"
+        className="border-0 pl-10 shadow-none"
+        style={{ borderRadius: 9999 }}
+      />
+    </div>
+  );
 }

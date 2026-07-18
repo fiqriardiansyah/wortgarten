@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Sprout } from 'lucide-react';
 import type { DrillSessionResponse } from '@wortgarten/shared';
+import { tokens } from '@/design/tokens';
 import { fetchActiveSession } from './api/useActiveSession';
 import { SessionShell } from './SessionShell';
 import { useSessionStore } from './store';
@@ -39,8 +40,8 @@ export function SessionPage() {
 
   if (!ready || !sessionId) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-2 bg-page">
-        <Sprout size={28} className="animate-pulse text-primary" />
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-2" style={{ backgroundColor: tokens.color.bg }}>
+        <Sprout size={28} className="animate-pulse" style={{ color: tokens.color.teal }} />
         <p className="text-sm font-semibold text-muted">Loading…</p>
       </div>
     );

@@ -48,12 +48,12 @@ export function ResetPasswordPage() {
         title="Reset link invalid"
         subtitle="This link is expired or has already been used"
         footer={
-          <Link to="/forgot-password" className="font-bold text-primary">
+          <Link to="/forgot-password" className="font-bold text-teal">
             Request a new link
           </Link>
         }
       >
-        <p className="text-sm text-deep">Request a fresh password reset link and try again.</p>
+        <p className="text-sm text-ink">Request a fresh password reset link and try again.</p>
       </AuthShell>
     );
   }
@@ -62,7 +62,7 @@ export function ResetPasswordPage() {
     <AuthShell
       title="Set a new password"
       footer={
-        <Link to="/login" className="font-bold text-primary">
+        <Link to="/login" className="font-bold text-teal">
           Back to log in
         </Link>
       }

@@ -24,7 +24,7 @@ export function ProblemChildrenCard({ words, index }: ProblemChildrenCardProps) 
 
   return (
     <Card index={index}>
-      <h3 className="mb-3 font-bold text-deep">Your problem children 🤔</h3>
+      <h3 className="mb-3 font-bold text-ink">Your problem children 🤔</h3>
 
       {words.length === 0 ? (
         <p className="text-sm text-muted">No trouble words yet — keep drilling.</p>
@@ -34,7 +34,7 @@ export function ProblemChildrenCard({ words, index }: ProblemChildrenCardProps) 
             {words.map((word) => (
               <div key={word.userWordId} className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-deep">{word.displayForm}</p>
+                  <p className="truncate text-sm font-semibold text-ink">{word.displayForm}</p>
                   <p className="truncate text-xs text-muted">{word.translation}</p>
                 </div>
                 <Chip variant="lilac" className="flex-shrink-0">

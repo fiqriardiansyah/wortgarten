@@ -1,5 +1,6 @@
 import { BookOpen } from 'lucide-react';
 import { ZodError } from 'zod';
+import { tokens } from '@/design/tokens';
 import { useLibrary } from '@/read/api/useLibrary';
 import { HeroStoryCard } from '@/read/components/HeroStoryCard';
 import { EarlierStoryCard } from '@/read/components/EarlierStoryCard';
@@ -10,9 +11,9 @@ import { PickedUpCard } from '@/read/components/PickedUpCard';
 function Skeleton() {
   return (
     <div className="animate-pulse space-y-4">
-      <div className="h-10 w-1/3 rounded-card bg-card/60" />
-      <div className="h-56 rounded-card bg-card/60" />
-      <div className="h-32 rounded-card bg-card/60" />
+      <div className="h-10 w-1/3 rounded-sketch bg-card/60" />
+      <div className="h-56 rounded-sketch bg-card/60" />
+      <div className="h-32 rounded-sketch bg-card/60" />
     </div>
   );
 }
@@ -28,7 +29,7 @@ export function ReadPage() {
     return (
       <div className="py-12 text-center text-muted">
         {error instanceof ZodError ? "Couldn't load your library — its data looks malformed." : 'Failed to load your library. Is the API running?'}{' '}
-        <button onClick={() => refetch()} className="font-semibold text-primary hover:underline">
+        <button onClick={() => refetch()} className="font-semibold text-teal hover:underline">
           Try again
         </button>
       </div>
@@ -40,7 +41,7 @@ export function ReadPage() {
   if (stories.length === 0) {
     return (
       <div>
-        <h1 className="text-[28px] font-extrabold leading-tight text-deep">Read</h1>
+        <h1 className="text-[28px] font-extrabold leading-tight text-ink">Read</h1>
         <div className="mt-8 py-12 text-center text-muted">
           Your first story is brewing — add a few words and check back.
         </div>
@@ -57,11 +58,13 @@ export function ReadPage() {
     <div>
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-extrabold leading-tight text-deep">Read</h1>
+          <h1 className="text-[28px] font-extrabold leading-tight text-ink">Read</h1>
           <p className="mt-0.5 text-sm text-muted">Stories written from the words you know</p>
         </div>
-        <span className="flex flex-shrink-0 items-center gap-1.5 rounded-pill bg-card px-3 py-1.5 text-xs font-bold text-deep shadow-card">
-          <BookOpen size={14} className="text-primary" /> {readCount} stories read
+        <span
+          className="flex flex-shrink-0 items-center gap-1.5 rounded-pill border-2 border-line bg-surface px-3 py-1.5 text-xs font-bold text-ink"
+        >
+          <BookOpen size={14} style={{ color: tokens.color.teal }} /> {readCount} stories read
         </span>
       </div>
 
@@ -72,7 +75,7 @@ export function ReadPage() {
 
           {earlier.length > 0 && (
             <div>
-              <h2 className="mb-3 text-sm font-bold text-deep">Earlier stories</h2>
+              <h2 className="mb-3 text-sm font-bold text-ink">Earlier stories</h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {earlier.map((story, i) => (
                   <EarlierStoryCard key={story.id} story={story} index={i + 1} />

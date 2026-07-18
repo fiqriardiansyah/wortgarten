@@ -1,6 +1,7 @@
 import { motion, useMotionValue, useTransform, animate } from 'motion/react';
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
+import { tokens } from '@/design/tokens';
 
 interface ProgressRingProps {
   value: number;
@@ -17,7 +18,7 @@ export function ProgressRing({
   size = 88,
   strokeWidth = 8,
   children,
-  color = '#3DDC97',
+  color = tokens.concept.progress.fill,
 }: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -43,7 +44,7 @@ export function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#F0F0F0"
+          stroke={tokens.concept.progress.track}
           strokeWidth={strokeWidth}
         />
         <motion.circle

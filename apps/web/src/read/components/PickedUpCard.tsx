@@ -20,12 +20,12 @@ export function PickedUpCard({ stories, index }: PickedUpCardProps) {
 
   return (
     <Card index={index}>
-      <p className="text-sm font-bold text-deep">Picked up while reading</p>
+      <p className="text-sm font-bold text-ink">Picked up while reading</p>
       <div className="mt-3 flex flex-col gap-3">
         {picks.map(({ story, entry }) => (
           <div key={`${story.id}-${entry.lexemeId}`} className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-deep">{entry.displayLemma}</p>
+              <p className="truncate text-sm font-semibold text-ink">{entry.displayLemma}</p>
               <p className="truncate text-xs text-muted">from {story.title}</p>
             </div>
             <Chip variant="lilac" className="flex-shrink-0">
@@ -35,7 +35,7 @@ export function PickedUpCard({ stories, index }: PickedUpCardProps) {
         ))}
       </div>
       {totalNewWords > 0 && (
-        <p className="mt-3 text-xs font-semibold text-primary">
+        <p className="mt-3 text-xs font-semibold text-teal">
           Reading added {totalNewWords} word{totalNewWords === 1 ? '' : 's'} this month 🌱
         </p>
       )}

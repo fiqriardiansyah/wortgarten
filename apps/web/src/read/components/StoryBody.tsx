@@ -17,7 +17,7 @@ interface StoryBodyProps {
  * word token is just a lookup: its own `status` decides styling, `lexemeId` keys the popup content. */
 export function StoryBody({ story, fontSize, onTapWord }: StoryBodyProps) {
   return (
-    <div className={`flex flex-col gap-4 text-deep ${FONT_SIZE_CLASSES[fontSize]}`}>
+    <div className={`flex flex-col gap-4 text-ink ${FONT_SIZE_CLASSES[fontSize]}`}>
       {story.paragraphs.map((paragraph, pIndex) => (
         <p key={pIndex}>
           {paragraph.tokens.map((token, tIndex) => {
@@ -32,8 +32,8 @@ export function StoryBody({ story, fontSize, onTapWord }: StoryBodyProps) {
                 key={tIndex}
                 type="button"
                 onClick={() => onTapWord(token, paragraph)}
-                className={`rounded px-0.5 -mx-0.5 transition-colors hover:bg-lilac ${
-                  isNew ? 'font-semibold text-deep underline decoration-2 decoration-accent underline-offset-4' : ''
+                className={`rounded px-0.5 -mx-0.5 transition-colors hover:bg-teal-soft ${
+                  isNew ? 'font-semibold text-ink underline decoration-2 decoration-yellow underline-offset-4' : ''
                 }`}
               >
                 {token.text}

@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
 import { SpeakButton } from '@/components/ui/SpeakButton';
+import { tokens } from '@/design/tokens';
 
 interface WordPopupProps {
   story: Story;
@@ -22,7 +23,7 @@ export function WordPopup({ story, token, paragraph, onAdd, onClose }: WordPopup
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-4 sm:items-center"
+        className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30 p-4 sm:items-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -38,12 +39,12 @@ export function WordPopup({ story, token, paragraph, onAdd, onClose }: WordPopup
           <Card hover={false}>
             {!entry ? (
               // Degrades gracefully if a token's lexemeId doesn't resolve — never crash the reader.
-              <p className="text-sm text-deep">"{token.text}"</p>
+              <p className="text-sm text-ink">"{token.text}"</p>
             ) : (
               <>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-lg font-extrabold text-deep">{entry.displayLemma}</p>
+                    <p className="text-lg font-extrabold text-ink">{entry.displayLemma}</p>
                     <SpeakButton text={entry.displayLemma} />
                   </div>
                   {isNew && <Chip variant="accent">NEW</Chip>}
@@ -52,7 +53,9 @@ export function WordPopup({ story, token, paragraph, onAdd, onClose }: WordPopup
                   {entry.translation} · {entry.pos}
                 </p>
 
-                <p className="mt-3 rounded-xl bg-lilac/50 px-3 py-2 text-sm text-deep">{sentence}</p>
+                <p className="mt-3 rounded-xl px-3 py-2 text-sm text-ink" style={{ backgroundColor: tokens.color.tealSoft }}>
+                  {sentence}
+                </p>
 
                 {isNew ? (
                   <Button className="mt-4 w-full justify-center" icon={<Sparkles size={16} />} onClick={() => onAdd(entry.lexemeId)}>
@@ -62,7 +65,7 @@ export function WordPopup({ story, token, paragraph, onAdd, onClose }: WordPopup
                   <p className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-muted">
                     {token.status === 'known' ? (
                       <>
-                        <Check size={14} className="text-success" /> You know this word
+                        <Check size={14} className="text-teal" /> You know this word
                       </>
                     ) : (
                       'Common word — no need to review'

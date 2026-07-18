@@ -7,6 +7,7 @@ import { useStory, useMarkWordKnown } from '@/read/api/useStory';
 import { ReaderTopBar, type ReaderFontSize } from '@/read/components/ReaderTopBar';
 import { StoryBody } from '@/read/components/StoryBody';
 import { WordPopup } from '@/read/components/WordPopup';
+import { IllustrationSlot } from '@/components/ui/IllustrationSlot';
 
 interface SelectedWord {
   token: StoryToken;
@@ -50,7 +51,7 @@ export function ReaderPage() {
       return (
         <div className="py-12 text-center text-muted">
           Couldn't load this story — its data looks malformed.{' '}
-          <button onClick={() => refetch()} className="font-semibold text-primary hover:underline">
+          <button onClick={() => refetch()} className="font-semibold text-teal hover:underline">
             Try again
           </button>
         </div>
@@ -62,7 +63,7 @@ export function ReaderPage() {
     return (
       <div className="py-12 text-center text-muted">
         Failed to load this story.{' '}
-        <button onClick={() => refetch()} className="font-semibold text-primary hover:underline">
+        <button onClick={() => refetch()} className="font-semibold text-teal hover:underline">
           Try again
         </button>
       </div>
@@ -81,16 +82,18 @@ export function ReaderPage() {
     <div className="mx-auto max-w-2xl">
       <ReaderTopBar title={story.title} fontSize={fontSize} onFontSizeChange={setFontSize} progress={progress} />
 
+      <IllustrationSlot label="story reader header" height={120} className="mb-4" />
+
       <StoryBody story={story} fontSize={fontSize} onTapWord={(token, paragraph) => setSelected({ token, paragraph })} />
 
       <p className="mt-6 text-center text-xs text-muted">tap = review · underlined = new word</p>
 
       {/* `translation` is nullable — most stories won't have one yet, so this only renders when present. */}
       {story.translation && (
-        <div className="mt-4 border-t border-gray-100 pt-4">
+        <div className="mt-4 border-t border-line pt-4">
           <button
             onClick={() => setShowTranslation((v) => !v)}
-            className="text-xs font-semibold text-primary hover:underline"
+            className="text-xs font-semibold text-teal hover:underline"
           >
             {showTranslation ? 'Hide' : 'Show'} English translation
           </button>

@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SpeakButton } from '@/components/ui/SpeakButton';
 import { StatNumber } from '@/components/ui/StatNumber';
+import { IllustrationSlot } from '@/components/ui/IllustrationSlot';
 import { cardEnterTransition, cardEnterVariants } from '@/design/motion';
+import { tokens } from '@/design/tokens';
 import { useHomeQuery } from '@/features/home/api/useHomeQuery';
 
 interface SessionSummaryProps {
@@ -49,16 +51,19 @@ export function SessionSummary({ summary, onStartNext, startNextPending, onPract
 
   return (
     <div className="mx-auto max-w-md text-center">
-      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
-        <span className="text-5xl" aria-hidden>
-          🎉
-        </span>
+      <motion.div
+        className="mx-auto flex justify-center"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      >
+        <IllustrationSlot label="session complete" width={160} height={120} />
       </motion.div>
-      <h1 className="mt-3 text-heading font-extrabold text-deep">Session done!</h1>
+      <h1 className="mt-3 text-heading font-extrabold text-ink">Session done!</h1>
       <p className="mt-1 text-muted">{minutesLabel(summary.elapsedMs)}</p>
 
       {home?.streak.learnedToday && (
-        <p className="mt-3 font-extrabold text-gold">
+        <p className="mt-3 font-extrabold text-yellow-deep">
           🔥 {home.streak.current}
         </p>
       )}
@@ -79,19 +84,19 @@ export function SessionSummary({ summary, onStartNext, startNextPending, onPract
           animate="visible"
           transition={cardEnterTransition(i + 1)}
         >
-          <Card hover={false} className="mt-4 bg-gold/10">
-            <p className="flex items-center justify-center gap-1.5 font-extrabold text-gold">
-              🏆 {word.displayForm} is now gold!
+          <Card hover={false} className="mt-4" fill={tokens.color.tealSoft} stroke={tokens.color.teal}>
+            <p className="flex items-center justify-center gap-1.5 font-extrabold text-teal-deep">
+              🏆 {word.displayForm} is mastered!
               <SpeakButton text={word.displayForm} size={16} />
             </p>
-            <p className="mt-1 text-sm text-deep">You used it in a sentence — it's truly yours now.</p>
+            <p className="mt-1 text-sm text-ink">You used it in a sentence — it's truly yours now.</p>
           </Card>
         </motion.div>
       ))}
 
       {secondCard && (
         <Card hover={false} className="mt-4">
-          <p className="text-sm text-deep">{secondCard.label}</p>
+          <p className="text-sm text-ink">{secondCard.label}</p>
         </Card>
       )}
 
@@ -111,7 +116,7 @@ export function SessionSummary({ summary, onStartNext, startNextPending, onPract
       ) : (
         <>
           <Card hover={false} className="mt-6">
-            <p className="flex items-center justify-center gap-2 font-extrabold text-deep">
+            <p className="flex items-center justify-center gap-2 font-extrabold text-ink">
               <Sprout size={20} /> Nothing's due
             </p>
             <p className="mt-1 text-sm text-muted">Your words are sticking. German grows when you meet new ones.</p>
@@ -125,7 +130,7 @@ export function SessionSummary({ summary, onStartNext, startNextPending, onPract
                 type="button"
                 onClick={onPracticeMore}
                 disabled={practicePending}
-                className="mt-3 text-sm font-semibold text-primary hover:underline disabled:opacity-60"
+                className="mt-3 text-sm font-semibold text-teal hover:underline disabled:opacity-60"
               >
                 Practice {wordsLabel(summary.practiceCount)}
               </button>

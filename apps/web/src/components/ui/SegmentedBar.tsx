@@ -20,7 +20,10 @@ export function SegmentedBar({ segments, className = '', onDark = false }: Segme
 
   return (
     <div className={className}>
-      <div className={`flex h-3 w-full overflow-hidden rounded-pill ${onDark ? 'bg-white/20' : 'bg-gray-100'}`}>
+      <div
+        className="flex h-3 w-full overflow-hidden rounded-pill"
+        style={{ backgroundColor: onDark ? 'rgba(255,255,255,0.2)' : tokens.color.line }}
+      >
         {segments.map((seg, i) => {
           const pct = total > 0 ? (seg.count / total) * 100 : 0;
           return (
@@ -40,7 +43,7 @@ export function SegmentedBar({ segments, className = '', onDark = false }: Segme
           <div key={seg.label} className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: seg.color }} />
             <span className={`text-xs ${onDark ? 'text-white/80' : 'text-muted'}`}>
-              {seg.label} <span className={`font-semibold ${onDark ? 'text-white' : 'text-deep'}`}>{seg.count}</span>
+              {seg.label} <span className={`font-semibold ${onDark ? 'text-white' : 'text-ink'}`}>{seg.count}</span>
             </span>
           </div>
         ))}
@@ -49,8 +52,9 @@ export function SegmentedBar({ segments, className = '', onDark = false }: Segme
   );
 }
 
+// Mastered is teal, never yellow — yellow means "progress in motion", teal means "achieved" (§2.3).
 export const segmentColors = {
-  new: tokens.colors.muted,
-  learning: tokens.colors.primary,
-  mastered: tokens.colors.gold,
+  new: tokens.color.muted,
+  learning: tokens.color.teal,
+  mastered: tokens.color.tealDeep,
 };

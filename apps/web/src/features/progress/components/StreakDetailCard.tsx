@@ -100,13 +100,13 @@ export function StreakDetailCard({ week, streak, index }: StreakDetailCardProps)
   return (
     <Card index={index} hover={false}>
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-base font-bold text-deep sm:text-heading-sm">{resolvedWeek.todayLabel}</h2>
+        <h2 className="text-base font-bold text-ink sm:text-heading-sm">{resolvedWeek.todayLabel}</h2>
         <div
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-pill bg-lilac px-3.5 py-2 text-sm font-extrabold text-deep"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-pill bg-yellow-soft px-3.5 py-2 text-sm font-extrabold text-yellow-deep"
           aria-label={`${resolvedWeek.currentStreak} day streak`}
         >
           <AnimatedStreak value={resolvedWeek.currentStreak} />
-          <Flame className="h-4 w-4 fill-accent text-accent" aria-hidden="true" />
+          <Flame className="h-4 w-4 fill-yellow-deep text-yellow-deep" aria-hidden="true" />
         </div>
       </div>
 
@@ -115,10 +115,10 @@ export function StreakDetailCard({ week, streak, index }: StreakDetailCardProps)
           const showFlame = day.state === 'learned' || (day.isToday && day.isLearned);
           const showSnowflake = day.state === 'frozen';
           const circleTone = day.isToday
-            ? 'border-primary bg-primary'
+            ? 'border-teal bg-teal'
             : showFlame || showSnowflake
-              ? 'border-lilac bg-lilac'
-              : 'border-muted/30 bg-transparent';
+              ? 'border-yellow-soft bg-yellow-soft'
+              : 'border-line bg-transparent';
 
           return (
             <motion.div
@@ -134,11 +134,11 @@ export function StreakDetailCard({ week, streak, index }: StreakDetailCardProps)
                 transition={day.isToday && !reduceMotion ? { duration: 2.4, repeat: Infinity, ease: 'easeInOut' } : undefined}
                 aria-label={`${day.label}: ${day.isToday && day.isLearned ? 'learned today' : day.state}`}
               >
-                {showFlame && <Flame className="h-5 w-5 fill-accent text-accent" aria-hidden="true" />}
-                {showSnowflake && <Snowflake className="h-5 w-5 text-primary" aria-hidden="true" />}
+                {showFlame && <Flame className="h-5 w-5 fill-yellow-deep text-yellow-deep" aria-hidden="true" />}
+                {showSnowflake && <Snowflake className="h-5 w-5 text-yellow-deep" aria-hidden="true" />}
                 {day.isToday && !day.isLearned && <span className="h-3 w-3 rounded-full border-2 border-white/80" />}
               </motion.div>
-              <span className={`text-xs ${day.isToday ? 'font-extrabold text-primary' : 'font-semibold text-muted'}`}>
+              <span className={`text-xs ${day.isToday ? 'font-extrabold text-teal' : 'font-semibold text-muted'}`}>
                 {day.label}
               </span>
             </motion.div>
@@ -146,8 +146,8 @@ export function StreakDetailCard({ week, streak, index }: StreakDetailCardProps)
         })}
       </div>
 
-      <div className="mt-5 flex items-start gap-2 border-t border-lilac pt-4 text-xs leading-relaxed text-muted">
-        <Snowflake className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+      <div className="mt-5 flex items-start gap-2 border-t border-line pt-4 text-xs leading-relaxed text-muted">
+        <Snowflake className="mt-0.5 h-4 w-4 shrink-0 text-yellow-deep" aria-hidden="true" />
         <p>
           {savedDay
             ? `A freeze saved your streak on ${savedDay}.`

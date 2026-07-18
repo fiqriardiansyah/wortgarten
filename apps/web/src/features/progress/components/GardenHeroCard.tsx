@@ -1,6 +1,5 @@
 import { Card } from '@/components/ui/Card';
 import { SegmentedBar } from '@/components/ui/SegmentedBar';
-import { tokens } from '@/design/tokens';
 import type { GardenStats } from '@wortgarten/shared';
 
 interface GardenHeroCardProps {
@@ -8,12 +7,12 @@ interface GardenHeroCardProps {
   index: number;
 }
 
-// Deliberately not the shared `segmentColors` from Home's GardenCard — that set uses primary
-// purple for "learning", which would be invisible against this card's own primary background.
+// This card's own solid teal background — brand-colored segments would vanish against it, so the
+// bar reads as translucency steps instead (mastered = most opaque = solid white).
 const heroSegmentColors = {
-  new: tokens.colors.muted,
-  learning: tokens.colors.lilac,
-  mastered: tokens.colors.goldLight,
+  new: 'rgba(255,255,255,0.35)',
+  learning: 'rgba(255,255,255,0.65)',
+  mastered: '#FFFFFF',
 };
 
 export function GardenHeroCard({ garden, index }: GardenHeroCardProps) {

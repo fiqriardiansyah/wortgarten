@@ -8,7 +8,7 @@ export function WordDetailPage() {
 
   return (
     <div className="lg:ml-auto lg:max-w-md">
-      <Link to="/words" className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-deep">
+      <Link to="/words" className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-ink">
         <ArrowLeft size={16} /> Back to your words
       </Link>
       <WordDetails id={id} onDeleted={() => navigate('/words')} />

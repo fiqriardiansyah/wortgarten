@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { SpeakButton } from '@/components/ui/SpeakButton';
 import { partOfSpeechLabel } from '@/lib/partOfSpeech';
 import { ladderLevelChipVariant, ladderLevelLabel } from '@/lib/wordLevel';
+import { tokens } from '@/design/tokens';
 import { ApiError } from '@/lib/apiClient';
 import { usePracticeSession } from '@/features/session/api/usePracticeSession';
 import { useWordDetailQuery } from '../api/useWordDetailQuery';
@@ -70,7 +71,7 @@ export function WordDetails({ id, onDeleted, sticky = false }: WordDetailsProps)
     <div className={sticky ? 'sticky top-6' : undefined}>
       <Card hover={false}>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-heading-sm font-extrabold text-deep">{fullDisplayForm(word.lexeme)}</h1>
+          <h1 className="text-heading-sm font-extrabold text-ink">{fullDisplayForm(word.lexeme)}</h1>
           <SpeakButton text={displayForm(word.lexeme)} size={20} />
           <Chip variant="lilac">{partOfSpeechLabel[word.lexeme.partOfSpeech]}</Chip>
           {word.isIncomplete && <IncompleteBadge />}
@@ -85,12 +86,12 @@ export function WordDetails({ id, onDeleted, sticky = false }: WordDetailsProps)
 
         {!isEditing ? (
           <>
-            <p className="mt-4 text-lg font-semibold text-deep">{word.translation}</p>
+            <p className="mt-4 text-lg font-semibold text-ink">{word.translation}</p>
             {word.example && <p className="mt-1 text-sm italic text-muted">“{word.example}”</p>}
             {word.sourceSentence && (
-              <div className="mt-3 rounded-xl bg-lilac/50 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary">Where you met it</p>
-                <p className="mt-1 text-sm text-deep">“{word.sourceSentence}”</p>
+              <div className="mt-3 rounded-xl p-3" style={{ backgroundColor: tokens.color.tealSoft }}>
+                <p className="text-xs font-semibold uppercase tracking-wide text-teal-deep">Where you met it</p>
+                <p className="mt-1 text-sm text-ink">“{word.sourceSentence}”</p>
               </div>
             )}
             {word.note && <p className="mt-3 text-sm text-muted">Note: {word.note}</p>}

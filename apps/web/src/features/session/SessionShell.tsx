@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { SessionCompleteResponse, TaskResponse } from '@wortgarten/shared';
 import { Button } from '@/components/ui/Button';
 import { LinearProgress } from '@/components/ui/LinearProgress';
+import { tokens } from '@/design/tokens';
 import { fetchActiveSession } from './api/useActiveSession';
 import { useAbandonSession } from './api/useAbandonSession';
 import { useCompleteSession } from './api/useCompleteSession';
@@ -16,8 +17,6 @@ import { BuildSentenceTask } from './tasks/BuildSentenceTask';
 import { PickMeaningTask } from './tasks/PickMeaningTask';
 import { TypeWordTask } from './tasks/TypeWordTask';
 
-const SUCCESS_GREEN = '#3DDC97';
-
 function FullscreenLayout({
   children,
   onExit,
@@ -30,16 +29,16 @@ function FullscreenLayout({
   total?: number;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-page">
+    <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto" style={{ backgroundColor: tokens.color.bg }}>
       <div className="flex items-center gap-4 px-4 py-4">
         {onExit ? (
-          <button type="button" onClick={onExit} aria-label="Exit session" className="text-2xl text-muted hover:text-deep">
+          <button type="button" onClick={onExit} aria-label="Exit session" className="text-2xl text-muted hover:text-ink">
             ✕
           </button>
         ) : (
           <div className="w-6" />
         )}
-        <div className="flex-1">{total !== undefined && progress !== undefined && <LinearProgress value={progress} max={total} color={SUCCESS_GREEN} />}</div>
+        <div className="flex-1">{total !== undefined && progress !== undefined && <LinearProgress value={progress} max={total} />}</div>
         {total !== undefined && progress !== undefined && (
           <span className="text-sm font-semibold text-muted">
             {Math.min(progress, total)}/{total}

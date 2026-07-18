@@ -12,12 +12,12 @@ interface RecentlyAddedCardProps {
 export function RecentlyAddedCard({ words, index }: RecentlyAddedCardProps) {
   return (
     <Card index={index}>
-      <h3 className="font-bold text-deep mb-3">Recently added</h3>
+      <h3 className="font-bold text-ink mb-3">Recently added</h3>
       <div className="flex flex-col gap-2.5">
         {words.map((word, i) => (
           <div key={word.german + i} className="flex items-center justify-between">
             <div>
-              <span className="font-semibold text-deep text-sm">{word.german}</span>
+              <span className="font-semibold text-ink text-sm">{word.german}</span>
               <span className="text-muted text-sm"> / {word.native}</span>
             </div>
             <Chip variant={wordLevelChipVariant[word.level]}>
@@ -28,7 +28,7 @@ export function RecentlyAddedCard({ words, index }: RecentlyAddedCardProps) {
       </div>
       <Link
         to="/words"
-        className="mt-4 block text-sm font-semibold text-primary hover:underline"
+        className="mt-4 block text-sm font-semibold text-teal hover:underline"
       >
         View all words →
       </Link>

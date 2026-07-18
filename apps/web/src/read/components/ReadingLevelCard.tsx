@@ -1,6 +1,5 @@
 import { Card } from '@/components/ui/Card';
 import { LinearProgress } from '@/components/ui/LinearProgress';
-import { tokens } from '@/design/tokens';
 import type { ReadingLevel } from '@wortgarten/shared';
 
 interface ReadingLevelCardProps {
@@ -13,11 +12,11 @@ export function ReadingLevelCard({ level, index }: ReadingLevelCardProps) {
 
   return (
     <Card index={index}>
-      <p className="text-sm font-bold text-deep">Your reading level</p>
-      <p className="mt-2 text-hero-sm font-extrabold text-primary">{wordsUnlocked}</p>
+      <p className="text-sm font-bold text-ink">Your reading level</p>
+      <p className="mt-2 text-hero-sm font-extrabold text-teal">{wordsUnlocked}</p>
       <p className="text-xs text-muted">words unlocked · longer stories at {nextThreshold}</p>
       <div className="mt-3">
-        <LinearProgress value={wordsUnlocked} max={nextThreshold} color={tokens.colors.success} />
+        <LinearProgress value={wordsUnlocked} max={nextThreshold} />
       </div>
       <p className="mt-2 text-xs text-muted">
         {wordsToGo} more words to unlock {nextUnlockLabel}

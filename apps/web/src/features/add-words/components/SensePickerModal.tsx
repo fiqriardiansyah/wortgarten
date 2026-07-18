@@ -23,7 +23,7 @@ export function SensePickerModal({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -38,7 +38,7 @@ export function SensePickerModal({
         >
           <Card hover={false}>
             <p className="text-sm text-muted">
-              Which meaning of <span className="font-bold text-deep">"{surface}"</span> did you mean?
+              Which meaning of <span className="font-bold text-ink">"{surface}"</span> did you mean?
             </p>
             <div className="mt-3 flex flex-col gap-2">
               {candidates.map((candidate) => (
@@ -47,8 +47,8 @@ export function SensePickerModal({
                   onClick={() => onChoose(candidate.senseId)}
                   className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
                     selectedSenseId === candidate.senseId
-                      ? 'border-primary bg-lilac text-primary'
-                      : 'border-gray-200 text-deep hover:bg-lilac/50'
+                      ? 'border-teal bg-teal-soft text-teal-deep'
+                      : 'border-line text-ink hover:bg-teal-soft/50'
                   }`}
                 >
                   <span className="font-semibold">{displayForm(candidate.lexeme)}</span>

@@ -7,9 +7,9 @@ interface ConsistencyCardProps {
 }
 
 const STATS = [
-  { key: 'current', label: 'current streak', color: 'text-primary' },
-  { key: 'longest', label: 'longest', color: 'text-deep' },
-  { key: 'totalLearningDays', label: 'total days', color: 'text-deep' },
+  { key: 'current', label: 'current streak', color: 'text-teal' },
+  { key: 'longest', label: 'longest', color: 'text-ink' },
+  { key: 'totalLearningDays', label: 'total days', color: 'text-ink' },
 ] as const;
 
 export function ConsistencyCard({ streak, index }: ConsistencyCardProps) {
@@ -34,7 +34,7 @@ export function ConsistencyCard({ streak, index }: ConsistencyCardProps) {
             key={day.date}
             title={day.date}
             className={`flex h-6 w-6 items-center justify-center rounded-md text-[10px] ${
-              day.state === 'completed' ? 'bg-success' : day.state === 'frozen' ? 'bg-lilac' : 'bg-gray-100'
+              day.state === 'completed' ? 'bg-teal' : day.state === 'frozen' ? 'bg-yellow-soft' : 'bg-line-soft'
             }`}
           >
             {day.state === 'frozen' && '❄️'}

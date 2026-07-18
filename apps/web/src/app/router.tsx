@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Sprout } from 'lucide-react';
 import { authClient } from '@/lib/authClient';
+import { tokens } from '@/design/tokens';
 import { AppLayout } from './layout/AppLayout';
 import { HomePage } from '@/features/home/HomePage';
 import { LoginPage } from '@/features/auth/LoginPage';
@@ -18,8 +19,8 @@ import { ReaderPage } from '@/read/ReaderPage';
 
 function AuthLoadingScreen() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-2 bg-page font-sans">
-      <Sprout size={28} className="animate-pulse text-primary" />
+    <div className="flex min-h-screen flex-col items-center justify-center gap-2 font-sans" style={{ backgroundColor: tokens.color.bg }}>
+      <Sprout size={28} className="animate-pulse" style={{ color: tokens.color.teal }} />
       <p className="text-sm font-semibold text-muted">Loading…</p>
     </div>
   );

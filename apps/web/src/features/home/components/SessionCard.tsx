@@ -59,7 +59,7 @@ export function SessionCard({ session, index }: SessionCardProps) {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {previewWords.map((w) => (
-              <Chip key={w} variant="lilac" className="bg-white/20 text-white">
+              <Chip key={w} variant="lilac" style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#FFFFFF', borderColor: 'rgba(255,255,255,0.4)' }}>
                 {w}
               </Chip>
             ))}

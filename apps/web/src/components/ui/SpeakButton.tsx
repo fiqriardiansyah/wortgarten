@@ -26,7 +26,7 @@ export function SpeakButton({ text, size = 16, className = '' }: SpeakButtonProp
         event.stopPropagation();
         speak(text);
       }}
-      className={`inline-flex shrink-0 items-center justify-center rounded-full text-primary hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full text-teal hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 ${className}`}
     >
       <Volume2 size={size} aria-hidden />
     </motion.button>

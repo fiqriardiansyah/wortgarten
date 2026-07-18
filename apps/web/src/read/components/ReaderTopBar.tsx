@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { tokens } from '@/design/tokens';
 
 export type ReaderFontSize = 'S' | 'M' | 'L';
 
@@ -16,19 +17,22 @@ export function ReaderTopBar({ title, fontSize, onFontSizeChange, progress }: Re
   const navigate = useNavigate();
 
   return (
-    <div className="sticky top-0 z-10 -mx-4 mb-4 bg-page/95 px-4 pb-2 pt-1 backdrop-blur lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:backdrop-blur-none">
+    <div
+      className="sticky top-0 z-10 -mx-4 mb-4 px-4 pb-2 pt-1 backdrop-blur lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:backdrop-blur-none"
+      style={{ backgroundColor: 'color-mix(in srgb, ' + tokens.color.bg + ' 95%, transparent)' }}
+    >
       <div className="flex items-center justify-between gap-3">
         <button
           onClick={() => navigate('/read')}
           aria-label="Back to Read"
-          className="flex items-center gap-1 text-sm font-semibold text-muted transition-colors hover:text-deep"
+          className="flex items-center gap-1 text-sm font-semibold text-muted transition-colors hover:text-ink"
         >
           <ArrowLeft size={16} /> <span className="hidden sm:inline">Back</span>
         </button>
 
-        <h1 className="min-w-0 flex-1 truncate text-center text-sm font-bold text-deep">{title}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-center text-sm font-bold text-ink">{title}</h1>
 
-        <div className="flex flex-shrink-0 items-center gap-0.5 rounded-pill bg-card px-1 py-1 shadow-card">
+        <div className="flex flex-shrink-0 items-center gap-0.5 rounded-pill border-2 border-line bg-surface px-1 py-1">
           {FONT_SIZES.map((size) => (
             <button
               key={size}
@@ -36,7 +40,7 @@ export function ReaderTopBar({ title, fontSize, onFontSizeChange, progress }: Re
               aria-label={`Font size ${size}`}
               aria-pressed={fontSize === size}
               className={`rounded-pill px-2 py-0.5 font-bold transition-colors ${
-                fontSize === size ? 'bg-primary text-white' : 'text-muted hover:text-deep'
+                fontSize === size ? 'bg-teal text-white' : 'text-muted hover:text-ink'
               } ${size === 'S' ? 'text-xs' : size === 'M' ? 'text-sm' : 'text-base'}`}
             >
               Aa
@@ -45,8 +49,8 @@ export function ReaderTopBar({ title, fontSize, onFontSizeChange, progress }: Re
         </div>
       </div>
 
-      <div className="mt-2 h-1 w-full overflow-hidden rounded-pill bg-gray-100">
-        <div className="h-full rounded-pill bg-primary transition-[width]" style={{ width: `${progress}%` }} />
+      <div className="mt-2 h-1 w-full overflow-hidden rounded-pill bg-line">
+        <div className="h-full rounded-pill bg-teal transition-[width]" style={{ width: `${progress}%` }} />
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ export function LoginPage() {
       footer={
         <>
           Don&apos;t have an account?{' '}
-          <Link to="/signup" className="font-bold text-primary">
+          <Link to="/signup" className="font-bold text-teal">
             Sign up
           </Link>
         </>
@@ -65,7 +65,7 @@ export function LoginPage() {
         />
 
         <div className="-mt-2 text-right">
-          <Link to="/forgot-password" className="text-xs font-semibold text-muted hover:text-primary">
+          <Link to="/forgot-password" className="text-xs font-semibold text-muted hover:text-teal">
             Forgot password?
           </Link>
         </div>
@@ -78,9 +78,9 @@ export function LoginPage() {
       </form>
 
       <div className="my-5 flex items-center gap-3">
-        <div className="h-px flex-1 bg-gray-100" />
+        <div className="h-px flex-1 bg-line" />
         <span className="text-xs font-semibold text-muted">OR</span>
-        <div className="h-px flex-1 bg-gray-100" />
+        <div className="h-px flex-1 bg-line" />
       </div>
 
       <GoogleButton

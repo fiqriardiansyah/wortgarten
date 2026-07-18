@@ -13,7 +13,7 @@
   }
 
   body {
-    @apply bg-page font-sans text-deep;
+    @apply bg-bg font-sans text-ink;
     margin: 0;
   }
 }

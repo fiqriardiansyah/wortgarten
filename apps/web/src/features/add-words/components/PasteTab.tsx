@@ -54,10 +54,10 @@ function TokenSpan({
   }
 
   const wordClasses = selected
-    ? `bg-primary text-white ${active ? 'ring-2 ring-primary ring-offset-1' : ''}`
+    ? `bg-teal text-white ${active ? 'ring-2 ring-teal ring-offset-1' : ''}`
     : active
-      ? 'border-2 border-primary text-primary bg-transparent'
-      : 'border border-dashed border-primary/50 text-primary hover:bg-lilac/40';
+      ? 'border-2 border-teal text-teal bg-transparent'
+      : 'border border-dashed border-teal/50 text-teal hover:bg-teal-soft';
 
   return (
     <span className="inline-flex items-center align-baseline">
@@ -100,8 +100,8 @@ function renderTokens(
 
 function EmptyState({ hint }: { hint: boolean }) {
   return (
-    <div className="mt-3 rounded-card bg-card p-5 text-center shadow-card">
-      <p className="font-semibold text-deep">No German words found.</p>
+    <div className="mt-3 rounded-sketch border-2 border-line bg-card p-5 text-center">
+      <p className="font-semibold text-ink">No German words found.</p>
       <p className="mt-1 text-sm text-muted">
         We didn't recognize any of these. They may be names, typos, or words outside our dictionary.
       </p>
@@ -193,7 +193,7 @@ export function PasteTab() {
         onChange={(e) => setText(e.target.value)}
         placeholder="Paste a German sentence or paragraph you just read…"
         rows={5}
-        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 font-sans text-sm text-deep placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        className="w-full rounded-xl border border-line bg-white px-4 py-3 font-sans text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent"
       />
       <div className="mt-1 flex items-center justify-between text-xs text-muted">
         <span>{tooLong ? <span className="font-semibold text-coral">Too long — keep it under {MAX_LENGTH} characters.</span> : ''}</span>
@@ -211,7 +211,7 @@ export function PasteTab() {
         {analyze.isPending ? 'Analyzing…' : 'Analyze'}
       </Button>
 
-      {addedMessage && <p className="mt-4 text-sm font-semibold text-success">{addedMessage}</p>}
+      {addedMessage && <p className="mt-4 text-sm font-semibold text-teal">{addedMessage}</p>}
 
       {analysis && noMatches && <EmptyState hint={suggestsNonGermanText(analysis.text)} />}
 
@@ -230,15 +230,15 @@ export function PasteTab() {
             </p>
           )}
 
-          <div className="mt-3 rounded-card bg-card p-4 shadow-card">
+          <div className="mt-3 rounded-sketch border-2 border-line bg-card p-4">
             {hasAddableTokens && <p className="text-sm text-muted">Tap a highlighted word to see its meaning and add it</p>}
             <div className="mt-3 flex flex-wrap items-center gap-x-1 gap-y-2 whitespace-pre-wrap leading-8">
               {renderTokens(analysis.text, analysis.tokens, selected, activeTokenStart, handleTap)}
             </div>
 
             {activeToken?.candidates && activeToken.candidates.length > 0 && (
-              <div className="mt-4 rounded-xl border border-gray-200 p-4">
-                <p className="font-bold text-deep">Choose the meaning of “{activeToken.surface}”</p>
+              <div className="mt-4 rounded-xl border border-line p-4">
+                <p className="font-bold text-ink">Choose the meaning of “{activeToken.surface}”</p>
                 <div className="mt-3 flex flex-col gap-2">
                   {activeToken.candidates.map((candidate) => (
                     <button
@@ -247,12 +247,12 @@ export function PasteTab() {
                       onClick={() => setDraftSenseId(candidate.senseId)}
                       className={`flex items-center justify-between gap-4 rounded-xl border px-3 py-2 text-left transition-colors ${
                         draftSenseId === candidate.senseId
-                          ? 'border-primary bg-lilac/60'
-                          : 'border-gray-200 hover:border-primary/40 hover:bg-lilac/20'
+                          ? 'border-teal bg-teal-soft'
+                          : 'border-line hover:border-teal/40 hover:bg-teal-soft/40'
                       }`}
                     >
                       <span>
-                        <span className="block font-semibold text-deep">{candidate.lexeme.lemma}</span>
+                        <span className="block font-semibold text-ink">{candidate.lexeme.lemma}</span>
                         <span className="block text-sm text-muted">
                           {candidate.translation} · {partOfSpeechLabel[candidate.lexeme.partOfSpeech]}
                         </span>
@@ -260,7 +260,7 @@ export function PasteTab() {
                       <span
                         aria-hidden="true"
                         className={`h-4 w-4 shrink-0 rounded-full border-2 ${
-                          draftSenseId === candidate.senseId ? 'border-primary bg-primary ring-2 ring-white ring-inset' : 'border-gray-300'
+                          draftSenseId === candidate.senseId ? 'border-teal bg-teal ring-2 ring-white ring-inset' : 'border-line'
                         }`}
                       />
                     </button>

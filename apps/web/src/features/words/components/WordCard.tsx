@@ -6,6 +6,7 @@ import { Chip } from '@/components/ui/Chip';
 import { IncompleteBadge } from '@/components/ui/IncompleteBadge';
 import { SpeakButton } from '@/components/ui/SpeakButton';
 import { ladderLevelChipVariant, ladderLevelLabel } from '@/lib/wordLevel';
+import { tokens } from '@/design/tokens';
 
 interface WordCardProps {
   word: WordCardData;
@@ -39,14 +40,14 @@ export function WordCard({ word, index, selected = false, onSelect }: WordCardPr
     >
       <Card
         index={index}
-        className={`!rounded-[18px] border-2 !p-4 transition-colors ${
-          selected ? 'border-primary' : 'border-transparent'
-        } ${word.isRusty ? 'opacity-60' : ''}`}
+        className="!p-4"
+        stroke={selected ? tokens.color.teal : tokens.color.ink}
+        style={word.isRusty ? { opacity: tokens.concept.word.rusty.opacity } : undefined}
       >
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-1.5">
-              <p className="font-bold text-deep">{displayForm(word.lexeme)}</p>
+              <p className="font-bold text-ink">{displayForm(word.lexeme)}</p>
               <SpeakButton text={displayForm(word.lexeme)} size={14} />
             </div>
             <p className="text-xs text-muted">{word.translation} · {word.lexeme.partOfSpeech}</p>

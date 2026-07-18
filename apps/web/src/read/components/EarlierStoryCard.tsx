@@ -26,7 +26,7 @@ export function EarlierStoryCard({ story, index }: EarlierStoryCardProps) {
       className="w-full text-left"
     >
       <Card index={index} className="h-full">
-        <h3 className="font-bold text-deep">{story.title}</h3>
+        <h3 className="font-bold text-ink">{story.title}</h3>
         {story.blurb && <p className="mt-1 text-sm text-muted line-clamp-2">{story.blurb}</p>}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -41,7 +41,7 @@ export function EarlierStoryCard({ story, index }: EarlierStoryCardProps) {
             <Clock size={12} /> {story.estMinutes} min
           </span>
           {story.isRead && (
-            <span className="flex items-center gap-1 text-xs font-semibold text-success">
+            <span className="flex items-center gap-1 text-xs font-semibold text-teal">
               <Check size={12} /> read
             </span>
           )}

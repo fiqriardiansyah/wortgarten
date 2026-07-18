@@ -31,11 +31,11 @@ export function GardenCard({ garden, index }: GardenCardProps) {
       {/* Mobile: two side-by-side stat cards */}
       <div className="grid grid-cols-2 gap-3 lg:hidden">
         <Card index={index} className="!p-4">
-          <p className="text-[28px] font-extrabold text-primary leading-none">{collected}</p>
+          <p className="text-[28px] font-extrabold text-teal leading-none">{collected}</p>
           <p className="mt-1 text-xs text-muted">words in garden 🌱</p>
         </Card>
         <Card index={index + 0.5} className="!p-4">
-          <p className="text-[28px] font-extrabold text-gold leading-none">{mastered}</p>
+          <p className="text-[28px] font-extrabold text-teal-deep leading-none">{mastered}</p>
           <p className="mt-1 text-xs text-muted">mastered 🏆</p>
         </Card>
       </div>

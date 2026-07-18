@@ -37,13 +37,13 @@ export function ForgotPasswordPage() {
       title="Forgot your password?"
       subtitle="We'll send a reset link to your email"
       footer={
-        <Link to="/login" className="font-bold text-primary">
+        <Link to="/login" className="font-bold text-teal">
           Back to log in
         </Link>
       }
     >
       {sent ? (
-        <p className="text-sm text-deep">
+        <p className="text-sm text-ink">
           If an account exists for <span className="font-bold">{email}</span>, a reset link is on its way. In dev,
           check the API console log for the link.
         </p>
