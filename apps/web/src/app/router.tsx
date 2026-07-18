@@ -13,15 +13,8 @@ import { SessionPage } from '@/features/session/SessionPage';
 import { WordsPage } from '@/features/words/WordsPage';
 import { WordDetailPage } from '@/features/words/detail/WordDetailPage';
 import { ProgressPage } from '@/features/progress/ProgressPage';
-
-function Placeholder({ title }: { title: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
-      <h1 className="text-heading font-bold text-deep">{title}</h1>
-      <p className="mt-2 text-muted">Coming soon</p>
-    </div>
-  );
-}
+import { ReadPage } from '@/read/ReadPage';
+import { ReaderPage } from '@/read/ReaderPage';
 
 function AuthLoadingScreen() {
   return (
@@ -92,7 +85,8 @@ export function AppRouter() {
           <Route path="/" element={<HomePage />} />
           <Route path="/words" element={<WordsPage />} />
           <Route path="/words/:id" element={<WordDetailPage />} />
-          <Route path="/read" element={<Placeholder title="Read" />} />
+          <Route path="/read" element={<ReadPage />} />
+          <Route path="/read/:id" element={<ReaderPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/add" element={<AddWordsPage />} />
         </Route>
