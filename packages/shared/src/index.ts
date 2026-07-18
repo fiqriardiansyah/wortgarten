@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { StatsByModeSchema } from './session-types';
 
 export * from './text';
+export * from './contractions';
 export * from './lexeme';
 export * from './tokenizer';
 export * from './ranking';

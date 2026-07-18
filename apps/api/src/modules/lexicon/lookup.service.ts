@@ -4,12 +4,12 @@ import {
   foldForLookup,
   isFiniteVerbForm,
   rankLexemes,
+  resolveContraction,
   resolveSeparableSentence,
   tokenize,
   tokenizeWithOffsets,
 } from '@wortgarten/shared';
 import { PrismaService } from '../../prisma/prisma.service';
-import { resolveContraction } from './contractions';
 import type { LexemeMatch, SentenceTokenMatch } from './types';
 
 type SeparableLexemeMatch = LexemeMatch & { isFiniteForm: boolean };

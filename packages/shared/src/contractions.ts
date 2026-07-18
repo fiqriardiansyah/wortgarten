@@ -1,4 +1,4 @@
-import { foldForLookup } from '@wortgarten/shared';
+import { foldForLookup } from './text';
 
 // Fused preposition + article — not something a learner should collect. The token resolves to the
 // base preposition instead (e.g. "im" → "in"), the same as any other inflected form would.
