@@ -9,6 +9,8 @@ export * from './ranking';
 export * from './separable';
 export * from './session-types';
 export * from './grading';
+export * from './story';
+export * from './ai';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -187,7 +189,7 @@ export type AnalyzeResponse = z.infer<typeof AnalyzeResponseSchema>;
 
 // ─── Word bank ────────────────────────────────────────────────────────────────
 
-export const AddWordSourceTypeSchema = z.enum(['search', 'paste', 'manual']);
+export const AddWordSourceTypeSchema = z.enum(['search', 'paste', 'manual', 'read']);
 export type AddWordSourceType = z.infer<typeof AddWordSourceTypeSchema>;
 
 export const AddWordRequestSchema = z.object({

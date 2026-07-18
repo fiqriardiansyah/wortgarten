@@ -25,7 +25,6 @@ export type {
   FsrsRating,
   DrillSessionStatus,
   TaskStatus,
-  StoryStatus,
   AiSource,
   ExampleSource,
 } from '../generated/prisma';

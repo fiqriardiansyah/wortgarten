@@ -5,12 +5,17 @@
   "scripts": {
     "build": "nest build",
     "dev": "ts-node -e \"console.log('Worker: no jobs scheduled yet')\"",
-    "start": "node dist/main"
+    "start": "node dist/main",
+    "ai:sanity": "ts-node src/jobs/ai-sanity.ts",
+    "story:batch": "ts-node src/jobs/story-batch.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^10.4.15",
+    "@wortgarten/ai": "workspace:*",
     "@wortgarten/database": "workspace:*",
+    "@wortgarten/shared": "workspace:*",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },

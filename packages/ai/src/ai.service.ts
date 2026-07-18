@@ -1,0 +1,77 @@
+import { checkSanitySentence } from '@wortgarten/shared';
+import type { AiCheckedResult, AiJob, AiProvider, AiRawResult } from '@wortgarten/shared';
+import type { AiAdapter } from './adapters/ai-adapter.interface';
+import type { AiRouterPort } from './ai-router';
+
+// Async, not just sync — SANITY_SENTENCE's checker is pure/in-memory, but STORY's checker needs
+// a DB-backed lexeme lookup (see checkStoryDraft in ./story/story-checker) to verify every word
+// resolves to an allowlisted lexemeId. `await`ing a non-Promise value is a no-op, so this widening
+// doesn't change SANITY_SENTENCE's behavior at all.
+type Checker = (raw: AiRawResult, job: AiJob) => AiCheckedResult<unknown> | Promise<AiCheckedResult<unknown>>;
+
+/** The one door. App/worker code calls `run(job)` and never touches Groq/Ollama directly.
+ * Orchestrates route → adapter.generate → checker → retry/fallback — plain logic, constructed
+ * directly (in the module via a factory, in tests via `new AiService(...)` with FakeAdapters). */
+export class AiService {
+  constructor(
+    private readonly router: AiRouterPort,
+    private readonly groq: AiAdapter,
+    private readonly ollama: AiAdapter,
+    private readonly maxRetries: number,
+    // Optional: only STORY jobs need it. Undefined is fine for callers that only ever run
+    // SANITY_SENTENCE (e.g. existing tests) — see checkerFor's error if a STORY job shows up anyway.
+    private readonly checkStoryDraft?: Checker,
+  ) {}
+
+  private adapterFor(provider: AiProvider): AiAdapter {
+    return provider === 'GROQ' ? this.groq : this.ollama;
+  }
+
+  private checkerFor(job: AiJob): Checker {
+    switch (job.type) {
+      case 'SANITY_SENTENCE':
+        return checkSanitySentence;
+      case 'STORY':
+        if (!this.checkStoryDraft) throw new Error('STORY job requires AiService to be constructed with checkStoryDraft');
+        return this.checkStoryDraft;
+    }
+  }
+
+  private async attempt(provider: AiProvider, job: AiJob, checker: Checker): Promise<AiCheckedResult<unknown>> {
+    let raw: AiRawResult;
+    try {
+      raw = await this.adapterFor(provider).generate(job);
+    } catch (err) {
+      // Adapters are written to never throw, but this is the one door — a caller must never
+      // see an unhandled rejection out of run(), even if an adapter regresses that contract.
+      raw = { provider, json: null, raw: `adapter threw: ${(err as Error).message}` };
+    }
+
+    const verdict = await checker(raw, job);
+    if (!verdict.ok) {
+      console.error(`[AiService] ${job.type} via ${provider} failed: ${verdict.reason} — ${verdict.detail}\n  raw: ${raw.raw}`);
+    } else if (provider === 'GROQ') {
+      // "Successful GROQ call" = the call that actually delivered a checker-approved result.
+      // Precisely mirroring Groq's own billed-request count (including checker-rejected
+      // content) is a possible future refinement; this is what the router needs today.
+      await this.router.recordGroqSuccess();
+    }
+    return verdict;
+  }
+
+  async run(job: AiJob): Promise<AiCheckedResult<unknown>> {
+    const checker = this.checkerFor(job);
+    const provider = await this.router.decide();
+
+    for (let i = 0; i <= this.maxRetries; i++) {
+      const verdict = await this.attempt(provider, job, checker);
+      if (verdict.ok) return verdict;
+    }
+
+    const otherProvider: AiProvider = provider === 'GROQ' ? 'OLLAMA' : 'GROQ';
+    const fallbackVerdict = await this.attempt(otherProvider, job, checker);
+    if (fallbackVerdict.ok) return fallbackVerdict;
+
+    return { ok: false, reason: 'OTHER', detail: `exhausted retries on ${provider} and fallback on ${otherProvider} for ${job.type}` };
+  }
+}

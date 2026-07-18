@@ -10,6 +10,7 @@ import { LexiconModule } from './modules/lexicon/lexicon.module';
 import { MeModule } from './me/me.module';
 import { ProgressModule } from './progress/progress.module';
 import { SessionModule } from './modules/session/session.module';
+import { StoriesModule } from './stories/stories.module';
 import { WordsModule } from './modules/words/words.module';
 
 @Module({
@@ -31,6 +32,7 @@ import { WordsModule } from './modules/words/words.module';
     MeModule,
     ProgressModule,
     SessionModule,
+    StoriesModule,
     WordsModule,
   ],
 })

@@ -82,12 +82,6 @@ enum TaskStatus {
   FAILED_CHECK
 }
 
-enum StoryStatus {
-  READY
-  READ
-  FAILED_CHECK
-}
-
 enum AiSource {
   GROQ
   OLLAMA
@@ -398,21 +392,30 @@ model Task {
   @@index([userId, status])
 }
 
+// Every stored row is a shipped, checker-approved story — a draft that fails the allowlist
+// checker (see packages/ai's story checker) is retried/fallback-provider'd and, if still
+// failing, simply never persisted (no FAILED_CHECK row). `readAt` doubles as the "isRead" flag
+// the frozen Story contract (packages/shared/src/story.ts) needs — no separate status enum.
 model Story {
-  id            String      @id @default(cuid())
-  userId        String
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title         String
-  body          String
-  tokenMap      Json
-  newWordCount  Int
-  minutes       Int
-  status        StoryStatus @default(READY)
-  source        AiSource?
-  createdAt     DateTime    @default(now())
-  readAt        DateTime?
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title            String
+  blurb            String?
+  // StoryParagraph[] (packages/shared/src/story.ts) verbatim — the worker's tokenMap precompute,
+  // stored exactly in the frozen shape so the reader does zero runtime tokenization.
+  paragraphs       Json
+  translation      String?
+  newWords         String[] // lexemeIds of the 1-2 intentionally-introduced words actually used
+  glossary         Json // Record<lexemeId, StoryGlossaryEntry>, covers every word token
+  coverageKnownPct Int
+  estMinutes       Int
+  source           AiSource?
+  createdAt        DateTime  @default(now())
+  readAt           DateTime?
 
-  @@index([userId, status])
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }
 
 model AiQuota {
