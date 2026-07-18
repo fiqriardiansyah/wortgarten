@@ -1,6 +1,9 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { tokens } from '@/design/tokens';
+
+const crushTransition = { duration: 0.6, ease: 'easeInOut' as const, times: [0, 0.35, 0.7, 1] };
 
 interface SketchBoxProps {
   /** Stable per-element identity the border wobble is derived from — reuse the same seed
@@ -98,6 +101,7 @@ function smoothClosedPath(points: { x: number; y: number }[]) {
 export function SketchBox({ seed, fill = tokens.color.surface, stroke = tokens.color.ink, radius = tokens.sketch.cornerRadius, className = '', style, children }: SketchBoxProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   useLayoutEffect(() => {
     const el = wrapperRef.current;
@@ -115,7 +119,12 @@ export function SketchBox({ seed, fill = tokens.color.surface, stroke = tokens.c
     const shift = (pts: { x: number; y: number }[]) => pts.map((p) => ({ x: p.x + OVERFLOW, y: p.y + OVERFLOW }));
     const pathA = smoothClosedPath(shift(jitter(base, tokens.sketch.jitterMain, `${seed}:a`)));
     const pathB = smoothClosedPath(shift(jitter(base, tokens.sketch.jitterSecond, `${seed}:b`)));
-    return { pathA, pathB };
+    // Extra crumple frames sampled from the same `base` point order so the `d` strings stay
+    // structurally identical (same command count) and Framer Motion can morph between them.
+    const crushAmount = tokens.sketch.jitterMain * 3;
+    const crushA = [0, 1].map((i) => smoothClosedPath(shift(jitter(base, crushAmount, `${seed}:crushA:${i}`))));
+    const crushB = [0, 1].map((i) => smoothClosedPath(shift(jitter(base, crushAmount, `${seed}:crushB:${i}`))));
+    return { pathA, pathB, crushA, crushB };
   }, [size, radius, seed]);
 
   return (
@@ -127,8 +136,29 @@ export function SketchBox({ seed, fill = tokens.color.surface, stroke = tokens.c
           style={{ left: -OVERFLOW, top: -OVERFLOW, width: size.width + OVERFLOW * 2, height: size.height + OVERFLOW * 2, overflow: 'visible' }}
         >
           {fill !== 'none' && <path d={paths.pathA} fill={fill} stroke="none" />}
-          <path d={paths.pathA} fill="none" stroke={stroke} strokeWidth={tokens.sketch.strokeMain} strokeLinejoin="round" strokeLinecap="round" />
-          <path d={paths.pathB} fill="none" stroke={stroke} strokeWidth={tokens.sketch.strokeSecond} strokeOpacity={tokens.sketch.secondOpacity} strokeLinejoin="round" strokeLinecap="round" />
+          <motion.path
+            fill="none"
+            stroke={stroke}
+            strokeWidth={tokens.sketch.strokeMain}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            initial={{ d: paths.pathA }}
+            whileInView={prefersReducedMotion ? undefined : { d: [paths.pathA, paths.crushA[0], paths.crushA[1], paths.pathA] }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={crushTransition}
+          />
+          <motion.path
+            fill="none"
+            stroke={stroke}
+            strokeWidth={tokens.sketch.strokeSecond}
+            strokeOpacity={tokens.sketch.secondOpacity}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            initial={{ d: paths.pathB }}
+            whileInView={prefersReducedMotion ? undefined : { d: [paths.pathB, paths.crushB[0], paths.crushB[1], paths.pathB] }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={crushTransition}
+          />
         </svg>
       )}
       <div className="relative">{children}</div>
