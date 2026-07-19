@@ -11,6 +11,7 @@ export * from './session-types';
 export * from './grading';
 export * from './story';
 export * from './ai';
+export * from './timezone';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -52,9 +53,10 @@ export const RustyGroupSchema = z.object({
 });
 export type RustyGroup = z.infer<typeof RustyGroupSchema>;
 
-// Home's one story card, discriminated by which of the 3 real states applies — never a single
+// Home's one story card, discriminated by which of the 4 real states applies — never a single
 // shape with zeroed-out fields (the "0% your words" bug class). Exactly one variant is ever true:
-// a READY unread story, a pending generation, or too few known words to generate one yet.
+// a READY unread story, a pending generation, today's one story already read (next at local
+// midnight), or too few known words to generate one yet.
 export const HomeStoryCardSchema = z.discriminatedUnion('state', [
   z.object({
     state: z.literal('ready'),
@@ -67,6 +69,9 @@ export const HomeStoryCardSchema = z.discriminatedUnion('state', [
     isNewToday: z.boolean(),
   }),
   z.object({ state: z.literal('generating') }),
+  // Deliberately NOT framed as a limit/lockout — no countdown, no minutes, no chevron, not
+  // tappable. Reads as anticipation ("your next one's brewing"), same tone as 'generating'.
+  z.object({ state: z.literal('waitingTomorrow') }),
   z.object({ state: z.literal('locked'), wordsToGo: z.number() }),
 ]);
 export type HomeStoryCard = z.infer<typeof HomeStoryCardSchema>;

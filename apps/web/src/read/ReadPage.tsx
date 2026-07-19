@@ -5,6 +5,7 @@ import { useLibrary } from '@/read/api/useLibrary';
 import { HeroStoryCard } from '@/read/components/HeroStoryCard';
 import { EarlierStoryCard } from '@/read/components/EarlierStoryCard';
 import { TomorrowStoryCard } from '@/read/components/TomorrowStoryCard';
+import { WaitingTomorrowCard } from '@/read/components/WaitingTomorrowCard';
 import { ReadingLevelCard } from '@/read/components/ReadingLevelCard';
 import { PickedUpCard } from '@/read/components/PickedUpCard';
 
@@ -36,7 +37,7 @@ export function ReadPage() {
     );
   }
 
-  const { stories, readingLevel } = data;
+  const { stories, readingLevel, pendingState } = data;
 
   if (stories.length === 0) {
     return (
@@ -50,7 +51,6 @@ export function ReadPage() {
   }
 
   const hero = stories.find((story) => story.isNewToday) ?? stories.find((story) => story.status === 'READY');
-  const generating = stories.find((story) => story.status === 'GENERATING');
   const earlier = stories.filter((story) => story.status === 'READY' && story.id !== hero?.id);
   const readCount = stories.filter((story) => story.isRead).length;
 
@@ -87,7 +87,8 @@ export function ReadPage() {
 
         {/* Right rail (desktop) */}
         <div className="mt-5 flex flex-col gap-4 lg:mt-0">
-          {generating && <TomorrowStoryCard index={0} />}
+          {pendingState === 'generating' && <TomorrowStoryCard index={0} />}
+          {pendingState === 'waitingTomorrow' && <WaitingTomorrowCard index={0} />}
           <ReadingLevelCard level={readingLevel} index={1} />
           <PickedUpCard stories={stories} index={2} />
         </div>

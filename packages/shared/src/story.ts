@@ -84,10 +84,20 @@ export const ReadingLevelSchema = z.object({
 });
 export type ReadingLevel = z.infer<typeof ReadingLevelSchema>;
 
+// What to tell the UI about the NEXT story when there's no unread one waiting to be read right
+// now. `null` means there IS an unread story (the `stories` array already has it) — nothing
+// "pending" to announce. Otherwise: still eligible and not produced yet ('generating', same
+// copy/urgency as before), or today's one new story already got read and the next only unlocks at
+// the user's local midnight ('waitingTomorrow' — same day boundary @wortgarten/shared's
+// localDateKey gives the streak). Computed once by StoriesService so Home and Read never disagree.
+export const StoryCadenceStateSchema = z.enum(['generating', 'waitingTomorrow']);
+export type StoryCadenceState = z.infer<typeof StoryCadenceStateSchema>;
+
 // Aggregate response for the library screen — same pattern as HomeDashboardSchema /
 // ProgressDashboardSchema: one endpoint, one wrapper schema, built from the domain types above.
 export const LibraryResponseSchema = z.object({
   stories: z.array(StorySchema),
   readingLevel: ReadingLevelSchema,
+  pendingState: StoryCadenceStateSchema.nullable(),
 });
 export type LibraryResponse = z.infer<typeof LibraryResponseSchema>;

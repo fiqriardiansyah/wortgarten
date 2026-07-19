@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns';
-import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
+import { isValidTimeZone, localDateKey, localDayRange } from '@wortgarten/shared';
 import type { Streak, StreakWeek, StreakWeekDayState } from '@wortgarten/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -19,26 +19,11 @@ interface ReplayedStreak {
   dayStates: Record<string, CalendarDayState>;
 }
 
-export function isValidTimeZone(timezone: string): boolean {
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function localDateKey(date: Date, timezone: string): string {
-  return formatInTimeZone(date, timezone, 'yyyy-MM-dd');
-}
-
-export function localDayRange(dayKey: string, timezone: string): { start: Date; end: Date } {
-  const nextDayKey = format(addDays(parseISO(dayKey), 1), 'yyyy-MM-dd');
-  return {
-    start: fromZonedTime(`${dayKey}T00:00:00`, timezone),
-    end: fromZonedTime(`${nextDayKey}T00:00:00`, timezone),
-  };
-}
+// Re-exported so existing call sites (this file's own tests, home.service.ts,
+// progress.service.ts, session-builder.service.ts) don't need to change their import path — the
+// day-boundary logic now lives in @wortgarten/shared so packages/ai's story eligibility can share
+// it too, without packages/ai depending on apps/api.
+export { isValidTimeZone, localDateKey, localDayRange };
 
 function localDaysBetween(earlier: string, later: string): number {
   return differenceInCalendarDays(parseISO(later), parseISO(earlier));

@@ -83,7 +83,7 @@ describe('generateStoryForUser', () => {
     const ollama = new FakeAdapter('OLLAMA', [draftJson]);
     const aiService = new AiService(router, groq, ollama, 0, checkStoryDraft);
 
-    const result = await generateStoryForUser(prisma, aiService, resolver, userId, LANG);
+    const result = await generateStoryForUser(prisma, aiService, resolver, userId, 'batch', LANG);
 
     expect(result.status).toBe('shipped');
     if (result.status !== 'shipped') return;
@@ -123,7 +123,7 @@ describe('generateStoryForUser', () => {
     const ollama = new FakeAdapter('OLLAMA', [draftJson]);
     const aiService = new AiService(router, groq, ollama, 0, checkStoryDraft);
 
-    const result = await generateStoryForUser(prisma, aiService, resolver, userId, LANG);
+    const result = await generateStoryForUser(prisma, aiService, resolver, userId, 'batch', LANG);
 
     expect(result.status).toBe('shipped');
     if (result.status !== 'shipped') return;
@@ -147,12 +147,28 @@ describe('generateStoryForUser', () => {
     const ollama = new FakeAdapter('OLLAMA', [draftJson]);
     const aiService = new AiService(router, groq, ollama, 0, checkStoryDraft);
 
-    const result = await generateStoryForUser(prisma, aiService, resolver, userId, LANG);
+    const result = await generateStoryForUser(prisma, aiService, resolver, userId, 'batch', LANG);
 
     expect(result.status).toBe('skipped');
     if (result.status !== 'skipped') return;
     expect(result.reason).toMatch(/^low_coverage_/);
     expect(groq.calls).toBe(1);
     expect(ollama.calls).toBe(0);
+  });
+
+  it('lazy trigger never touches OLLAMA — skips outright when the router says quota is exhausted', async () => {
+    const resolver = new LexemeResolver(prisma);
+
+    const draftJson = { title: 'Hund', story: 'Hund.\n\nNeugierig.' };
+    const router = new FakeRouter('OLLAMA'); // quota exhausted — router would normally fall here
+    const groq = new FakeAdapter('GROQ', [draftJson]);
+    const ollama = new FakeAdapter('OLLAMA', [draftJson]);
+    const aiService = new AiService(router, groq, ollama, 2, checkStoryDraft);
+
+    const result = await generateStoryForUser(prisma, aiService, resolver, userId, 'lazy', LANG);
+
+    expect(result).toEqual({ status: 'skipped', reason: 'REMOTE_QUOTA_EXHAUSTED' });
+    expect(groq.calls).toBe(0);
+    expect(ollama.calls).toBe(0); // the whole point: never loads the local model during a lazy run
   });
 });

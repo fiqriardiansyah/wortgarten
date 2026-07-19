@@ -42,7 +42,17 @@ export const AiRawResultSchema = z.object({
 });
 export type AiRawResult = z.infer<typeof AiRawResultSchema>;
 
-export const AiCheckFailReasonSchema = z.enum(['BAD_JSON', 'EMPTY', 'TOO_LONG', 'USED_DISALLOWED_WORD', 'OTHER']);
+export const AiCheckFailReasonSchema = z.enum([
+  'BAD_JSON',
+  'EMPTY',
+  'TOO_LONG',
+  'USED_DISALLOWED_WORD',
+  // A remote-only run (daytime lazy generation) found the GROQ free quota exhausted, or exhausted
+  // its retries on GROQ — never a checker verdict. The one signal that must never fall back to
+  // OLLAMA, so it can't be conflated with a real checker failure.
+  'REMOTE_QUOTA_EXHAUSTED',
+  'OTHER',
+]);
 export type AiCheckFailReason = z.infer<typeof AiCheckFailReasonSchema>;
 
 /** What a checker function returns. Never a thrown error — bad model output is an

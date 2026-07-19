@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { AiService, LexemeResolver, PrismaService, STORY_ELIGIBLE_ACTIVE_DAYS, generateStoryForUser } from '@wortgarten/ai';
+import { AiService, LexemeResolver, PrismaService, STORY_ELIGIBLE_ACTIVE_DAYS, generateStoryForUser, isEligibleForNewStory } from '@wortgarten/ai';
 import { WorkerModule } from '../worker.module';
 
 // Guardrail 2: never run past sunrise. Both are config, not vague "run until done" — the batch
@@ -25,9 +25,12 @@ async function main() {
 
   const activeSince = new Date(Date.now() - STORY_ELIGIBLE_ACTIVE_DAYS * MS_PER_DAY);
 
-  // Recently active AND not already sitting on an unread story — the same two conditions
-  // isEligibleForNewStory (@wortgarten/ai) checks per-user, expressed here in one SQL query so
-  // the candidate list comes back pre-filtered instead of one round trip per user.
+  // Recently active AND not already sitting on an unread story — a cheap SQL pre-filter so the
+  // per-candidate loop below isn't a round trip per user just to find out most users don't
+  // qualify. This is NOT the authoritative check: isEligibleForNewStory (called per candidate
+  // below) also enforces the one-story-per-day rule, which needs each user's own timezone and
+  // isn't worth expressing as SQL here — it's the same function apps/api's lazy trigger uses, so
+  // batch and lazy can never disagree about who's eligible.
   const candidates = await prisma.user.findMany({
     where: {
       drillSessions: { some: { startedAt: { gte: activeSince } } },
@@ -58,8 +61,18 @@ async function main() {
     }
 
     const user = candidates[i];
+
+    // The authoritative check — also enforces "no story already generated today" (user's
+    // timezone). Doesn't count against STORY_BATCH_MAX or the deadline: it's a cheap DB read, not
+    // an AI call, and re-running this script twice in one night should cost nothing extra.
+    if (!(await isEligibleForNewStory(prisma, user.id))) {
+      skipped++;
+      console.log(`[story:batch] skipped user ${user.id}: not_eligible`);
+      continue;
+    }
+
     attempted++;
-    const result = await generateStoryForUser(prisma, aiService, resolver, user.id);
+    const result = await generateStoryForUser(prisma, aiService, resolver, user.id, 'batch');
     if (result.status === 'shipped') {
       shipped++;
       console.log(`[story:batch] shipped story ${result.storyId} for user ${user.id}`);

@@ -22,5 +22,5 @@ export { checkStoryDraft } from './story/story-checker';
 export { buildStoryFromDraft } from './story/build-story-tokens';
 export type { BuiltStory } from './story/build-story-tokens';
 export { generateStoryForUser } from './story/generate-story';
-export type { GenerateStoryResult } from './story/generate-story';
+export type { GenerateStoryResult, StoryTriggerContext } from './story/generate-story';
 export { isEligibleForNewStory, STORY_ELIGIBLE_ACTIVE_DAYS } from './story/eligibility';

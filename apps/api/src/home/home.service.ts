@@ -6,6 +6,7 @@ import {
   type HomeStoryCard,
   type SessionSummary,
   type Story,
+  type StoryCadenceState,
   type WordLevel as ContractWordLevel,
 } from '@wortgarten/shared';
 import { MIN_KNOWN_WORDS_FOR_STORY } from '@wortgarten/ai';
@@ -68,7 +69,7 @@ export class HomeService {
       this.stories.listForUser(userId),
     ]);
     const knownWordCount = byLevel.RECOGNIZE + byLevel.RECALL + byLevel.PRODUCE + byLevel.MASTERED;
-    const storyCard = this.buildStoryCard(library.stories, knownWordCount);
+    const storyCard = this.buildStoryCard(library.stories, library.pendingState, knownWordCount);
 
     const rustyUserWordIds = new Set(rusty.map((r) => r.userWord.id));
 
@@ -156,10 +157,10 @@ export class HomeService {
     };
   }
 
-  /** Same 3 states as the Read page's own hero/generating split (ReadPage.tsx), so the two
-   * screens can never disagree about whether a story exists. `library.stories` already comes
+  /** Same states as the Read page's own hero/pending split (ReadPage.tsx), so the two screens
+   * can never disagree about whether a story exists. `library.stories`/`pendingState` both come
    * from StoriesService.listForUser — the exact same source GET /stories serves. */
-  private buildStoryCard(stories: Story[], knownWordCount: number): HomeStoryCard {
+  private buildStoryCard(stories: Story[], pendingState: StoryCadenceState | null, knownWordCount: number): HomeStoryCard {
     const ready = stories.find((s) => s.status === 'READY' && s.isNewToday);
     if (ready) {
       return {
@@ -172,16 +173,14 @@ export class HomeService {
       };
     }
 
-    const generating = stories.find((s) => s.status === 'GENERATING');
-    if (generating) return { state: 'generating' };
-
     if (knownWordCount < MIN_KNOWN_WORDS_FOR_STORY) {
       return { state: 'locked', wordsToGo: MIN_KNOWN_WORDS_FOR_STORY - knownWordCount };
     }
 
-    // Enough known words, no unread story, none in flight — one is eligible to be generated
-    // (listForUser already fired that lazy trigger above). Honest "coming soon", not a lie about
-    // missing words.
+    // Enough known words, no unread story — pendingState says which of the two remaining honest
+    // states applies: still eligible and not produced yet, or today's one story already read and
+    // the next only unlocks at the user's local midnight.
+    if (pendingState === 'waitingTomorrow') return { state: 'waitingTomorrow' };
     return { state: 'generating' };
   }
 }

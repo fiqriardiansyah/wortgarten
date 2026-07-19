@@ -18,6 +18,11 @@ const STORY_MIN_COVERAGE_PCT = Number(process.env.STORY_MIN_COVERAGE_PCT ?? 70);
 
 export type GenerateStoryResult = { status: 'shipped'; storyId: string } | { status: 'skipped'; reason: string };
 
+// 'lazy' = daytime, request-driven (apps/api's GET /stories fire-and-forget). 'batch' = the
+// overnight worker. The only behavioral difference is which providers `aiService.run` may use —
+// see the `remoteOnly` call below and AiService.run's own doc comment.
+export type StoryTriggerContext = 'lazy' | 'batch';
+
 /**
  * Upserts occurrence counts for surface forms the resolver couldn't place at all — a diagnostic
  * for a human to read offline, never a write to Lexeme/Sense. Best-effort per surface: a logging
@@ -51,13 +56,16 @@ export async function generateStoryForUser(
   aiService: AiService,
   resolver: LexemeResolver,
   userId: string,
+  triggerContext: StoryTriggerContext = 'batch',
   language = 'de',
 ): Promise<GenerateStoryResult> {
   const vocab = await selectStoryVocabulary(prisma, userId, language);
   if (!vocab) return { status: 'skipped', reason: 'too_few_known_words' };
 
   const job = buildStoryJob(vocab);
-  const result = await aiService.run(job);
+  // Daytime (lazy) generation must never load the local model into RAM while the API is serving —
+  // remoteOnly means this call either uses GROQ or doesn't run at all (see AiService.run).
+  const result = await aiService.run(job, { remoteOnly: triggerContext === 'lazy' });
   if (!result.ok) return { status: 'skipped', reason: result.reason };
 
   const draft = result.value as StoryDraft;

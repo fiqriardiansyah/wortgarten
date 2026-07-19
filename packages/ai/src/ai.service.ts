@@ -59,13 +59,26 @@ export class AiService {
     return verdict;
   }
 
-  async run(job: AiJob): Promise<AiCheckedResult<unknown>> {
+  /** `remoteOnly` is the daytime-generation guardrail: a 4GB VPS must never load the local model
+   * into RAM while the API is serving. When set, GROQ is the only provider this run may ever
+   * touch — if the router says quota is exhausted, or GROQ itself exhausts retries, this returns
+   * `ok:false` immediately instead of falling back to OLLAMA. The caller (lazy story generation)
+   * is expected to treat that as "try again later", not as a real failure. */
+  async run(job: AiJob, opts: { remoteOnly?: boolean } = {}): Promise<AiCheckedResult<unknown>> {
     const checker = this.checkerFor(job);
     const provider = await this.router.decide();
+
+    if (opts.remoteOnly && provider !== 'GROQ') {
+      return { ok: false, reason: 'REMOTE_QUOTA_EXHAUSTED', detail: 'GROQ free quota exhausted; local model not allowed for a remote-only run' };
+    }
 
     for (let i = 0; i <= this.maxRetries; i++) {
       const verdict = await this.attempt(provider, job, checker);
       if (verdict.ok) return verdict;
+    }
+
+    if (opts.remoteOnly) {
+      return { ok: false, reason: 'REMOTE_QUOTA_EXHAUSTED', detail: `exhausted retries on ${provider}; local fallback not allowed for a remote-only run` };
     }
 
     const otherProvider: AiProvider = provider === 'GROQ' ? 'OLLAMA' : 'GROQ';

@@ -104,4 +104,44 @@ describe('AiService.run', () => {
 
     expect(result).toMatchObject({ ok: true, provider: 'OLLAMA' });
   });
+
+  describe('remoteOnly (daytime lazy generation guardrail)', () => {
+    it('skips outright — never touching either adapter — when the router says quota is exhausted', async () => {
+      const router = new FakeRouter('OLLAMA'); // quota exhausted, router would normally route here
+      const groq = new FakeAdapter('GROQ', [GOOD]);
+      const ollama = new FakeAdapter('OLLAMA', [GOOD]);
+      const service = new AiService(router, groq, ollama, 2);
+
+      const result = await service.run(job, { remoteOnly: true });
+
+      expect(result).toEqual({ ok: false, reason: 'REMOTE_QUOTA_EXHAUSTED', detail: expect.any(String) });
+      expect(groq.calls).toBe(0);
+      expect(ollama.calls).toBe(0); // the local model must never load during a remote-only run
+    });
+
+    it('uses GROQ normally while quota remains', async () => {
+      const router = new FakeRouter('GROQ');
+      const groq = new FakeAdapter('GROQ', [GOOD]);
+      const ollama = new FakeAdapter('OLLAMA', [GOOD]);
+      const service = new AiService(router, groq, ollama, 2);
+
+      const result = await service.run(job, { remoteOnly: true });
+
+      expect(result).toEqual({ ok: true, value: GOOD, provider: 'GROQ' });
+      expect(ollama.calls).toBe(0);
+    });
+
+    it('gives up instead of falling back to OLLAMA once GROQ exhausts its retries', async () => {
+      const router = new FakeRouter('GROQ');
+      const groq = new FakeAdapter('GROQ', [BAD_JSON, BAD_JSON]);
+      const ollama = new FakeAdapter('OLLAMA', [GOOD]);
+      const service = new AiService(router, groq, ollama, 1); // 2 total GROQ attempts, both bad
+
+      const result = await service.run(job, { remoteOnly: true });
+
+      expect(result).toEqual({ ok: false, reason: 'REMOTE_QUOTA_EXHAUSTED', detail: expect.any(String) });
+      expect(groq.calls).toBe(2);
+      expect(ollama.calls).toBe(0);
+    });
+  });
 });

@@ -1,8 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AiService, LexemeResolver, generateStoryForUser, isEligibleForNewStory } from '@wortgarten/ai';
 import type { Story as StoryRow } from '@wortgarten/database';
-import { LibraryResponseSchema, StorySchema } from '@wortgarten/shared';
-import type { LibraryResponse, ReadingLevel, Story, StoryGlossaryEntry, StoryParagraph } from '@wortgarten/shared';
+import { isValidTimeZone, LibraryResponseSchema, localDateKey, StorySchema } from '@wortgarten/shared';
+import type { LibraryResponse, ReadingLevel, Story, StoryCadenceState, StoryGlossaryEntry, StoryParagraph } from '@wortgarten/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { WordsService } from '../modules/words/words.service';
 
@@ -77,7 +77,9 @@ export class StoriesService {
     this.generating.add(userId);
 
     const resolver = new LexemeResolver(this.prisma);
-    generateStoryForUser(this.prisma, this.aiService, resolver, userId)
+    // 'lazy': daytime, request-driven — remote-only inside generateStoryForUser, never loads the
+    // local model into RAM while this API process is serving requests.
+    generateStoryForUser(this.prisma, this.aiService, resolver, userId, 'lazy')
       .then((result) => this.logger.log(`lazy generation for ${userId}: ${JSON.stringify(result)}`))
       .catch((err) => this.logger.error(`lazy generation failed for ${userId}`, err))
       .finally(() => this.generating.delete(userId));
@@ -92,14 +94,28 @@ export class StoriesService {
     const stories = rows.map((row, i) => toContractStory(row, i === firstUnreadIndex, knownLexemeIds));
 
     // Dormant users and users already sitting on an unread story never trigger a new one here —
-    // isEligibleForNewStory enforces both. Fire-and-forget: a 1-30s AI call has no business
+    // isEligibleForNewStory enforces both, plus the one-new-story-per-day rule (User.timezone
+    // day, same boundary the streak uses). Fire-and-forget: a 1-30s AI call has no business
     // blocking this request; a later refetch picks up the shipped story once it lands.
     const eligible = !hasUnread && (await isEligibleForNewStory(this.prisma, userId));
     if (eligible) this.triggerLazyGeneration(userId);
 
+    // What to tell Home/Read about the NEXT story when there's no unread one sitting in `stories`
+    // above: still eligible and not produced yet ('generating'), or today's one new story already
+    // got read and the next only unlocks at the user's local midnight ('waitingTomorrow').
+    // Computed once here — the single source both screens read, so they can never disagree.
+    let pendingState: StoryCadenceState | null = null;
+    if (!hasUnread) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } });
+      const timezone = user && isValidTimeZone(user.timezone) ? user.timezone : 'UTC';
+      const latest = rows[0];
+      const generatedToday = latest && localDateKey(latest.createdAt, timezone) === localDateKey(new Date(), timezone);
+      pendingState = generatedToday ? 'waitingTomorrow' : 'generating';
+    }
+
     const wordsUnlocked = await this.words.countForUser(userId);
 
-    return LibraryResponseSchema.parse({ stories, readingLevel: computeReadingLevel(wordsUnlocked) });
+    return LibraryResponseSchema.parse({ stories, readingLevel: computeReadingLevel(wordsUnlocked), pendingState });
   }
 
   async getById(userId: string, id: string): Promise<Story> {

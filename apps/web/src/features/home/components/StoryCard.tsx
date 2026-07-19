@@ -29,6 +29,22 @@ export function StoryCard({ story, index }: StoryCardProps) {
     );
   }
 
+  if (story.state === 'waitingTomorrow') {
+    return (
+      <Card index={index} hover={false}>
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-teal-soft">
+            <Sparkles size={18} className="text-teal" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-ink text-sm">Today's story is done</p>
+            <p className="text-xs text-muted">New story tomorrow</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   if (story.state === 'locked') {
     return (
       <Card index={index} hover={false}>
