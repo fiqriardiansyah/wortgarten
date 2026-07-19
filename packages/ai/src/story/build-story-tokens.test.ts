@@ -169,7 +169,7 @@ describe('buildStoryFromDraft', () => {
     const built = await buildStoryFromDraft(resolver, vocab(), draft, LANG);
 
     const token = built.paragraphs[0].tokens.find((t) => t.text === 'Katze');
-    expect(token).toMatchObject({ lexemeId: katze.id, senseId: null, status: 'unknown' });
+    expect(token).toMatchObject({ lexemeId: katze.id, senseId: katze.senses[0].id, status: 'unknown' });
     expect(built.glossary[katze.id]).toMatchObject({ lexemeId: katze.id, displayLemma: 'die Katze', translation: 'Katze-translation' });
     expect(built.unresolvedSurfaces).toEqual([]);
   });

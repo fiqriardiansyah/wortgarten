@@ -11,16 +11,20 @@ export function useStory(id: string) {
   });
 }
 
-/** Optimistically flips every token for `lexemeId` from "new" to "known" and drops it from
- * `newWords` — the visible half of "+ Add to my words". Rolled back in `onError` if the POST
- * to the real bank fails. */
+/** Optimistically flips every token for `lexemeId` to "known" and drops it from `newWords` — the
+ * visible half of "+ Add to my words". Covers both "new" (an intentional story word) and
+ * "unknown" (a real word outside the allowlist — see WordPopup's `isAddable`, which offers the
+ * same button for both) so a successful add always reflects on the page. Rolled back in `onError`
+ * if the POST to the real bank fails. */
 function markLexemeKnown(story: Story, lexemeId: string): Story {
   return {
     ...story,
     newWords: story.newWords.filter((id) => id !== lexemeId),
     paragraphs: story.paragraphs.map((paragraph) => ({
       tokens: paragraph.tokens.map((token) =>
-        token.lexemeId === lexemeId && token.status === 'new' ? { ...token, status: 'known' } : token,
+        token.lexemeId === lexemeId && (token.status === 'new' || token.status === 'unknown')
+          ? { ...token, status: 'known' }
+          : token,
       ),
     })),
   };

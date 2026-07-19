@@ -33,7 +33,7 @@ function computeReadingLevel(wordsUnlocked: number): ReadingLevel {
 function toContractStory(row: StoryRow, isNewToday: boolean, knownLexemeIds: Set<string>): Story {
   const paragraphs = (row.paragraphs as unknown as StoryParagraph[]).map((paragraph) => ({
     tokens: paragraph.tokens.map((token) =>
-      token.status === 'new' && token.lexemeId && knownLexemeIds.has(token.lexemeId)
+      (token.status === 'new' || token.status === 'unknown') && token.lexemeId && knownLexemeIds.has(token.lexemeId)
         ? { ...token, status: 'known' as const }
         : token,
     ),

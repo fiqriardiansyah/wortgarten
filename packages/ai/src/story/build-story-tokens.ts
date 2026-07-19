@@ -126,14 +126,17 @@ export async function buildStoryFromDraft(
       }
 
       // Resolves to a real lexeme, just not one on this user's allowlist (e.g. "Katze") — the
-      // comprehensible-input mechanic, not a defect. Glossaried so tapping still works; senseId
-      // stays null because it's not a sense the user has (or is being taught) yet.
+      // comprehensible-input mechanic, not a defect. Glossaried so tapping still works. Still
+      // carries a senseId (fallback to the lexeme's first sense) — WordPopup's "+ Add to my
+      // words" is deliberately offered for 'unknown' tokens too (see WordPopup's isAddable), so
+      // a null senseId here would make every such tap fail in useMarkWordKnown.
       const outsideHit = slot?.matches[0];
       if (outsideHit) {
         unknownWordCount++;
         const lexemeId = outsideHit.lexeme.id;
+        const senseId = outsideHit.senses[0]?.id ?? null;
         if (!glossary[lexemeId]) glossary[lexemeId] = glossaryEntryFor(outsideHit);
-        return { text: segment.text, kind: 'word', lexemeId, senseId: null, status: 'unknown' };
+        return { text: segment.text, kind: 'word', lexemeId, senseId, status: 'unknown' };
       }
 
       // Resolves to nothing at all — hallucination, invented name, typo, or an inflection
