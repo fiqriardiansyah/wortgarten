@@ -9,8 +9,9 @@ export const FUNCTION_WORD_RANK_CEILING = 200;
 // entirely on function words — better to skip generation than ship something thin.
 export const MIN_KNOWN_WORDS_FOR_STORY = 15;
 const NEW_WORD_COUNT = 2;
-// ~60-120 words keeps a 3B local model coherent and gives the checker less to reject.
-export const STORY_TARGET_WORD_COUNT = 100;
+// Shorter is more reliable on every axis: fewer chances to stray from the allowlist, less JSON
+// for a 3B model to malform, and a more comfortable read for an A1-A2 learner.
+export const STORY_TARGET_WORD_COUNT = 70;
 
 const KNOWN_LEVELS: WordLevel[] = ['RECOGNIZE', 'RECALL', 'PRODUCE', 'MASTERED'];
 

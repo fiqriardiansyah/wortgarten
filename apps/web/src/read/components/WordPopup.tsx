@@ -19,6 +19,9 @@ export function WordPopup({ story, token, paragraph, onAdd, onClose }: WordPopup
   const entry = token.lexemeId ? story.glossary[token.lexemeId] : undefined;
   const sentence = paragraph.tokens.map((t) => t.text).join('');
   const isNew = token.status === 'new';
+  // A real lexeme just outside this user's allowlist — comprehensible input, not one of the
+  // story's intentional new words, but still addable: same "+ Add to my words" action.
+  const isAddable = isNew || token.status === 'unknown';
 
   return (
     <AnimatePresence>
@@ -57,7 +60,7 @@ export function WordPopup({ story, token, paragraph, onAdd, onClose }: WordPopup
                   {sentence}
                 </p>
 
-                {isNew ? (
+                {isAddable ? (
                   <Button className="mt-4 w-full justify-center" icon={<Sparkles size={16} />} onClick={() => onAdd(entry.lexemeId)}>
                     + Add to my words
                   </Button>

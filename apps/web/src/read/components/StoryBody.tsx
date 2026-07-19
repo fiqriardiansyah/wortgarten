@@ -25,7 +25,16 @@ export function StoryBody({ story, fontSize, onTapWord }: StoryBodyProps) {
               return <span key={tIndex}>{token.text}</span>;
             }
 
-            const isNew = token.status === 'new';
+            if (token.status === 'unknown' && !token.lexemeId) {
+              // A word the resolver couldn't place at all (hallucination/typo/unhandled
+              // inflection) — an ordinary comprehensible-input gap, not the learner's mistake.
+              // Plain text: no color, no popup, no tap.
+              return <span key={tIndex}>{token.text}</span>;
+            }
+
+            // 'unknown' here always carries a real lexemeId (the branch above caught the null
+            // case) — a real word just outside this user's allowlist, rendered exactly like 'new'.
+            const isAccented = token.status === 'new' || token.status === 'unknown';
 
             return (
               <button
@@ -33,7 +42,7 @@ export function StoryBody({ story, fontSize, onTapWord }: StoryBodyProps) {
                 type="button"
                 onClick={() => onTapWord(token, paragraph)}
                 className={`rounded px-0.5 -mx-0.5 transition-colors hover:bg-teal-soft ${
-                  isNew ? 'font-semibold text-ink underline decoration-2 decoration-yellow underline-offset-4' : ''
+                  isAccented ? 'font-semibold text-ink underline decoration-2 decoration-yellow underline-offset-4' : ''
                 }`}
               >
                 {token.text}

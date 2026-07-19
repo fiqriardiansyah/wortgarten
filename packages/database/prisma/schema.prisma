@@ -392,10 +392,10 @@ model Task {
   @@index([userId, status])
 }
 
-// Every stored row is a shipped, checker-approved story — a draft that fails the allowlist
-// checker (see packages/ai's story checker) is retried/fallback-provider'd and, if still
-// failing, simply never persisted (no FAILED_CHECK row). `readAt` doubles as the "isRead" flag
-// the frozen Story contract (packages/shared/src/story.ts) needs — no separate status enum.
+// Every stored row is a shipped story — a draft that fails the shape checker (unparseable or
+// empty; see packages/ai's story checker) is retried/fallback-provider'd and, if still failing,
+// simply never persisted (no FAILED_CHECK row). `readAt` doubles as the "isRead" flag the frozen
+// Story contract (packages/shared/src/story.ts) needs — no separate status enum.
 model Story {
   id               String    @id @default(cuid())
   userId           String
@@ -416,6 +416,24 @@ model Story {
 
   @@index([userId, readAt])
   @@index([userId, createdAt])
+}
+
+// A diagnostic review queue, never a write path into the dictionary: a surface form the story
+// pipeline's resolver couldn't place at all (hallucination, invented name, typo, or an inflection
+// LookupService doesn't handle) is upserted here after a story ships, purely for a human to read
+// offline. Growth of Lexeme/Sense stays seeded and human-verified — this table is never joined
+// into vocabulary selection or resolution, and nothing in the app auto-creates a Lexeme from it.
+// A repeated real German word here (high `occurrences`) is a signal to fix the seed dictionary or
+// LookupService, not to paper over it in the pipeline.
+model UnresolvedStoryWord {
+  id            String   @id @default(cuid())
+  language      String
+  surface       String
+  occurrences   Int      @default(1)
+  lastSeenAt    DateTime @default(now())
+  sampleStoryId String?
+
+  @@unique([language, surface])
 }
 
 model AiQuota {

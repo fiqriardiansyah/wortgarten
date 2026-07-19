@@ -41,6 +41,9 @@ export class OllamaAdapter implements AiAdapter {
           format: 'json',
           stream: false,
           keep_alive: keepAlive,
+          // Low and matching Groq's — high temperature is where malformed JSON and stray
+          // vocabulary both come from.
+          options: { temperature: 0.4 },
         }),
         signal: controller.signal,
       });

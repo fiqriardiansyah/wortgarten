@@ -8,15 +8,15 @@ import type { AiRouterPort } from '../ai-router';
 import { FakeAdapter } from '../adapters/fake.adapter';
 import { generateStoryForUser } from './generate-story';
 import { LexemeResolver } from './lexeme-resolver';
-import { makeStoryChecker } from './story-checker';
+import { checkStoryDraft } from './story-checker';
 import { MIN_KNOWN_WORDS_FOR_STORY } from './select-vocabulary';
 
 const LANG = 'de-story-generate-fixture';
 
 const prisma = new PrismaClient();
 const lexemeIds: string[] = [];
+const storyIds: string[] = [];
 let userId: string;
-let storyId: string | undefined;
 
 class FakeRouter implements AiRouterPort {
   constructor(private readonly provider: AiProvider) {}
@@ -65,7 +65,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (storyId) await prisma.story.delete({ where: { id: storyId } }).catch(() => undefined);
+  await prisma.unresolvedStoryWord.deleteMany({ where: { language: LANG } });
+  if (storyIds.length > 0) await prisma.story.deleteMany({ where: { id: { in: storyIds } } });
   await prisma.userWord.deleteMany({ where: { userId } });
   await prisma.user.delete({ where: { id: userId } });
   await prisma.lexeme.deleteMany({ where: { id: { in: lexemeIds } } });
@@ -75,26 +76,25 @@ afterAll(async () => {
 describe('generateStoryForUser', () => {
   it('runs vocab selection → AI spine → checker → builder → persist end to end', async () => {
     const resolver = new LexemeResolver(prisma);
-    const checker = makeStoryChecker(resolver, LANG);
 
-    const draftJson = { title: 'Hund', paragraphs: ['Hund.', 'Neugierig.'], translation: 'Dog. Curious.' };
+    const draftJson = { title: 'Hund', story: 'Hund.\n\nNeugierig.', translation: 'Dog.\n\nCurious.' };
     const router = new FakeRouter('GROQ');
     const groq = new FakeAdapter('GROQ', [draftJson]);
     const ollama = new FakeAdapter('OLLAMA', [draftJson]);
-    const aiService = new AiService(router, groq, ollama, 0, checker);
+    const aiService = new AiService(router, groq, ollama, 0, checkStoryDraft);
 
     const result = await generateStoryForUser(prisma, aiService, resolver, userId, LANG);
 
     expect(result.status).toBe('shipped');
     if (result.status !== 'shipped') return;
-    storyId = result.storyId;
+    storyIds.push(result.storyId);
 
-    const row = await prisma.story.findUnique({ where: { id: storyId } });
+    const row = await prisma.story.findUnique({ where: { id: result.storyId } });
     expect(row).not.toBeNull();
     if (!row) return;
 
     expect(row.title).toBe('Hund');
-    expect(row.translation).toBe('Dog. Curious.');
+    expect(row.translation).toBe('Dog.\n\nCurious.');
     expect(row.source).toBe('GROQ');
     expect(row.estMinutes).toBeGreaterThanOrEqual(1);
     expect(row.coverageKnownPct).toBe(100);
@@ -111,5 +111,48 @@ describe('generateStoryForUser', () => {
 
     const glossary = row.glossary as Record<string, { translation: string }>;
     expect(Object.keys(glossary)).toHaveLength(2); // Hund + neugierig
+  });
+
+  it('ships a draft containing an unresolvable word and records it in the review queue, never in Lexeme/Sense', async () => {
+    const resolver = new LexemeResolver(prisma);
+
+    // 5 known "Hund" repeats dilute one unresolvable word enough to clear the coverage floor.
+    const draftJson = { title: 'Hund', story: 'Hund Hund Hund Hund Hund Xyzzyplex.' };
+    const router = new FakeRouter('GROQ');
+    const groq = new FakeAdapter('GROQ', [draftJson]);
+    const ollama = new FakeAdapter('OLLAMA', [draftJson]);
+    const aiService = new AiService(router, groq, ollama, 0, checkStoryDraft);
+
+    const result = await generateStoryForUser(prisma, aiService, resolver, userId, LANG);
+
+    expect(result.status).toBe('shipped');
+    if (result.status !== 'shipped') return;
+    storyIds.push(result.storyId);
+
+    const entry = await prisma.unresolvedStoryWord.findUnique({ where: { language_surface: { language: LANG, surface: 'Xyzzyplex' } } });
+    expect(entry).not.toBeNull();
+    expect(entry?.occurrences).toBe(1);
+    expect(entry?.sampleStoryId).toBe(result.storyId);
+
+    const hallucinated = await prisma.lexeme.findFirst({ where: { language: LANG, lemma: 'Xyzzyplex' } });
+    expect(hallucinated).toBeNull();
+  });
+
+  it('skips storing (without retrying or falling back) when coverage falls below the quality floor', async () => {
+    const resolver = new LexemeResolver(prisma);
+
+    const draftJson = { title: 'Weird', story: 'Xyzzyplex Qwibbleton Florpnak Hund.' };
+    const router = new FakeRouter('GROQ');
+    const groq = new FakeAdapter('GROQ', [draftJson]);
+    const ollama = new FakeAdapter('OLLAMA', [draftJson]);
+    const aiService = new AiService(router, groq, ollama, 0, checkStoryDraft);
+
+    const result = await generateStoryForUser(prisma, aiService, resolver, userId, LANG);
+
+    expect(result.status).toBe('skipped');
+    if (result.status !== 'skipped') return;
+    expect(result.reason).toMatch(/^low_coverage_/);
+    expect(groq.calls).toBe(1);
+    expect(ollama.calls).toBe(0);
   });
 });

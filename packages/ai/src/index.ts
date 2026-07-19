@@ -18,7 +18,7 @@ export type { LexemeMatch, SentenceTokenMatch } from './story/lexeme-resolver';
 export { selectStoryVocabulary, FUNCTION_WORD_RANK_CEILING, MIN_KNOWN_WORDS_FOR_STORY, STORY_TARGET_WORD_COUNT } from './story/select-vocabulary';
 export type { StoryVocabulary, StoryVocabularyWord } from './story/select-vocabulary';
 export { buildStoryJob } from './story/story-job';
-export { makeStoryChecker } from './story/story-checker';
+export { checkStoryDraft } from './story/story-checker';
 export { buildStoryFromDraft } from './story/build-story-tokens';
 export type { BuiltStory } from './story/build-story-tokens';
 export { generateStoryForUser } from './story/generate-story';

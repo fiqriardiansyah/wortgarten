@@ -6,8 +6,7 @@ import { PrismaAiQuotaStore } from './quota/ai-quota.store';
 import { SystemClock } from './clock';
 import { AiRouter } from './ai-router';
 import { AiService } from './ai.service';
-import { LexemeResolver } from './story/lexeme-resolver';
-import { makeStoryChecker } from './story/story-checker';
+import { checkStoryDraft } from './story/story-checker';
 import { AI_QUOTA_STORE, CLOCK } from './tokens';
 
 const DEFAULT_GROQ_DAILY_LIMIT = 10000;
@@ -39,15 +38,9 @@ const DEFAULT_MAX_RETRIES = 2;
     },
     {
       provide: AiService,
-      useFactory: (router: AiRouter, groq: GroqAdapter, ollama: OllamaAdapter, prisma: PrismaService) =>
-        new AiService(
-          router,
-          groq,
-          ollama,
-          Number(process.env.AI_MAX_RETRIES ?? DEFAULT_MAX_RETRIES),
-          makeStoryChecker(new LexemeResolver(prisma)),
-        ),
-      inject: [AiRouter, GroqAdapter, OllamaAdapter, PrismaService],
+      useFactory: (router: AiRouter, groq: GroqAdapter, ollama: OllamaAdapter) =>
+        new AiService(router, groq, ollama, Number(process.env.AI_MAX_RETRIES ?? DEFAULT_MAX_RETRIES), checkStoryDraft),
+      inject: [AiRouter, GroqAdapter, OllamaAdapter],
     },
   ],
   exports: [AiService, PrismaService],

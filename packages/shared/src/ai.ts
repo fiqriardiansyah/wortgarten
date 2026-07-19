@@ -27,10 +27,9 @@ export const AiJobSchema = z.object({
   allowedWords: z.array(z.string()),
   // For SANITY_SENTENCE: a hard word-count ceiling. For STORY: the target total word count.
   maxWords: z.number().int().positive(),
-  // STORY stashes its lexemeId allowlist here (`allowlistLexemeIds`, `newWordLexemeIds`,
-  // `newWordDisplayLemmas`) — the checker must compare by id, never by the display-lemma
-  // strings above (a homograph outside the allowlist must be caught by id, not fooled by
-  // spelling — see checkStoryDraft in @wortgarten/ai).
+  // STORY stashes `newWordDisplayLemmas` here for the prompt's "feature this word" line — the
+  // checker doesn't touch vocabulary at all; resolution against the real lexemeId allowlist
+  // happens once, downstream in @wortgarten/ai's buildStoryFromDraft.
   meta: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 export type AiJob = z.infer<typeof AiJobSchema>;
@@ -104,9 +103,13 @@ export function checkSanitySentence(raw: AiRawResult, job: AiJob): AiCheckedResu
 
 export const StoryDraftSchema = z.object({
   title: z.string(),
-  paragraphs: z.array(z.string()),
+  // The whole German text, paragraphs separated by a blank line (\n\n) — a flat string, not a
+  // nested array. A small model reliably produces one JSON string far more often than an array of
+  // strings (trailing commas, unterminated arrays); @wortgarten/ai's buildStoryFromDraft splits
+  // this back into the frozen `Story` contract's `paragraphs`.
+  story: z.string(),
   // Optional: an English translation is a nice-to-have, not a safety property the checker must
-  // enforce (unlike vocabulary, which it always must) — a model that omits it should not cost a
+  // enforce (unlike shape, which it always must) — a model that omits it should not cost a
   // retry. checkStoryDraft normalizes a missing/blank value to `null`, matching the frozen
   // `Story.translation` contract in packages/shared/src/story.ts.
   translation: z.string().nullable().optional(),
