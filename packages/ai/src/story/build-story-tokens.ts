@@ -80,6 +80,7 @@ export async function buildStoryFromDraft(
   draft: StoryDraft,
   language = 'de',
 ): Promise<BuiltStory> {
+  console.log(`[buildStoryFromDraft] in: title="${draft.title}" language=${language}`);
   const rawParagraphs = splitParagraphTexts(draft.story);
   const paragraphTexts = truncateToTarget(rawParagraphs, vocab.targetWordCount);
 
@@ -151,6 +152,10 @@ export async function buildStoryFromDraft(
 
   const newWords = vocab.newWords.filter((w) => usedLexemeIds.has(w.lexemeId)).map((w) => w.lexemeId);
   const coverageKnownPct = totalWordCount === 0 ? 100 : Math.round(((totalWordCount - unknownWordCount) / totalWordCount) * 100);
+
+  console.log(
+    `[buildStoryFromDraft] out: paragraphs=${paragraphs.length} words=${totalWordCount} coverage=${coverageKnownPct}% unresolved=${unresolvedSurfaces.length}${unresolvedSurfaces.length ? ` [${unresolvedSurfaces.join(', ')}]` : ''}`,
+  );
 
   return { paragraphs, glossary, newWords, coverageKnownPct, totalWordCount, translation, unresolvedSurfaces };
 }

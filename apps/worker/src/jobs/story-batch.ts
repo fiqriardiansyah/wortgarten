@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AiService, LexemeResolver, PrismaService, STORY_ELIGIBLE_ACTIVE_DAYS, generateStoryForUser, isEligibleForNewStory } from '@wortgarten/ai';
+import { ImageService } from '@wortgarten/images';
 import { WorkerModule } from '../worker.module';
 
 // Guardrail 2: never run past sunrise. Both are config, not vague "run until done" — the batch
@@ -21,6 +22,7 @@ async function main() {
   const app = await NestFactory.createApplicationContext(WorkerModule);
   const aiService = app.get(AiService);
   const prisma = app.get(PrismaService);
+  const imageService = app.get(ImageService);
   const resolver = new LexemeResolver(prisma);
 
   const activeSince = new Date(Date.now() - STORY_ELIGIBLE_ACTIVE_DAYS * MS_PER_DAY);
@@ -72,7 +74,7 @@ async function main() {
     }
 
     attempted++;
-    const result = await generateStoryForUser(prisma, aiService, resolver, user.id, 'batch');
+    const result = await generateStoryForUser(prisma, aiService, resolver, imageService, user.id, 'batch');
     if (result.status === 'shipped') {
       shipped++;
       console.log(`[story:batch] shipped story ${result.storyId} for user ${user.id}`);

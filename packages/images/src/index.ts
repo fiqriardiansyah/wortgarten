@@ -1,0 +1,10 @@
+export { ImageService } from './image.service';
+export type { GenerateStoryCoverResult } from './image.service';
+export { ImagesModule } from './images.module';
+export { attachStoryCover } from './attach-cover';
+export { deriveCoverImageUrl } from './derive-url';
+export { STORY_COVER_PROMPT_TEMPLATE, ACCENT_COLORS, buildSubject, pickAccent, buildCoverPrompt } from './prompt';
+export { GeminiImageError, generateCoverImage as generateCoverImageWithGemini } from './gemini.client';
+export { CloudflareImageError, generateCoverImage as generateCoverImageWithCloudflare } from './cloudflare.client';
+export { resolveImageProvider } from './provider';
+export type { ImageProvider } from './provider';

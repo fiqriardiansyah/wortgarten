@@ -1,6 +1,8 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { AiService, LexemeResolver, generateStoryForUser, isEligibleForNewStory } from '@wortgarten/ai';
+import type { GenerateStoryResult } from '@wortgarten/ai';
 import type { Story as StoryRow } from '@wortgarten/database';
+import { deriveCoverImageUrl, ImageService } from '@wortgarten/images';
 import { isValidTimeZone, LibraryResponseSchema, localDateKey, StorySchema } from '@wortgarten/shared';
 import type { LibraryResponse, ReadingLevel, Story, StoryCadenceState, StoryGlossaryEntry, StoryParagraph } from '@wortgarten/shared';
 import { PrismaService } from '../prisma/prisma.service';
@@ -54,6 +56,7 @@ function toContractStory(row: StoryRow, isNewToday: boolean, knownLexemeIds: Set
     glossary: row.glossary as unknown as Record<string, StoryGlossaryEntry>,
     createdAt: row.createdAt.toISOString(),
     isRead: row.readAt !== null,
+    coverImageUrl: deriveCoverImageUrl(row.coverImageKey),
   };
 }
 
@@ -69,6 +72,7 @@ export class StoriesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiService: AiService,
+    private readonly imageService: ImageService,
     private readonly words: WordsService,
   ) {}
 
@@ -79,7 +83,7 @@ export class StoriesService {
     const resolver = new LexemeResolver(this.prisma);
     // 'lazy': daytime, request-driven — remote-only inside generateStoryForUser, never loads the
     // local model into RAM while this API process is serving requests.
-    generateStoryForUser(this.prisma, this.aiService, resolver, userId, 'lazy')
+    generateStoryForUser(this.prisma, this.aiService, resolver, this.imageService, userId, 'lazy')
       .then((result) => this.logger.log(`lazy generation for ${userId}: ${JSON.stringify(result)}`))
       .catch((err) => this.logger.error(`lazy generation failed for ${userId}`, err))
       .finally(() => this.generating.delete(userId));
@@ -116,6 +120,28 @@ export class StoriesService {
     const wordsUnlocked = await this.words.countForUser(userId);
 
     return LibraryResponseSchema.parse({ stories, readingLevel: computeReadingLevel(wordsUnlocked), pendingState });
+  }
+
+  /** Dev-only manual trigger — bypasses the one-story-per-day/unread eligibility gate entirely
+   * so a developer can generate on demand. Still shares `generating` with the lazy path so a
+   * click can't stack a second concurrent generation for the same user. Never wired for
+   * production (see the controller's own guard). */
+  async forceGenerateForDev(userId: string): Promise<GenerateStoryResult> {
+    if (process.env.NODE_ENV === 'production') {
+      throw new ForbiddenException('Manual story generation is development-only');
+    }
+    if (this.generating.has(userId)) {
+      return { status: 'skipped', reason: 'already_generating' };
+    }
+    this.generating.add(userId);
+    try {
+      const resolver = new LexemeResolver(this.prisma);
+      const result = await generateStoryForUser(this.prisma, this.aiService, resolver, this.imageService, userId, 'lazy');
+      this.logger.log(`dev force-generate for ${userId}: ${JSON.stringify(result)}`);
+      return result;
+    } finally {
+      this.generating.delete(userId);
+    }
   }
 
   async getById(userId: string, id: string): Promise<Story> {

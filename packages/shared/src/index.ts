@@ -72,7 +72,9 @@ export const HomeStoryCardSchema = z.discriminatedUnion('state', [
   // Deliberately NOT framed as a limit/lockout — no countdown, no minutes, no chevron, not
   // tappable. Reads as anticipation ("your next one's brewing"), same tone as 'generating'.
   z.object({ state: z.literal('waitingTomorrow') }),
-  z.object({ state: z.literal('locked'), wordsToGo: z.number() }),
+  // needsPractice distinguishes "add more words" from "practice what you've already got" —
+  // true when the bank already holds enough words but too few have leveled past NEW yet.
+  z.object({ state: z.literal('locked'), wordsToGo: z.number(), needsPractice: z.boolean() }),
 ]);
 export type HomeStoryCard = z.infer<typeof HomeStoryCardSchema>;
 

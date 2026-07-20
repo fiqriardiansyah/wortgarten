@@ -28,6 +28,8 @@ export class OllamaAdapter implements AiAdapter {
     const keepAlive = process.env.OLLAMA_KEEP_ALIVE ?? DEFAULT_KEEP_ALIVE;
     const { system, user } = buildPrompt(job);
 
+    console.log(`[OllamaAdapter] in: ${job.type} model=${model} baseUrl=${baseUrl}`);
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -50,13 +52,16 @@ export class OllamaAdapter implements AiAdapter {
 
       if (!res.ok) {
         const body = await res.text().catch(() => '');
+        console.error(`[OllamaAdapter] out: ${job.type} model=${model} error: HTTP ${res.status}: ${body}`);
         return { provider: 'OLLAMA', json: null, raw: `HTTP ${res.status}: ${body}` };
       }
 
       const body = (await res.json()) as { response?: string };
       const text = body.response ?? '';
+      console.log(`[OllamaAdapter] out: ${job.type} model=${model} chars=${text.length}`);
       return { provider: 'OLLAMA', json: safeJsonParse(text), raw: text };
     } catch (err) {
+      console.error(`[OllamaAdapter] out: ${job.type} model=${model} error: ${(err as Error).message}`);
       return { provider: 'OLLAMA', json: null, raw: `request failed: ${(err as Error).message}` };
     } finally {
       clearTimeout(timeout);

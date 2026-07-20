@@ -69,7 +69,7 @@ export class HomeService {
       this.stories.listForUser(userId),
     ]);
     const knownWordCount = byLevel.RECOGNIZE + byLevel.RECALL + byLevel.PRODUCE + byLevel.MASTERED;
-    const storyCard = this.buildStoryCard(library.stories, library.pendingState, knownWordCount);
+    const storyCard = this.buildStoryCard(library.stories, library.pendingState, knownWordCount, collected);
 
     const rustyUserWordIds = new Set(rusty.map((r) => r.userWord.id));
 
@@ -160,7 +160,7 @@ export class HomeService {
   /** Same states as the Read page's own hero/pending split (ReadPage.tsx), so the two screens
    * can never disagree about whether a story exists. `library.stories`/`pendingState` both come
    * from StoriesService.listForUser — the exact same source GET /stories serves. */
-  private buildStoryCard(stories: Story[], pendingState: StoryCadenceState | null, knownWordCount: number): HomeStoryCard {
+  private buildStoryCard(stories: Story[], pendingState: StoryCadenceState | null, knownWordCount: number, totalWordCount: number): HomeStoryCard {
     const ready = stories.find((s) => s.status === 'READY' && s.isNewToday);
     if (ready) {
       return {
@@ -174,7 +174,13 @@ export class HomeService {
     }
 
     if (knownWordCount < MIN_KNOWN_WORDS_FOR_STORY) {
-      return { state: 'locked', wordsToGo: MIN_KNOWN_WORDS_FOR_STORY - knownWordCount };
+      // Bank already has enough words to clear the floor once they level up — the fix is
+      // practice, not adding more. Otherwise even mastering everything banked wouldn't be enough.
+      return {
+        state: 'locked',
+        wordsToGo: MIN_KNOWN_WORDS_FOR_STORY - knownWordCount,
+        needsPractice: totalWordCount >= MIN_KNOWN_WORDS_FOR_STORY,
+      };
     }
 
     // Enough known words, no unread story — pendingState says which of the two remaining honest

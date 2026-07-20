@@ -4,6 +4,7 @@ import type { Story } from '@wortgarten/shared';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
+import { StoryCoverBanner } from '@/components/ui/StoryCoverBanner';
 
 interface HeroStoryCardProps {
   story: Story;
@@ -34,6 +35,14 @@ export function HeroStoryCard({ story, index }: HeroStoryCardProps) {
 
   return (
     <Card index={index}>
+      {story.coverImageUrl && (
+        <StoryCoverBanner
+          src={story.coverImageUrl}
+          alt={`${story.title} — ${(story.translation ?? '').slice(0, 60)}`}
+          height={120}
+          className="mb-3"
+        />
+      )}
       <div className="flex flex-wrap items-center gap-2">
         {story.isNewToday && <Chip variant="lilac">NEW TODAY</Chip>}
         {story.coverageKnownPct === 100 && <Chip variant="success">100% your words</Chip>}

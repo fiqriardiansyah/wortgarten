@@ -44,6 +44,7 @@ function toDisplayLemma(lexeme: Lexeme): string {
  * mechanism). Returns null when the user has too few known words to make a story worth shipping.
  */
 export async function selectStoryVocabulary(prisma: PrismaClient, userId: string, language = 'de'): Promise<StoryVocabulary | null> {
+  console.log(`[selectStoryVocabulary] in: userId=${userId} language=${language}`);
   const userWords = await prisma.userWord.findMany({
     where: { userId, sense: { lexeme: { language } } },
     select: { level: true, senseId: true, sense: { select: { lexemeId: true, lexeme: true } } },
@@ -59,7 +60,10 @@ export async function selectStoryVocabulary(prisma: PrismaClient, userId: string
     }
   }
 
-  if (knownLexemes.size < MIN_KNOWN_WORDS_FOR_STORY) return null;
+  if (knownLexemes.size < MIN_KNOWN_WORDS_FOR_STORY) {
+    console.log(`[selectStoryVocabulary] out: null (only ${knownLexemes.size} known words, need ${MIN_KNOWN_WORDS_FOR_STORY}) userId=${userId}`);
+    return null;
+  }
 
   const functionLexemes = await prisma.lexeme.findMany({
     where: { language, frequencyRank: { lte: FUNCTION_WORD_RANK_CEILING } },
@@ -89,6 +93,10 @@ export async function selectStoryVocabulary(prisma: PrismaClient, userId: string
   for (const lexeme of knownLexemes.values()) addDisplay(toDisplayLemma(lexeme));
   for (const lexeme of functionLexemes) addDisplay(toDisplayLemma(lexeme));
   for (const w of newWords) addDisplay(w.displayLemma);
+
+  console.log(
+    `[selectStoryVocabulary] out: known=${knownLexemes.size} function=${functionLexemeIds.size} newWords=${newWords.map((w) => w.displayLemma).join(', ') || 'none'} userId=${userId}`,
+  );
 
   return {
     knownLexemeIds: new Set(knownLexemes.keys()),

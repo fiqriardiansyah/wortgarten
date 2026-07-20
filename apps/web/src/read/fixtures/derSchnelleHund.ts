@@ -180,6 +180,7 @@ const heroStory: Story = {
   glossary: heroGlossary,
   createdAt: '2026-07-17T06:00:00.000Z',
   isRead: false,
+  coverImageUrl: null,
 };
 
 // ─── Earlier story: "Im Supermarkt" ────────────────────────────────────────
@@ -224,6 +225,7 @@ const supermarktStory: Story = {
   glossary: supermarktGlossary,
   createdAt: '2026-07-16T06:00:00.000Z',
   isRead: true,
+  coverImageUrl: null,
 };
 
 // ─── Earlier story: "Der Hund läuft nach Hause" ────────────────────────────
@@ -267,6 +269,7 @@ const hundNachHauseStory: Story = {
   glossary: hundNachHauseGlossary,
   createdAt: '2026-07-15T06:00:00.000Z',
   isRead: true,
+  coverImageUrl: null,
 };
 
 // ─── Earlier story: "Ein guter Morgen" — translation intentionally null ───
@@ -305,6 +308,7 @@ const guterMorgenStory: Story = {
   glossary: guterMorgenGlossary,
   createdAt: '2026-07-14T06:00:00.000Z',
   isRead: true,
+  coverImageUrl: null,
 };
 
 // ─── Earlier story: "Die Katze und der Park" — oldest, still unread ───────
@@ -357,6 +361,7 @@ const katzeParkStory: Story = {
   glossary: katzeParkGlossary,
   createdAt: '2026-07-10T06:00:00.000Z',
   isRead: false,
+  coverImageUrl: null,
 };
 
 // ─── Tomorrow's story — GENERATING, not tappable, no body yet ─────────────
@@ -376,6 +381,7 @@ const tomorrowStory: Story = {
   glossary: {},
   createdAt: '2026-07-18T02:00:00.000Z',
   isRead: false,
+  coverImageUrl: null,
 };
 
 // ─── Library fixture ────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ import { useStory, useMarkWordKnown } from '@/read/api/useStory';
 import { ReaderTopBar, type ReaderFontSize } from '@/read/components/ReaderTopBar';
 import { StoryBody } from '@/read/components/StoryBody';
 import { WordPopup } from '@/read/components/WordPopup';
-import { IllustrationSlot } from '@/components/ui/IllustrationSlot';
+import { StoryCoverBanner } from '@/components/ui/StoryCoverBanner';
 
 interface SelectedWord {
   token: StoryToken;
@@ -79,10 +79,17 @@ export function ReaderPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl flex flex-col">
       <ReaderTopBar title={story.title} fontSize={fontSize} onFontSizeChange={setFontSize} progress={progress} />
 
-      <IllustrationSlot label="story reader header" height={120} className="mb-4" />
+      {story.coverImageUrl && (
+        <StoryCoverBanner
+          src={story.coverImageUrl}
+          alt={`${story.title} — ${(story.translation ?? '').slice(0, 60)}`}
+          height={120}
+          className="mb-4"
+        />
+      )}
 
       <StoryBody story={story} fontSize={fontSize} onTapWord={(token, paragraph) => setSelected({ token, paragraph })} />
 

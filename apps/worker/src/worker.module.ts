@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { existsSync } from 'fs';
 import { dirname, join } from 'path';
 import { AiModule } from '@wortgarten/ai';
+import { ImagesModule } from '@wortgarten/images';
 
 /** A fixed relative depth to the repo-root `.env` breaks depending on how this module is
  * loaded: `ts-node` runs straight from `src/` (one entry point — the `ai:sanity` script), while
@@ -27,6 +28,7 @@ function findRepoRootEnvPath(startDir: string): string {
       envFilePath: findRepoRootEnvPath(__dirname),
     }),
     AiModule,
+    ImagesModule,
   ],
 })
 export class WorkerModule {}

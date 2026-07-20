@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from '@wortgarten/database';
+import { attachStoryCover, type ImageService } from '@wortgarten/images';
 import { StorySchema } from '@wortgarten/shared';
 import type { StoryDraft } from '@wortgarten/shared';
 import type { AiService } from '../ai.service';
@@ -55,23 +56,33 @@ export async function generateStoryForUser(
   prisma: PrismaClient,
   aiService: AiService,
   resolver: LexemeResolver,
+  imageService: ImageService,
   userId: string,
   triggerContext: StoryTriggerContext = 'batch',
   language = 'de',
 ): Promise<GenerateStoryResult> {
+  console.log(`[generateStoryForUser] in: userId=${userId} trigger=${triggerContext} language=${language}`);
+
   const vocab = await selectStoryVocabulary(prisma, userId, language);
-  if (!vocab) return { status: 'skipped', reason: 'too_few_known_words' };
+  if (!vocab) {
+    console.log(`[generateStoryForUser] out: skipped (too_few_known_words) userId=${userId}`);
+    return { status: 'skipped', reason: 'too_few_known_words' };
+  }
 
   const job = buildStoryJob(vocab);
   // Daytime (lazy) generation must never load the local model into RAM while the API is serving —
   // remoteOnly means this call either uses GROQ or doesn't run at all (see AiService.run).
   const result = await aiService.run(job, { remoteOnly: triggerContext === 'lazy' });
-  if (!result.ok) return { status: 'skipped', reason: result.reason };
+  if (!result.ok) {
+    console.error(`[generateStoryForUser] out: skipped (${result.reason}) userId=${userId} detail=${result.detail}`);
+    return { status: 'skipped', reason: result.reason };
+  }
 
   const draft = result.value as StoryDraft;
   const built = await buildStoryFromDraft(resolver, vocab, draft, language);
 
   if (built.coverageKnownPct < STORY_MIN_COVERAGE_PCT) {
+    console.log(`[generateStoryForUser] out: skipped (low_coverage_${built.coverageKnownPct}pct) userId=${userId}`);
     return { status: 'skipped', reason: `low_coverage_${built.coverageKnownPct}pct` };
   }
 
@@ -95,6 +106,7 @@ export async function generateStoryForUser(
     glossary: built.glossary,
     createdAt: new Date().toISOString(),
     isRead: false,
+    coverImageUrl: null,
   });
 
   const created = await prisma.story.create({
@@ -111,10 +123,16 @@ export async function generateStoryForUser(
       source: result.provider,
     },
   });
+  console.log(`[generateStoryForUser] story row created: storyId=${created.id} userId=${userId}`);
 
   if (built.unresolvedSurfaces.length > 0) {
     await recordUnresolvedSurfaces(prisma, language, built.unresolvedSurfaces, created.id);
   }
 
+  // Story-first, picture-second: the row above is already complete and readable. This can never
+  // throw and never affects the result below — see attachStoryCover's own doc comment.
+  await attachStoryCover(prisma, imageService, created.id, built.translation ?? draft.title);
+
+  console.log(`[generateStoryForUser] out: shipped storyId=${created.id} userId=${userId} provider=${result.provider} coverage=${built.coverageKnownPct}pct`);
   return { status: 'shipped', storyId: created.id };
 }

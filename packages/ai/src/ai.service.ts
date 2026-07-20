@@ -38,6 +38,7 @@ export class AiService {
   }
 
   private async attempt(provider: AiProvider, job: AiJob, checker: Checker): Promise<AiCheckedResult<unknown>> {
+    console.log(`[AiService] attempt in: ${job.type} via ${provider}`);
     let raw: AiRawResult;
     try {
       raw = await this.adapterFor(provider).generate(job);
@@ -49,13 +50,14 @@ export class AiService {
 
     const verdict = await checker(raw, job);
     if (!verdict.ok) {
-      console.error(`[AiService] ${job.type} via ${provider} failed: ${verdict.reason} — ${verdict.detail}\n  raw: ${raw.raw}`);
+      console.error(`[AiService] attempt out: ${job.type} via ${provider} FAILED: ${verdict.reason} — ${verdict.detail}\n  raw: ${raw.raw}`);
     } else if (provider === 'GROQ') {
       // "Successful GROQ call" = the call that actually delivered a checker-approved result.
       // Precisely mirroring Groq's own billed-request count (including checker-rejected
       // content) is a possible future refinement; this is what the router needs today.
       await this.router.recordGroqSuccess();
     }
+    if (verdict.ok) console.log(`[AiService] attempt out: ${job.type} via ${provider} OK`);
     return verdict;
   }
 
@@ -65,26 +67,39 @@ export class AiService {
    * `ok:false` immediately instead of falling back to OLLAMA. The caller (lazy story generation)
    * is expected to treat that as "try again later", not as a real failure. */
   async run(job: AiJob, opts: { remoteOnly?: boolean } = {}): Promise<AiCheckedResult<unknown>> {
+    console.log(`[AiService] run in: ${job.type} remoteOnly=${!!opts.remoteOnly}`);
     const checker = this.checkerFor(job);
     const provider = await this.router.decide();
+    console.log(`[AiService] router.decide() -> ${provider}`);
 
     if (opts.remoteOnly && provider !== 'GROQ') {
+      console.error(`[AiService] run out: ${job.type} REMOTE_QUOTA_EXHAUSTED (router picked ${provider}, remoteOnly)`);
       return { ok: false, reason: 'REMOTE_QUOTA_EXHAUSTED', detail: 'GROQ free quota exhausted; local model not allowed for a remote-only run' };
     }
 
     for (let i = 0; i <= this.maxRetries; i++) {
+      console.log(`[AiService] retry ${i}/${this.maxRetries} on ${provider}`);
       const verdict = await this.attempt(provider, job, checker);
-      if (verdict.ok) return verdict;
+      if (verdict.ok) {
+        console.log(`[AiService] run out: ${job.type} shipped via ${provider}`);
+        return verdict;
+      }
     }
 
     if (opts.remoteOnly) {
+      console.error(`[AiService] run out: ${job.type} REMOTE_QUOTA_EXHAUSTED (exhausted retries on ${provider})`);
       return { ok: false, reason: 'REMOTE_QUOTA_EXHAUSTED', detail: `exhausted retries on ${provider}; local fallback not allowed for a remote-only run` };
     }
 
     const otherProvider: AiProvider = provider === 'GROQ' ? 'OLLAMA' : 'GROQ';
+    console.log(`[AiService] falling back to ${otherProvider} after exhausting ${provider}`);
     const fallbackVerdict = await this.attempt(otherProvider, job, checker);
-    if (fallbackVerdict.ok) return fallbackVerdict;
+    if (fallbackVerdict.ok) {
+      console.log(`[AiService] run out: ${job.type} shipped via fallback ${otherProvider}`);
+      return fallbackVerdict;
+    }
 
+    console.error(`[AiService] run out: ${job.type} OTHER (exhausted retries on ${provider} and fallback on ${otherProvider})`);
     return { ok: false, reason: 'OTHER', detail: `exhausted retries on ${provider} and fallback on ${otherProvider} for ${job.type}` };
   }
 }

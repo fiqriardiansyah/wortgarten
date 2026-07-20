@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { BookOpen, ChevronRight, Sparkles, Sprout } from 'lucide-react';
 import type { HomeStoryCard } from '@wortgarten/shared';
+import { useCreateSession } from '@/features/session/api/useCreateSession';
 
 interface StoryCardProps {
   story: HomeStoryCard;
@@ -12,6 +13,12 @@ interface StoryCardProps {
 
 export function StoryCard({ story, index }: StoryCardProps) {
   const navigate = useNavigate();
+  const createSession = useCreateSession();
+
+  async function handleStartSession() {
+    const result = await createSession.mutateAsync();
+    if (result.kind === 'session') navigate('/session', { state: { session: result.session } });
+  }
 
   if (story.state === 'generating') {
     return (
@@ -34,7 +41,7 @@ export function StoryCard({ story, index }: StoryCardProps) {
       <Card index={index} hover={false}>
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-teal-soft">
-            <Sparkles size={18} className="text-teal" />
+            <BookOpen size={18} className="text-teal" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-ink text-sm">Today's story is done</p>
@@ -53,12 +60,25 @@ export function StoryCard({ story, index }: StoryCardProps) {
             <Sprout size={18} className="text-teal" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-ink text-sm">Add a few more words to unlock your first story</p>
+            <p className="font-semibold text-ink text-sm">
+              {story.needsPractice ? 'Practice your words to unlock your first story' : 'Add a few more words to unlock your first story'}
+            </p>
             <p className="text-xs text-muted">{story.wordsToGo} more words to go</p>
           </div>
-          <Button variant="light" className="flex-shrink-0 text-xs px-4 py-2" onClick={() => navigate('/add')}>
-            + Add words
-          </Button>
+          {story.needsPractice ? (
+            <Button
+              variant="light"
+              className="flex-shrink-0 text-xs px-4 py-2"
+              disabled={createSession.isPending}
+              onClick={handleStartSession}
+            >
+              Start session
+            </Button>
+          ) : (
+            <Button variant="light" className="flex-shrink-0 text-xs px-4 py-2" onClick={() => navigate('/add')}>
+              Add word
+            </Button>
+          )}
         </div>
       </Card>
     );

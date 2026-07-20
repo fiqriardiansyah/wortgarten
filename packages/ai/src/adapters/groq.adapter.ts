@@ -30,6 +30,8 @@ export class GroqAdapter implements AiAdapter {
 
     const client = new Groq({ apiKey, timeout: TIMEOUT_MS, maxRetries: 0 });
 
+    console.log(`[GroqAdapter] in: ${job.type} model=${model}`);
+
     try {
       const completion = await client.chat.completions.create({
         model,
@@ -46,11 +48,14 @@ export class GroqAdapter implements AiAdapter {
       });
 
       const text = completion.choices[0]?.message?.content ?? '';
+      console.log(`[GroqAdapter] out: ${job.type} model=${model} chars=${text.length}`);
       return { provider: 'GROQ', json: safeJsonParse(text), raw: text };
     } catch (err) {
       if (err instanceof Groq.APIError) {
+        console.error(`[GroqAdapter] out: ${job.type} model=${model} error: HTTP ${err.status}: ${err.message}`);
         return { provider: 'GROQ', json: null, raw: `HTTP ${err.status}: ${err.message}` };
       }
+      console.error(`[GroqAdapter] out: ${job.type} model=${model} error: ${(err as Error).message}`);
       return { provider: 'GROQ', json: null, raw: `request failed: ${(err as Error).message}` };
     }
   }

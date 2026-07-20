@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient } from '@wortgarten/database';
 import { HomeDashboardSchema } from '@wortgarten/shared';
 import { AiService, FakeAdapter, type AiRouterPort } from '@wortgarten/ai';
+import { ImageService } from '@wortgarten/images';
 import type { PrismaService } from '../prisma/prisma.service';
 import { SessionBuilderService } from '../modules/session/session-builder.service';
 import { SrsService } from '../modules/srs/srs.service';
@@ -24,7 +25,7 @@ const words = new WordsService(prisma as unknown as PrismaService, srs);
 const sessionBuilder = new SessionBuilderService(prisma as unknown as PrismaService, srs, words);
 const streaks = new StreakService(prisma as unknown as PrismaService);
 const aiService = new AiService(fakeRouter, new FakeAdapter('GROQ', ['{}']), new FakeAdapter('OLLAMA', ['{}']), 0);
-const stories = new StoriesService(prisma as unknown as PrismaService, aiService, words);
+const stories = new StoriesService(prisma as unknown as PrismaService, aiService, new ImageService(), words);
 const homeService = new HomeService(prisma as unknown as PrismaService, words, sessionBuilder, streaks, stories);
 
 describe('HomeService.getDashboard — empty state', () => {
@@ -57,7 +58,7 @@ describe('HomeService.getDashboard — empty state', () => {
     expect(dashboard.daySubtitle).toBe('Day 1 of learning German');
     expect(dashboard.streak.current).toBe(0);
     // A brand-new user has 0 known words — real "locked" state, never a fake 0%/0 min story.
-    expect(dashboard.story).toEqual({ state: 'locked', wordsToGo: 15 });
+    expect(dashboard.story).toEqual({ state: 'locked', wordsToGo: 15, needsPractice: false });
   });
 });
 
@@ -123,6 +124,51 @@ describe('HomeService.getDashboard — with data', () => {
     expect(dashboard.recentlyAdded.map((w) => w.german).sort()).toEqual(['Baum', 'Fenster', 'Katze']);
     // Katze (RECALL) + Baum (MASTERED) are known; Fenster (NEW) isn't — 2 known, 13 short of the
     // same MIN_KNOWN_WORDS_FOR_STORY floor story generation uses.
-    expect(dashboard.story).toEqual({ state: 'locked', wordsToGo: 13 });
+    expect(dashboard.story).toEqual({ state: 'locked', wordsToGo: 13, needsPractice: false });
+  });
+});
+
+describe('HomeService.getDashboard — enough words banked, not enough known', () => {
+  const prisma3 = prisma;
+  const lexemeIds: string[] = [];
+  let userId: string;
+
+  beforeAll(async () => {
+    const user = await prisma3.user.create({
+      data: { name: 'Practice Needed', email: `home-practice-${Date.now()}@example.com` },
+    });
+    userId = user.id;
+
+    for (let i = 0; i < 15; i++) {
+      const lexeme = await prisma3.lexeme.create({
+        data: {
+          id: randomUUID(),
+          sourceKey: randomUUID(),
+          language: LANG,
+          lemma: `Wort${i}`,
+          partOfSpeech: 'NOUN',
+          senses: { create: [{ id: randomUUID(), sourceKey: randomUUID(), translation: `word${i}` }] },
+        },
+        include: { senses: true },
+      });
+      lexemeIds.push(lexeme.id);
+      // All NEW — banked but not yet practiced, so knownWordCount stays 0 while the bank hits 15.
+      await prisma3.userWord.create({
+        data: { userId, senseId: lexeme.senses[0].id, level: 'NEW', dueAt: new Date(), reps: 0 },
+      });
+    }
+  });
+
+  afterAll(async () => {
+    await prisma3.userWord.deleteMany({ where: { userId } });
+    await prisma3.user.delete({ where: { id: userId } });
+    await prisma3.lexeme.deleteMany({ where: { id: { in: lexemeIds } } });
+  });
+
+  it('flags needsPractice instead of asking to add more words', async () => {
+    const dashboard = await homeService.getDashboard(userId);
+
+    expect(() => HomeDashboardSchema.parse(dashboard)).not.toThrow();
+    expect(dashboard.story).toEqual({ state: 'locked', wordsToGo: 15, needsPractice: true });
   });
 });

@@ -69,6 +69,9 @@ export const StorySchema = z.object({
   newWords: z.array(z.string()), // lexemeIds of the 1-2 intentional new words in this story
   glossary: z.record(z.string(), StoryGlossaryEntrySchema), // keyed by lexemeId, covers every word token
   createdAt: z.string(),
+  // Bonus layer, generated (if ever) strictly after this story is already stored and readable —
+  // null means "no cover yet" (flag off, generation failed, or an older story), never an error.
+  coverImageUrl: z.string().nullable(),
   // Not in the original design doc's field list, but the "Earlier stories" library needs a read
   // state per story (the "✓ read" chip) and there's nowhere else to derive it from client-side —
   // the real worker/API will need to track this too (e.g. via a UserStory join).

@@ -413,6 +413,9 @@ model Story {
   source           AiSource?
   createdAt        DateTime  @default(now())
   readAt           DateTime?
+  // R2 object key only, never a full URL (see packages/images) — null until the bonus cover-image
+  // step succeeds, which always happens after the story above is already persisted and readable.
+  coverImageKey    String?
 
   @@index([userId, readAt])
   @@index([userId, createdAt])

@@ -161,7 +161,7 @@ export function SketchBox({ seed, fill = tokens.color.surface, stroke = tokens.c
           />
         </svg>
       )}
-      <div className="relative">{children}</div>
+      <div className="relative h-full w-full">{children}</div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Post } from '@nestjs/common';
 import { Session, UserSession } from '@thallesp/nestjs-better-auth';
 import { StoriesService } from './stories.service';
 
@@ -9,6 +9,13 @@ export class StoriesController {
   @Get()
   list(@Session() session: UserSession) {
     return this.storiesService.listForUser(session.user.id);
+  }
+
+  /** Dev-only manual trigger for the "Generate story" button in the Read page top bar — see
+   * StoriesService.forceGenerateForDev for the production guard. */
+  @Post('generate')
+  forceGenerate(@Session() session: UserSession) {
+    return this.storiesService.forceGenerateForDev(session.user.id);
   }
 
   @Get(':id')
