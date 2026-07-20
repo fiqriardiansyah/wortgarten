@@ -1,5 +1,7 @@
 import { BookOpen, Sparkles } from 'lucide-react';
 import { ZodError } from 'zod';
+import Measure from 'react-measure';
+import Masonry from 'react-responsive-masonry';
 import { tokens } from '@/design/tokens';
 import { useGenerateStoryDev, useLibrary } from '@/read/api/useLibrary';
 import { HeroStoryCard } from '@/read/components/HeroStoryCard';
@@ -8,6 +10,8 @@ import { TomorrowStoryCard } from '@/read/components/TomorrowStoryCard';
 import { WaitingTomorrowCard } from '@/read/components/WaitingTomorrowCard';
 import { ReadingLevelCard } from '@/read/components/ReadingLevelCard';
 import { PickedUpCard } from '@/read/components/PickedUpCard';
+
+const TWO_COLUMN_MIN_WIDTH = 480;
 
 function Skeleton() {
   return (
@@ -99,11 +103,17 @@ export function ReadPage() {
           {earlier.length > 0 && (
             <div>
               <h2 className="mb-3 text-sm font-bold text-ink">Earlier stories</h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {earlier.map((story, i) => (
-                  <EarlierStoryCard key={story.id} story={story} index={i + 1} />
-                ))}
-              </div>
+              <Measure bounds>
+                {({ measureRef, contentRect }) => (
+                  <div ref={measureRef}>
+                    <Masonry columnsCount={(contentRect.bounds?.width ?? 0) >= TWO_COLUMN_MIN_WIDTH ? 2 : 1} gutter="0.75rem">
+                      {earlier.map((story, i) => (
+                        <EarlierStoryCard key={story.id} story={story} index={i + 1} />
+                      ))}
+                    </Masonry>
+                  </div>
+                )}
+              </Measure>
             </div>
           )}
         </div>

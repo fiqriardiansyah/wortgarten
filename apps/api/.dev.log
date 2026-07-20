@@ -1,0 +1,354 @@
+
+> @wortgarten/api@0.0.1 predev D:\private\wortgarten\apps\api
+> kill-port 3026
+
+Process on port 3026 killed
+
+> @wortgarten/api@0.0.1 dev D:\private\wortgarten\apps\api
+> nest start --watch
+
+[2J[3J[H[[90m3:34:07 PM[0m] Starting compilation in watch mode...
+
+[[90m3:34:16 PM[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +52ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mImagesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +9ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSrsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStreakModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +13ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWordsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLexiconModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mProgressModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStoriesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSessionModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHomeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[AuthModule] [39m[32mAuthModule initialized BetterAuth on '/auth'[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +3ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHomeController {/home}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/home, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWordsController {/words}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/batch, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSessionController {/sessions}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/active, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/practice, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/rescue, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/attempts, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/complete, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/abandon, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLexiconController {/lexicon}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/search, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/analyze, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStoriesController {/stories}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/generate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMeController {/me}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/me, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mProgressController {/progress}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/progress, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 9836  - [39m07/20/2026, 3:34:20 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +55ms[39m
+API running on http://localhost:3026
+[2J[3J[H[[90m4:15:22 PM[0m] File change detecte[2J[3J[H[[90m4:15:22 PM[0m] File ch[[90m4:15:23 PM[0m] Found 0 errors. Watching for f[[90m4:15:23 [2J[3J[H[[90m4:15:23 PM[0m] File change detecte[2J[3J[H[[90m4:15:23 PM[0m] File ch[[90m4:15:24 PM[0m] Found 0 errors. Watching for f[[90m4:15:24 [2J[3J[H[[90m4:15:25 PM[0m] File change detecte[2J[3J[H[[90m4:15:25 PM[0m] File ch[[90m4:15:26 PM[0m] Found 0 errors. Watching for f[[90m4:15:26 [2J[3J[H[[90m4:15:26 PM[0m] File change detecte[2J[3J[H[[90m4:15:26 PM[0m] File ch[[90m4:15:27 PM[0m] Found 0 errors. Watching for f[[90m4:15:27 [2J[3J[H[[90m4:15:29 PM[0m] File change detecte[2J[3J[H[[90m4:15:29 PM[0m] File ch[[90m4:15:29 PM[0m] Found 0 errors. Watching for f[[90m4:15:29 [2J[3J[H[[90m4:15:30 PM[0m] File change detected. Starting[[90m4:15:30 PM[0m] File ch[[90m4:15:31 PM[0m] Found 0 errors. Watching for f[[90m4:15:31 [2J[3J[H[[90m4:15:32 PM[0m] File change detecte[2J[3J[H[[90m4:15:32 PM[0m] File ch[[90m4:15:32 PM[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [3[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +68ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mImagesModu[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [3[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +7ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModu[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [3[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSrsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStreakModu[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [3[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModul[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [3[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiModu[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [3[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWordsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLexiconModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mProgressModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStoriesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSessionModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHomeModu[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [3[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[AuthModule] [39m[3[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [3[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32m[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHomeController {/home}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/home, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWordsController {/words}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/batch, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSessionController {/sessions}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/active, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/practice, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/rescue, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/attempts, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/complete, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/abandon, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLexiconController {/lexicon}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/search, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/analyze, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStoriesController {/stories}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [3[32m[Nest] 41380  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/st[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMeController {/me}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mProgressController {/progress}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/progress, GET} route[39m[38;5;3m +1ms[39m
+[2J[3J[H[[90m4:15:35 PM[0m] File change detected. Starting incremental compilation...
+
+[32m[Nest] 42084  - [39m07/20/2026, 4:15:35 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +96ms[39m
+API running on http://localhost:3026
+[[90m4:15:36 PM[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +39ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mImagesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +7ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSrsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStreakModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +12ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWordsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLexiconModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mProgressModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStoriesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSessionModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHomeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[AuthModule] [39m[32mAuthModule initialized BetterAuth on '/auth'[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +4ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHomeController {/home}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/home, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWordsController {/words}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/batch, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSessionController {/sessions}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/active, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:38 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/practice, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/rescue, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/attempts, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/complete, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/abandon, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLexiconController {/lexicon}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/search, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/analyze, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStoriesController {/stories}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/generate, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMeController {/me}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mProgressController {/progress}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/progress, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 37992  - [39m07/20/2026, 4:15:39 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +55ms[39m
+API running on http://localhost:3026
+[2J[3J[H[[90m4:30:50 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m4:30:51 PM[0m] Found 0 errors. Watching for file changes.
+
+[2J[3J[H[[90m4:30:53 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m4:30:55 PM[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +113ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mImagesModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +11ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSrsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStreakModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +14ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWordsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLexiconModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mProgressModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStoriesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSessionModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHomeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[AuthModule] [39m[32mAuthModule initialized BetterAuth on '/auth'[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +5ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHomeController {/home}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/home, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWordsController {/words}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/batch, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSessionController {/sessions}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/active, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/practice, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/rescue, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/attempts, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/complete, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/abandon, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLexiconController {/lexicon}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/search, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/analyze, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStoriesController {/stories}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/generate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMeController {/me}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/me, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mProgressController {/progress}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/progress, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 38624  - [39m07/20/2026, 4:30:58 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +146ms[39m
+API running on http://localhost:3026
+[2J[3J[H[[90m4:31:36 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m4:31:39 PM[0m] Found 0 errors. Watching for file changes.
+
+[2J[3J[H[[90m4:31:40 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m4:31:41 PM[0m] Found 0 errors. Watching for file changes.
+
+[2J[3J[H[[90m4:31:41 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m4:31:42 PM[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +45ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mImagesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +12ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSrsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStreakModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +13ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWordsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLexiconModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mProgressModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStoriesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSessionModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHomeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[AuthModule] [39m[32mAuthModule initialized BetterAuth on '/auth'[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +5ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHomeController {/home}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/home, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWordsController {/words}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/batch, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSessionController {/sessions}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/active, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/practice, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/rescue, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/attempts, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/complete, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/abandon, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLexiconController {/lexicon}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/search, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/analyze, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStoriesController {/stories}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/generate, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMeController {/me}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/me, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mProgressController {/progress}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:44 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/progress, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 25976  - [39m07/20/2026, 4:31:45 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +75ms[39m
+API running on http://localhost:3026
+[2J[3J[H[[90m4:32:00 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m4:32:01 PM[0m] Found 0 errors. Watching for file changes.
+
+[2J[3J[H[[90m4:32:02 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m4:32:03 PM[0m] Found 0 errors. Watching for file changes.
+
+[2J[3J[H[[90m4:32:04 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m4:32:05 PM[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +44ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mImagesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +10ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSrsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStreakModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +13ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mWordsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLexiconModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mProgressModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStoriesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSessionModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHomeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[AuthModule] [39m[32mAuthModule initialized BetterAuth on '/auth'[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +3ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHomeController {/home}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/home, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mWordsController {/words}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/batch, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/words/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSessionController {/sessions}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/active, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/practice, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/rescue, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/attempts, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/complete, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/sessions/:id/abandon, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mLexiconController {/lexicon}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/search, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/lexicon/analyze, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStoriesController {/stories}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/generate, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/stories/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMeController {/me}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/me, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mProgressController {/progress}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/progress, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 10696  - [39m07/20/2026, 4:32:08 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +82ms[39m
+API running on http://localhost:3026
