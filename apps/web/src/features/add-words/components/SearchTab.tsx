@@ -55,7 +55,7 @@ export function SearchTab() {
   return (
     <div>
       <div className="relative">
-        <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
+        {/* <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" /> */}
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}

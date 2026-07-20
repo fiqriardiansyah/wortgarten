@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Sprout } from 'lucide-react';
 import { authClient } from '@/lib/authClient';
 import { tokens } from '@/design/tokens';
@@ -15,6 +16,7 @@ import { WordsPage } from '@/features/words/WordsPage';
 import { WordDetailPage } from '@/features/words/detail/WordDetailPage';
 import { ProgressPage } from '@/features/progress/ProgressPage';
 import { ReadPage } from '@/read/ReadPage';
+import { AllStoriesPage } from '@/read/AllStoriesPage';
 import { ReaderPage } from '@/read/ReaderPage';
 
 function AuthLoadingScreen() {
@@ -35,6 +37,16 @@ function RequireAuth({ children }: { children: ReactNode }) {
   return children;
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 function RequireGuest({ children }: { children: ReactNode }) {
   const { data, isPending } = authClient.useSession();
 
@@ -47,6 +59,7 @@ function RequireGuest({ children }: { children: ReactNode }) {
 export function AppRouter() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route
           path="/login"
@@ -87,6 +100,7 @@ export function AppRouter() {
           <Route path="/words" element={<WordsPage />} />
           <Route path="/words/:id" element={<WordDetailPage />} />
           <Route path="/read" element={<ReadPage />} />
+          <Route path="/read/all" element={<AllStoriesPage />} />
           <Route path="/read/:id" element={<ReaderPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/add" element={<AddWordsPage />} />

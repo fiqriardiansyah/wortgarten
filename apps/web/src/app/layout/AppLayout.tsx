@@ -79,6 +79,27 @@ export function AppLayout() {
         </div>
       </main>
 
+      {/* Fade content behind the floating bottom nav: blur + opacity gradation */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 lg:hidden"
+        style={{
+          height: '9rem',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          maskImage: 'linear-gradient(to bottom, transparent, black 65%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 65%)',
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 lg:hidden"
+        style={{
+          height: '9rem',
+          background: `linear-gradient(to bottom, transparent, ${tokens.color.bg} 55%)`,
+        }}
+      />
+
       {/* Mobile bottom nav */}
       <div className="lg:hidden">
         <BottomNavBar />

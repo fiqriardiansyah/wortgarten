@@ -27,7 +27,7 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-6 top-6 bottom-6 z-40" style={{ width: tokens.component.nav.sidebarWidth }}>
-      <SketchBox seed={seed} fill={tokens.color.surface} stroke={tokens.color.ink} className="flex h-full flex-col">
+      <SketchBox seed={seed} fill={tokens.color.surface} stroke={tokens.color.ink} className="flex h-full flex-col relative">
         {/* Logo */}
         <div className="flex items-center gap-2 px-5 py-5">
           <Sprout size={24} style={{ color: tokens.color.teal }} />
@@ -57,7 +57,7 @@ export function Sidebar() {
         </div>
 
         {/* User block */}
-        <div className="mt-auto flex items-center gap-3 px-4 py-4" style={{ borderTop: `1px solid ${tokens.color.lineSoft}` }}>
+        <div className="mt-auto absolute bottom-0 flex items-center gap-3 px-4 py-4">
           <Avatar name={user?.name} src={user?.image ?? undefined} size="md" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold" style={{ color: tokens.color.ink }}>

@@ -6,6 +6,7 @@ import { tokens } from '@/design/tokens';
 import { useGenerateStoryDev, useLibrary } from '@/read/api/useLibrary';
 import { HeroStoryCard } from '@/read/components/HeroStoryCard';
 import { EarlierStoryCard } from '@/read/components/EarlierStoryCard';
+import { EarlierStoriesSummaryCard } from '@/read/components/EarlierStoriesSummaryCard';
 import { TomorrowStoryCard } from '@/read/components/TomorrowStoryCard';
 import { WaitingTomorrowCard } from '@/read/components/WaitingTomorrowCard';
 import { ReadingLevelCard } from '@/read/components/ReadingLevelCard';
@@ -82,12 +83,12 @@ export function ReadPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <h1 className="text-[28px] font-extrabold leading-tight text-ink">Read</h1>
           <p className="mt-0.5 text-sm text-muted">Stories written from the words you know</p>
         </div>
-        <div className="flex flex-shrink-0 items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:flex-shrink-0 sm:flex-nowrap">
           <DevGenerateStoryButton />
           <span className="flex items-center gap-1.5 rounded-pill border-2 border-line bg-surface px-3 py-1.5 text-xs font-bold text-ink">
             <BookOpen size={14} style={{ color: tokens.color.teal }} /> {readCount} stories read
@@ -101,20 +102,29 @@ export function ReadPage() {
           {hero && <HeroStoryCard story={hero} index={0} />}
 
           {earlier.length > 0 && (
-            <div>
-              <h2 className="mb-3 text-sm font-bold text-ink">Earlier stories</h2>
-              <Measure bounds>
-                {({ measureRef, contentRect }) => (
-                  <div ref={measureRef}>
-                    <Masonry columnsCount={(contentRect.bounds?.width ?? 0) >= TWO_COLUMN_MIN_WIDTH ? 2 : 1} gutter="0.75rem">
-                      {earlier.map((story, i) => (
-                        <EarlierStoryCard key={story.id} story={story} index={i + 1} />
-                      ))}
-                    </Masonry>
-                  </div>
-                )}
-              </Measure>
-            </div>
+            <>
+              {/* Mobile: one compact card linking to the paginated /read/all page, so the
+                  reading-level/picked-up cards further down aren't buried under a long list. */}
+              <div className="lg:hidden">
+                <EarlierStoriesSummaryCard stories={earlier} index={1} />
+              </div>
+
+              {/* Desktop: full masonry grid inline in the left column. */}
+              <div className="hidden lg:block">
+                <h2 className="mb-3 text-sm font-bold text-ink">Earlier stories</h2>
+                <Measure bounds>
+                  {({ measureRef, contentRect }) => (
+                    <div ref={measureRef}>
+                      <Masonry columnsCount={(contentRect.bounds?.width ?? 0) >= TWO_COLUMN_MIN_WIDTH ? 2 : 1} gutter="0.75rem">
+                        {earlier.map((story, i) => (
+                          <EarlierStoryCard key={story.id} story={story} index={i + 1} />
+                        ))}
+                      </Masonry>
+                    </div>
+                  )}
+                </Measure>
+              </div>
+            </>
           )}
         </div>
 
