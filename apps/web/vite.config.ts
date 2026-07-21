@@ -18,10 +18,10 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: Number(process.env.WEB_PORT) || 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3026',
+        target: `http://localhost:${process.env.API_PORT || 3026}`,
         rewrite: (p) => p.replace(/^\/api/, ''),
       },
     },
