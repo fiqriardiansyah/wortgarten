@@ -88,6 +88,16 @@ export function LoginPage() {
           authClient.signIn.social({ provider: 'google', callbackURL: window.location.origin + '/' })
         }
       />
+
+      <p className="mt-5 text-center text-xs text-muted">
+        <a href="/terms" target="_blank" rel="noreferrer" className="font-semibold hover:text-teal hover:underline">
+          Terms of Service
+        </a>{' '}
+        &middot;{' '}
+        <a href="/privacy" target="_blank" rel="noreferrer" className="font-semibold hover:text-teal hover:underline">
+          Privacy Policy
+        </a>
+      </p>
     </AuthShell>
   );
 }

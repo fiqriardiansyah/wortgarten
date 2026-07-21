@@ -109,8 +109,49 @@ export type SessionUser = z.infer<typeof SessionUserSchema>;
 
 export const MeResponseSchema = z.object({
   user: SessionUserSchema,
+  createdAt: z.string(),
+  timezone: z.string(),
+  timezoneSetManually: z.boolean(),
+  dayNumber: z.number(),
 });
 export type MeResponse = z.infer<typeof MeResponseSchema>;
+
+export const SetTimezoneRequestSchema = z.object({
+  timezone: z.string(),
+});
+export type SetTimezoneRequest = z.infer<typeof SetTimezoneRequestSchema>;
+
+export const SetTimezoneResponseSchema = z.object({
+  timezone: z.string(),
+  timezoneSetManually: z.boolean(),
+});
+export type SetTimezoneResponse = z.infer<typeof SetTimezoneResponseSchema>;
+
+export const DeleteAccountRequestSchema = z.object({
+  confirmEmail: z.string(),
+});
+export type DeleteAccountRequest = z.infer<typeof DeleteAccountRequestSchema>;
+
+// ─── Legal ────────────────────────────────────────────────────────────────────
+//
+// Bump these dates whenever the corresponding markdown in apps/web/src/legal/*.md changes in a
+// way a user should re-review. CURRENT_TERMS_VERSION is what SignupPage sends and what
+// MeService.acceptTerms stores on User.acceptedTermsVersion — see LEGAL-REVIEW.md.
+
+export const PRIVACY_LAST_UPDATED = '2026-07-21';
+export const TERMS_LAST_UPDATED = '2026-07-21';
+export const CURRENT_TERMS_VERSION = TERMS_LAST_UPDATED;
+
+export const AcceptTermsRequestSchema = z.object({
+  version: z.string(),
+});
+export type AcceptTermsRequest = z.infer<typeof AcceptTermsRequestSchema>;
+
+export const AcceptTermsResponseSchema = z.object({
+  acceptedTermsAt: z.string(),
+  acceptedTermsVersion: z.string(),
+});
+export type AcceptTermsResponse = z.infer<typeof AcceptTermsResponseSchema>;
 
 // ─── Lexicon ──────────────────────────────────────────────────────────────────
 
@@ -258,6 +299,23 @@ export const WordCardSchema = z.object({
   addedAt: z.string(),
 });
 export type WordCard = z.infer<typeof WordCardSchema>;
+
+// Full, unpaginated dump of a user's word bank — backs the Profile page's "export my words"
+// (CSV columns follow this field order; JSON export is an array of this shape).
+export const WordExportRowSchema = z.object({
+  word: z.string(), // displayForm, e.g. "der Hund"
+  partOfSpeech: PartOfSpeechSchema,
+  translation: z.string(),
+  level: LadderLevelSchema,
+  stability: z.number(),
+  difficulty: z.number(),
+  reps: z.number(),
+  lapses: z.number(),
+  dueAt: z.string(),
+  lastReviewedAt: z.string().nullable(),
+  addedAt: z.string(),
+});
+export type WordExportRow = z.infer<typeof WordExportRowSchema>;
 
 export const WordsListResponseSchema = z.object({
   items: z.array(WordCardSchema),

@@ -106,6 +106,13 @@ model User {
   emailVerified Boolean   @default(false)
   image         String?
   timezone      String    @default("UTC")
+  // Once true, HomeService/ProgressService stop silently overwriting `timezone` from the
+  // browser-detected X-Timezone header — an explicit Profile-page choice must stick.
+  timezoneSetManually Boolean @default(false)
+  // Set once, at signup, by MeService.acceptTerms — never backfilled for accounts created before
+  // this field existed (both stay null for those rows; do not retroactively mark them accepted).
+  acceptedTermsAt      DateTime?
+  acceptedTermsVersion String?
   sessions      Session[]
   accounts      Account[]
 

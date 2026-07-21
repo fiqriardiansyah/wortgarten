@@ -1,9 +1,9 @@
 import { useId } from 'react';
-import { Home, Type, BookOpen, BarChart2, Plus, LogOut, Sprout } from 'lucide-react';
+import { Home, Type, BookOpen, BarChart2, Plus, Sprout } from 'lucide-react';
 import { SidebarNavItem } from '@/components/ui/SidebarNavItem';
 import { Avatar } from '@/components/ui/Avatar';
 import { SketchBox } from '@/components/ui/SketchBox';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { authClient } from '@/lib/authClient';
 import { tokens } from '@/design/tokens';
 
@@ -15,15 +15,9 @@ const NAV = [
 ];
 
 export function Sidebar() {
-  const navigate = useNavigate();
   const { data: session } = authClient.useSession();
   const user = session?.user;
   const seed = `sidebar-${useId()}`;
-
-  async function handleLogout() {
-    await authClient.signOut();
-    navigate('/login');
-  }
 
   return (
     <aside className="fixed left-6 top-6 bottom-6 z-40" style={{ width: tokens.component.nav.sidebarWidth }}>
@@ -57,7 +51,11 @@ export function Sidebar() {
         </div>
 
         {/* User block */}
-        <div className="mt-auto absolute bottom-0 flex items-center gap-3 px-4 py-4">
+        <Link
+          to="/profile"
+          aria-label="Your profile"
+          className="mt-auto absolute right-0 left-0 bottom-0 flex items-center gap-2 px-4 py-4 transition-colors hover:bg-black/[0.02]"
+        >
           <Avatar name={user?.name} src={user?.image ?? undefined} size="md" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold" style={{ color: tokens.color.ink }}>
@@ -67,15 +65,7 @@ export function Sidebar() {
               {user?.email ?? ''}
             </p>
           </div>
-          <button
-            onClick={handleLogout}
-            aria-label="Log out"
-            className="transition-colors hover:opacity-100"
-            style={{ color: tokens.color.muted }}
-          >
-            <LogOut size={16} />
-          </button>
-        </div>
+        </Link>
       </SketchBox>
     </aside>
   );

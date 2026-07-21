@@ -1,12 +1,33 @@
-import { Outlet, useNavigate } from 'react-router-dom';
-import { LogOut, Sprout } from 'lucide-react';
+import { useEffect } from 'react';
+import { Outlet, Link } from 'react-router-dom';
+import { Sprout } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { BottomNavBar } from '@/components/ui/BottomNavBar';
 import { Avatar } from '@/components/ui/Avatar';
 import { StreakPill } from '@/components/ui/StreakPill';
 import { useHomeQuery } from '@/features/home/api/useHomeQuery';
+import { useAcceptTerms } from '@/features/profile/api/useAcceptTerms';
+import { PENDING_TERMS_ACCEPTANCE_KEY } from '@/features/profile/api/pendingTermsAcceptance';
 import { authClient } from '@/lib/authClient';
 import { tokens } from '@/design/tokens';
+
+/** Picks up the flag SignupPage sets before a Google OAuth redirect (that redirect leaves the
+ * signup page entirely, so nothing there can await the result and record acceptance itself).
+ * Runs once per authenticated mount; a no-op on every load where the flag isn't present. */
+function usePendingTermsAcceptance(userId: string | undefined) {
+  const acceptTerms = useAcceptTerms();
+
+  useEffect(() => {
+    if (!userId) return;
+    const version = sessionStorage.getItem(PENDING_TERMS_ACCEPTANCE_KEY);
+    if (!version) return;
+    sessionStorage.removeItem(PENDING_TERMS_ACCEPTANCE_KEY);
+    acceptTerms.mutate(version);
+    // acceptTerms is a fresh useMutation identity each render — depending only on userId is
+    // deliberate, this must fire exactly once per sessionStorage flag, not on every re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+}
 
 // 6-8 small dots per screen, not 30 (spec §7 "Confetti dots").
 const CONFETTI = [
@@ -29,15 +50,10 @@ function ConfettiDot({ top, left, size, color }: { top: string; left: string; si
 }
 
 export function AppLayout() {
-  const navigate = useNavigate();
   const { data: session } = authClient.useSession();
   const { data: home } = useHomeQuery();
   const user = session?.user;
-
-  async function handleLogout() {
-    await authClient.signOut();
-    navigate('/login');
-  }
+  usePendingTermsAcceptance(user?.id);
 
   return (
     <div className="relative min-h-screen font-sans" style={{ backgroundColor: tokens.color.bg }}>
@@ -60,15 +76,9 @@ export function AppLayout() {
         </div>
         <div className="flex items-center gap-2">
           <StreakPill days={home?.streak.current ?? 0} compact />
-          <Avatar name={user?.name} src={user?.image ?? undefined} size="sm" />
-          <button
-            onClick={handleLogout}
-            aria-label="Log out"
-            className="transition-colors"
-            style={{ color: tokens.color.muted }}
-          >
-            <LogOut size={16} />
-          </button>
+          <Link to="/profile" aria-label="Your profile">
+            <Avatar name={user?.name} src={user?.image ?? undefined} size="sm" />
+          </Link>
         </div>
       </div>
 

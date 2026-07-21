@@ -26,11 +26,12 @@ function GoogleIcon() {
 interface GoogleButtonProps {
   onClick?: () => void;
   className?: string;
+  disabled?: boolean;
 }
 
-export function GoogleButton({ onClick, className = '' }: GoogleButtonProps) {
+export function GoogleButton({ onClick, className = '', disabled = false }: GoogleButtonProps) {
   return (
-    <Button variant="outline" icon={<GoogleIcon />} onClick={onClick} className={`w-full justify-center ${className}`}>
+    <Button variant="outline" icon={<GoogleIcon />} onClick={onClick} disabled={disabled} className={`w-full justify-center ${className}`}>
       Continue with Google
     </Button>
   );

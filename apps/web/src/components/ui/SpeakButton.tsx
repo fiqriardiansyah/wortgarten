@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { Volume2 } from 'lucide-react';
 import { pressSpring } from '@/design/motion';
 import { useGermanVoice } from '@/lib/useGermanVoice';
+import { useTtsPreference } from '@/lib/useTtsPreference';
 
 interface SpeakButtonProps {
   /** The exact string to speak — word only, e.g. `displayForm(lexeme)`. Never a sentence. */
@@ -14,7 +15,8 @@ interface SpeakButtonProps {
  * has no German voice installed — an English-accented fallback is worse than no button. */
 export function SpeakButton({ text, size = 16, className = '' }: SpeakButtonProps) {
   const { speak, supported } = useGermanVoice();
-  if (!supported) return null;
+  const { enabled } = useTtsPreference();
+  if (!supported || !enabled) return null;
 
   return (
     <motion.button

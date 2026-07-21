@@ -53,7 +53,12 @@ export class HomeService {
 
   async getDashboard(userId: string, reportedTimezone?: string): Promise<HomeDashboard> {
     let user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    if (reportedTimezone && reportedTimezone !== user.timezone && isValidTimeZone(reportedTimezone)) {
+    if (
+      reportedTimezone &&
+      !user.timezoneSetManually &&
+      reportedTimezone !== user.timezone &&
+      isValidTimeZone(reportedTimezone)
+    ) {
       user = await this.prisma.user.update({ where: { id: userId }, data: { timezone: reportedTimezone } });
     }
 

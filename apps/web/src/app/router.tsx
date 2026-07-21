@@ -15,6 +15,10 @@ import { SessionPage } from '@/features/session/SessionPage';
 import { WordsPage } from '@/features/words/WordsPage';
 import { WordDetailPage } from '@/features/words/detail/WordDetailPage';
 import { ProgressPage } from '@/features/progress/ProgressPage';
+import { ProfilePage } from '@/features/profile/ProfilePage';
+import { AboutPage } from '@/features/about/AboutPage';
+import { PrivacyPage } from '@/features/legal/PrivacyPage';
+import { TermsPage } from '@/features/legal/TermsPage';
 import { ReadPage } from '@/read/ReadPage';
 import { AllStoriesPage } from '@/read/AllStoriesPage';
 import { ReaderPage } from '@/read/ReaderPage';
@@ -79,6 +83,9 @@ export function AppRouter() {
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Public, no login required — a prospective user must be able to read these before signing up. */}
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
 
         <Route
           path="/session"
@@ -104,6 +111,8 @@ export function AppRouter() {
           <Route path="/read/:id" element={<ReaderPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/add" element={<AddWordsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/about" element={<AboutPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

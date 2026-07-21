@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SessionCompleteResponse, TaskResponse } from '@wortgarten/shared';
 import { Button } from '@/components/ui/Button';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import { LinearProgress } from '@/components/ui/LinearProgress';
 import { tokens } from '@/design/tokens';
 import { fetchActiveSession } from './api/useActiveSession';
@@ -67,6 +68,7 @@ export function SessionShell() {
   const [typedText, setTypedText] = useState('');
   const [tileIds, setTileIds] = useState<string[]>([]);
   const [summary, setSummary] = useState<SessionCompleteResponse | null>(null);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const task = store.tasks[store.currentIndex];
@@ -112,8 +114,11 @@ export function SessionShell() {
     }
   }
 
-  async function handleExit() {
-    if (!window.confirm('Your progress is saved. Exit this session?')) return;
+  function handleExit() {
+    setShowExitConfirm(true);
+  }
+
+  async function handleConfirmExit() {
     if (store.sessionId) await abandonSession.mutateAsync();
     navigate('/', { replace: true });
   }
@@ -143,9 +148,11 @@ export function SessionShell() {
     function onKeyDown(event: KeyboardEvent) {
       if (summary) return;
       if (event.key === 'Escape') {
-        void handleExit();
+        if (showExitConfirm) setShowExitConfirm(false);
+        else handleExit();
         return;
       }
+      if (showExitConfirm) return;
       if (store.phase === 'correction') {
         if (event.key === 'Enter') void handleGotIt();
         return;
@@ -191,32 +198,44 @@ export function SessionShell() {
     task.taskType === 'TYPE_WORD' ? typedText : task.taskType === 'PICK_MEANING' ? task.payload.options.find((o) => o.senseId === pickSelected)?.label : undefined;
 
   return (
-    <FullscreenLayout onExit={handleExit} progress={store.practicedCount} total={store.totalCount}>
-      {store.phase === 'correction' && store.lastAttempt ? (
-        <CorrectionCard userAnswerLabel={userAnswerLabel} attempt={store.lastAttempt} onGotIt={handleGotIt} />
-      ) : (
-        <>
-          {task.taskType === 'PICK_MEANING' && (
-            <PickMeaningTask payload={task.payload} disabled={submitAttempt.isPending} onSelect={handlePickSelect} />
-          )}
-          {task.taskType === 'TYPE_WORD' && (
-            <>
-              <TypeWordTask payload={task.payload} value={typedText} disabled={submitAttempt.isPending} inputRef={inputRef} onChange={setTypedText} />
-              <Button className="mt-4 w-full justify-center" disabled={submitAttempt.isPending} onPointerDown={handleCheck}>
-                Check ✓
-              </Button>
-            </>
-          )}
-          {task.taskType === 'BUILD_SENTENCE' && (
-            <>
-              <BuildSentenceTask payload={task.payload} selectedIds={tileIds} disabled={submitAttempt.isPending} onChange={setTileIds} />
-              <Button className="mt-4 w-full justify-center" disabled={submitAttempt.isPending} onPointerDown={handleCheck}>
-                Check ✓
-              </Button>
-            </>
-          )}
-        </>
-      )}
-    </FullscreenLayout>
+    <>
+      <FullscreenLayout onExit={handleExit} progress={store.practicedCount} total={store.totalCount}>
+        {store.phase === 'correction' && store.lastAttempt ? (
+          <CorrectionCard userAnswerLabel={userAnswerLabel} attempt={store.lastAttempt} onGotIt={handleGotIt} />
+        ) : (
+          <>
+            {task.taskType === 'PICK_MEANING' && (
+              <PickMeaningTask payload={task.payload} disabled={submitAttempt.isPending} onSelect={handlePickSelect} />
+            )}
+            {task.taskType === 'TYPE_WORD' && (
+              <>
+                <TypeWordTask payload={task.payload} value={typedText} disabled={submitAttempt.isPending} inputRef={inputRef} onChange={setTypedText} />
+                <Button className="mt-4 w-full justify-center" disabled={submitAttempt.isPending} onPointerDown={handleCheck}>
+                  Check ✓
+                </Button>
+              </>
+            )}
+            {task.taskType === 'BUILD_SENTENCE' && (
+              <>
+                <BuildSentenceTask payload={task.payload} selectedIds={tileIds} disabled={submitAttempt.isPending} onChange={setTileIds} />
+                <Button className="mt-4 w-full justify-center" disabled={submitAttempt.isPending} onPointerDown={handleCheck}>
+                  Check ✓
+                </Button>
+              </>
+            )}
+          </>
+        )}
+      </FullscreenLayout>
+      <ConfirmModal
+        open={showExitConfirm}
+        title="Exit this session?"
+        description="Your progress is saved."
+        confirmLabel="Exit"
+        cancelLabel="Keep going"
+        pending={abandonSession.isPending}
+        onConfirm={handleConfirmExit}
+        onCancel={() => setShowExitConfirm(false)}
+      />
+    </>
   );
 }
