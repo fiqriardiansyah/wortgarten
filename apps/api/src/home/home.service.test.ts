@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PrismaClient } from '@wortgarten/database';
 import { HomeDashboardSchema } from '@wortgarten/shared';
 import { AiService, FakeAdapter, type AiRouterPort } from '@wortgarten/ai';
+import { AudioService } from '@wortgarten/audio';
 import { ImageService } from '@wortgarten/images';
 import type { PrismaService } from '../prisma/prisma.service';
 import { SessionBuilderService } from '../modules/session/session-builder.service';
@@ -25,7 +26,7 @@ const words = new WordsService(prisma as unknown as PrismaService, srs);
 const sessionBuilder = new SessionBuilderService(prisma as unknown as PrismaService, srs, words);
 const streaks = new StreakService(prisma as unknown as PrismaService);
 const aiService = new AiService(fakeRouter, new FakeAdapter('GROQ', ['{}']), new FakeAdapter('OLLAMA', ['{}']), 0);
-const stories = new StoriesService(prisma as unknown as PrismaService, aiService, new ImageService(), words);
+const stories = new StoriesService(prisma as unknown as PrismaService, aiService, new ImageService(), new AudioService(), words);
 const homeService = new HomeService(prisma as unknown as PrismaService, words, sessionBuilder, streaks, stories);
 
 describe('HomeService.getDashboard — empty state', () => {

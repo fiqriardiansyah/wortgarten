@@ -423,6 +423,16 @@ model Story {
   // R2 object key only, never a full URL (see packages/images) — null until the bonus cover-image
   // step succeeds, which always happens after the story above is already persisted and readable.
   coverImageKey    String?
+  // Listen Mode (see packages/audio) — same bonus-layer discipline as coverImageKey: null until
+  // the (optional, flag-gated) edge-tts step succeeds after this story is already persisted.
+  // R2 object key only, never a full URL. `audioSync` is 'wordLevel' | 'sentenceLevel', validated
+  // at the zod boundary (packages/shared's StoryAudioSyncSchema) rather than a Prisma enum, so the
+  // DB value stays textually identical to the contract with no mapping layer.
+  audioKey         String?
+  audioSync        String?
+  // SentenceTiming[] (packages/shared/src/story.ts), only populated when audioSync is
+  // 'sentenceLevel' — per-sentence highlight spans for the reader's fallback karaoke mode.
+  sentenceTimings  Json?
 
   @@index([userId, readAt])
   @@index([userId, createdAt])

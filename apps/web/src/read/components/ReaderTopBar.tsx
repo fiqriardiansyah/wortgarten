@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { tokens } from '@/design/tokens';
+import { ListenControl } from '@/read/components/ListenControl';
+import type { ListenSpeed } from '@/read/useListenAudio';
 
 export type ReaderFontSize = 'S' | 'M' | 'L';
 
@@ -11,9 +13,10 @@ interface ReaderTopBarProps {
   fontSize: ReaderFontSize;
   onFontSizeChange: (size: ReaderFontSize) => void;
   progress: number; // 0-100
+  listen?: { isPlaying: boolean; onToggle: () => void; speed: ListenSpeed; onSpeedChange: (speed: ListenSpeed) => void };
 }
 
-export function ReaderTopBar({ title, fontSize, onFontSizeChange, progress }: ReaderTopBarProps) {
+export function ReaderTopBar({ title, fontSize, onFontSizeChange, progress, listen }: ReaderTopBarProps) {
   const navigate = useNavigate();
 
   return (
@@ -31,6 +34,8 @@ export function ReaderTopBar({ title, fontSize, onFontSizeChange, progress }: Re
         </button>
 
         <h1 className="min-w-0 flex-1 truncate text-center text-sm font-bold text-ink">{title}</h1>
+
+        {listen && <ListenControl {...listen} />}
 
         <div className="flex flex-shrink-0 items-center gap-0.5 rounded-pill border-2 border-line bg-surface px-1 py-1">
           {FONT_SIZES.map((size) => (

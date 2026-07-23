@@ -28,6 +28,13 @@ export const StoryTokenSchema = z.object({
   // new      = one of the 1-2 intentional new words -> underlined accent orange, tap = add
   // function = top-frequency word (rank <= 200) -> plain, tap = review-lite
   // unknown  = SHOULD NOT APPEAR in a "100% your words" story; see coverageKnownPct note below
+
+  // Bonus layer, same discipline as `coverImageUrl` below: null for punct/space tokens, for every
+  // token on a story with no audio (flag off, generation failed, older story), and for any `word`
+  // token the edge-tts alignment pass in packages/audio couldn't confidently place — see that
+  // package's `align.ts` for the tolerant-match algorithm. Never required for the reader to work.
+  audioStartMs: z.number().nullable().optional(),
+  audioEndMs: z.number().nullable().optional(),
 });
 export type StoryToken = z.infer<typeof StoryTokenSchema>;
 
@@ -46,6 +53,23 @@ export type StoryGlossaryEntry = z.infer<typeof StoryGlossaryEntrySchema>;
 
 export const StorySourceSchema = z.enum(['GROQ', 'OLLAMA', 'SEED', 'USER']);
 export type StorySource = z.infer<typeof StorySourceSchema>;
+
+// Whether edge-tts alignment (packages/audio's align.ts) achieved per-word confidence or had to
+// degrade to per-sentence spans — see `sentenceTimings` below. Null whenever `audioUrl` is null.
+export const StoryAudioSyncSchema = z.enum(['wordLevel', 'sentenceLevel']);
+export type StoryAudioSync = z.infer<typeof StoryAudioSyncSchema>;
+
+// Only populated (and only meaningful) when audioSync === 'sentenceLevel' — one span per sentence,
+// covering every token in `paragraphs[paragraphIndex].tokens[startTokenIndex..endTokenIndex]`
+// (inclusive), so the Reader can highlight the whole current line instead of a single word.
+export const SentenceTimingSchema = z.object({
+  paragraphIndex: z.number(),
+  startTokenIndex: z.number(),
+  endTokenIndex: z.number(),
+  startMs: z.number(),
+  endMs: z.number(),
+});
+export type SentenceTiming = z.infer<typeof SentenceTimingSchema>;
 
 export const StoryStatusSchema = z.enum(['READY', 'GENERATING']);
 export type StoryStatus = z.infer<typeof StoryStatusSchema>;
@@ -72,6 +96,12 @@ export const StorySchema = z.object({
   // Bonus layer, generated (if ever) strictly after this story is already stored and readable —
   // null means "no cover yet" (flag off, generation failed, or an older story), never an error.
   coverImageUrl: z.string().nullable(),
+  // Listen Mode — same bonus-layer discipline as coverImageUrl. `audioSync` and `sentenceTimings`
+  // are only meaningful when `audioUrl` is non-null; word-level timings (when achieved) live on
+  // each `StoryToken` instead of a separate array.
+  audioUrl: z.string().nullable(),
+  audioSync: StoryAudioSyncSchema.nullable(),
+  sentenceTimings: z.array(SentenceTimingSchema).nullable(),
   // Not in the original design doc's field list, but the "Earlier stories" library needs a read
   // state per story (the "✓ read" chip) and there's nowhere else to derive it from client-side —
   // the real worker/API will need to track this too (e.g. via a UserStory join).

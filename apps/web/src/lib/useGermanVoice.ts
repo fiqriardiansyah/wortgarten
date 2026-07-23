@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { pauseActiveListenAudio } from '@/lib/listenAudioRegistry';
 
 // undefined = not resolved yet, null = resolved to "no German voice on this device"
 let cachedVoice: SpeechSynthesisVoice | null | undefined;
@@ -39,6 +40,7 @@ export function useGermanVoice() {
   function speak(text: string) {
     if (!voice) return;
     try {
+      pauseActiveListenAudio(); // never let single-word pronunciation overlap Listen Mode playback
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.voice = voice;

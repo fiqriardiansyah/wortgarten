@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { AudioService } from '@wortgarten/audio';
 import { PrismaClient } from '@wortgarten/database';
 import { ImageService } from '@wortgarten/images';
 import { foldForLookup } from '@wortgarten/shared';
@@ -16,6 +17,7 @@ const LANG = 'de-story-generate-fixture';
 
 const prisma = new PrismaClient();
 const imageService = new ImageService(); // STORY_IMAGES_ENABLED is unset in tests — attachStoryCover no-ops
+const audioService = new AudioService(); // STORY_AUDIO_ENABLED is unset in tests — attachStoryAudio no-ops
 const lexemeIds: string[] = [];
 const storyIds: string[] = [];
 let userId: string;
@@ -85,7 +87,7 @@ describe('generateStoryForUser', () => {
     const ollama = new FakeAdapter('OLLAMA', [draftJson]);
     const aiService = new AiService(router, groq, ollama, 0, checkStoryDraft);
 
-    const result = await generateStoryForUser(prisma, aiService, resolver, imageService, userId, 'batch', LANG);
+    const result = await generateStoryForUser(prisma, aiService, resolver, imageService, audioService, userId, 'batch', LANG);
 
     expect(result.status).toBe('shipped');
     if (result.status !== 'shipped') return;
@@ -125,7 +127,7 @@ describe('generateStoryForUser', () => {
     const ollama = new FakeAdapter('OLLAMA', [draftJson]);
     const aiService = new AiService(router, groq, ollama, 0, checkStoryDraft);
 
-    const result = await generateStoryForUser(prisma, aiService, resolver, imageService, userId, 'batch', LANG);
+    const result = await generateStoryForUser(prisma, aiService, resolver, imageService, audioService, userId, 'batch', LANG);
 
     expect(result.status).toBe('shipped');
     if (result.status !== 'shipped') return;
@@ -149,7 +151,7 @@ describe('generateStoryForUser', () => {
     const ollama = new FakeAdapter('OLLAMA', [draftJson]);
     const aiService = new AiService(router, groq, ollama, 0, checkStoryDraft);
 
-    const result = await generateStoryForUser(prisma, aiService, resolver, imageService, userId, 'batch', LANG);
+    const result = await generateStoryForUser(prisma, aiService, resolver, imageService, audioService, userId, 'batch', LANG);
 
     expect(result.status).toBe('skipped');
     if (result.status !== 'skipped') return;
@@ -167,7 +169,7 @@ describe('generateStoryForUser', () => {
     const ollama = new FakeAdapter('OLLAMA', [draftJson]);
     const aiService = new AiService(router, groq, ollama, 2, checkStoryDraft);
 
-    const result = await generateStoryForUser(prisma, aiService, resolver, imageService, userId, 'lazy', LANG);
+    const result = await generateStoryForUser(prisma, aiService, resolver, imageService, audioService, userId, 'lazy', LANG);
 
     expect(result).toEqual({ status: 'skipped', reason: 'REMOTE_QUOTA_EXHAUSTED' });
     expect(groq.calls).toBe(0);

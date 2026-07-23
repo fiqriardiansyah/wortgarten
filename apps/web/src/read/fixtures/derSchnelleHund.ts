@@ -181,6 +181,9 @@ const heroStory: Story = {
   createdAt: '2026-07-17T06:00:00.000Z',
   isRead: false,
   coverImageUrl: null,
+  audioUrl: null,
+  audioSync: null,
+  sentenceTimings: null,
 };
 
 // ─── Earlier story: "Im Supermarkt" ────────────────────────────────────────
@@ -226,6 +229,9 @@ const supermarktStory: Story = {
   createdAt: '2026-07-16T06:00:00.000Z',
   isRead: true,
   coverImageUrl: null,
+  audioUrl: null,
+  audioSync: null,
+  sentenceTimings: null,
 };
 
 // ─── Earlier story: "Der Hund läuft nach Hause" ────────────────────────────
@@ -270,6 +276,9 @@ const hundNachHauseStory: Story = {
   createdAt: '2026-07-15T06:00:00.000Z',
   isRead: true,
   coverImageUrl: null,
+  audioUrl: null,
+  audioSync: null,
+  sentenceTimings: null,
 };
 
 // ─── Earlier story: "Ein guter Morgen" — translation intentionally null ───
@@ -309,6 +318,9 @@ const guterMorgenStory: Story = {
   createdAt: '2026-07-14T06:00:00.000Z',
   isRead: true,
   coverImageUrl: null,
+  audioUrl: null,
+  audioSync: null,
+  sentenceTimings: null,
 };
 
 // ─── Earlier story: "Die Katze und der Park" — oldest, still unread ───────
@@ -362,6 +374,9 @@ const katzeParkStory: Story = {
   createdAt: '2026-07-10T06:00:00.000Z',
   isRead: false,
   coverImageUrl: null,
+  audioUrl: null,
+  audioSync: null,
+  sentenceTimings: null,
 };
 
 // ─── Tomorrow's story — GENERATING, not tappable, no body yet ─────────────
@@ -382,6 +397,9 @@ const tomorrowStory: Story = {
   createdAt: '2026-07-18T02:00:00.000Z',
   isRead: false,
   coverImageUrl: null,
+  audioUrl: null,
+  audioSync: null,
+  sentenceTimings: null,
 };
 
 // ─── Library fixture ────────────────────────────────────────────────────

@@ -14,6 +14,7 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^10.4.15",
     "@wortgarten/ai": "workspace:*",
+    "@wortgarten/audio": "workspace:*",
     "@wortgarten/database": "workspace:*",
     "@wortgarten/images": "workspace:*",
     "@wortgarten/shared": "workspace:*",

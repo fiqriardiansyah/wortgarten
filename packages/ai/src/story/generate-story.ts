@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from '@wortgarten/database';
+import { attachStoryAudio, type AudioService } from '@wortgarten/audio';
 import { attachStoryCover, type ImageService } from '@wortgarten/images';
 import { StorySchema } from '@wortgarten/shared';
 import type { StoryDraft } from '@wortgarten/shared';
@@ -57,6 +58,7 @@ export async function generateStoryForUser(
   aiService: AiService,
   resolver: LexemeResolver,
   imageService: ImageService,
+  audioService: AudioService,
   userId: string,
   triggerContext: StoryTriggerContext = 'batch',
   language = 'de',
@@ -107,6 +109,9 @@ export async function generateStoryForUser(
     createdAt: new Date().toISOString(),
     isRead: false,
     coverImageUrl: null,
+    audioUrl: null,
+    audioSync: null,
+    sentenceTimings: null,
   });
 
   const created = await prisma.story.create({
@@ -132,6 +137,10 @@ export async function generateStoryForUser(
   // Story-first, picture-second: the row above is already complete and readable. This can never
   // throw and never affects the result below — see attachStoryCover's own doc comment.
   await attachStoryCover(prisma, imageService, created.id, built.translation ?? draft.title);
+
+  // Same "already shipped" ordering as the cover — Listen Mode audio is a bonus layer that can
+  // never block, delay, or fail the story. See attachStoryAudio's own doc comment.
+  await attachStoryAudio(prisma, audioService, created.id, built.paragraphs);
 
   console.log(`[generateStoryForUser] out: shipped storyId=${created.id} userId=${userId} provider=${result.provider} coverage=${built.coverageKnownPct}pct`);
   return { status: 'shipped', storyId: created.id };

@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { existsSync } from 'fs';
 import { dirname, join } from 'path';
 import { AiModule } from '@wortgarten/ai';
+import { AudioModule } from '@wortgarten/audio';
 import { ImagesModule } from '@wortgarten/images';
 
 /** A fixed relative depth to the repo-root `.env` breaks depending on how this module is
@@ -29,6 +30,7 @@ function findRepoRootEnvPath(startDir: string): string {
     }),
     AiModule,
     ImagesModule,
+    AudioModule,
   ],
 })
 export class WorkerModule {}
