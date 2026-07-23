@@ -50,7 +50,8 @@ export function TypeWordTask({ payload, value, disabled, inputRef, onChange }: T
         autoComplete="off"
         autoCapitalize="off"
         spellCheck={false}
-        className="mt-4 text-center text-lg"
+        className="mt-4 text-center text-hero-sm font-extrabold text-teal"
+        style={{ fontSize: 28, fontWeight: 800 }}
       />
 
       <div className="mt-3 flex justify-center gap-2">
