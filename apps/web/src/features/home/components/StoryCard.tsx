@@ -24,12 +24,12 @@ export function StoryCard({ story, index }: StoryCardProps) {
     return (
       <Card index={index} hover={false}>
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-teal-soft">
+          <div className="flex h-9 w-9 flex-shrink-0 animate-pulse items-center justify-center rounded-full bg-teal-soft">
             <Sparkles size={18} className="text-teal" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="font-semibold text-ink text-sm">Tomorrow's story is brewing</p>
-            <p className="text-xs text-muted">Generating tonight from your newest words</p>
+            <p className="font-semibold text-ink text-sm">Today's story is on its way</p>
+            <p className="text-xs text-muted">Writing it now from your newest words — this'll update on its own</p>
           </div>
         </div>
       </Card>

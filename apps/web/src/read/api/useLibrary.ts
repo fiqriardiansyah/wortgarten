@@ -7,6 +7,9 @@ export function useLibrary() {
   return useQuery({
     queryKey: ['read', 'library'],
     queryFn: () => apiFetch('/stories', LibraryResponseSchema),
+    // Same reasoning as useHomeQuery: generation is fire-and-forget server-side, so poll while
+    // TomorrowStoryCard is showing and stop once a story lands or pendingState clears.
+    refetchInterval: (query) => (query.state.data?.pendingState === 'generating' ? 4000 : false),
   });
 }
 
