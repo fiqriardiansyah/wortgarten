@@ -1,12 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { tokens } from '@/design/tokens';
+import { FontSizeSelector } from '@/read/components/FontSizeSelector';
 import { ListenControl } from '@/read/components/ListenControl';
 import type { ListenSpeed } from '@/read/useListenAudio';
 
 export type ReaderFontSize = 'S' | 'M' | 'L';
-
-const FONT_SIZES: ReaderFontSize[] = ['S', 'M', 'L'];
 
 interface ReaderTopBarProps {
   title: string;
@@ -35,22 +34,14 @@ export function ReaderTopBar({ title, fontSize, onFontSizeChange, progress, list
 
         <h1 className="min-w-0 flex-1 truncate text-center text-sm font-bold text-ink">{title}</h1>
 
-        {listen && <ListenControl {...listen} />}
+        {listen && (
+          <div className="hidden lg:flex">
+            <ListenControl {...listen} />
+          </div>
+        )}
 
-        <div className="flex flex-shrink-0 items-center gap-0.5 rounded-pill border-2 border-line bg-surface px-1 py-1">
-          {FONT_SIZES.map((size) => (
-            <button
-              key={size}
-              onClick={() => onFontSizeChange(size)}
-              aria-label={`Font size ${size}`}
-              aria-pressed={fontSize === size}
-              className={`rounded-pill px-2 py-0.5 font-bold transition-colors ${
-                fontSize === size ? 'bg-teal text-white' : 'text-muted hover:text-ink'
-              } ${size === 'S' ? 'text-xs' : size === 'M' ? 'text-sm' : 'text-base'}`}
-            >
-              Aa
-            </button>
-          ))}
+        <div className="hidden lg:flex">
+          <FontSizeSelector fontSize={fontSize} onFontSizeChange={onFontSizeChange} />
         </div>
       </div>
 

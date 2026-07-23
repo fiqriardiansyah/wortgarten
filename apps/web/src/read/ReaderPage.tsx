@@ -8,6 +8,8 @@ import { ReaderTopBar, type ReaderFontSize } from '@/read/components/ReaderTopBa
 import { StoryBody, type ActiveSentencePosition, type ActiveTokenPosition } from '@/read/components/StoryBody';
 import { WordPopup } from '@/read/components/WordPopup';
 import { StoryCoverBanner } from '@/components/ui/StoryCoverBanner';
+import { FontSizeSelector } from '@/read/components/FontSizeSelector';
+import { ListenControl } from '@/read/components/ListenControl';
 import { useListenAudio } from '@/read/useListenAudio';
 
 interface SelectedWord {
@@ -157,6 +159,8 @@ export function ReaderPage() {
     setSelected(null);
   }
 
+  const listenProps = story.audioUrl ? { isPlaying, onToggle: toggle, speed, onSpeedChange: setSpeed } : undefined;
+
   return (
     <div className="mx-auto max-w-2xl flex flex-col">
       <ReaderTopBar
@@ -164,7 +168,7 @@ export function ReaderPage() {
         fontSize={fontSize}
         onFontSizeChange={setFontSize}
         progress={progress}
-        listen={story.audioUrl ? { isPlaying, onToggle: toggle, speed, onSpeedChange: setSpeed } : undefined}
+        listen={listenProps}
       />
 
       {story.coverImageUrl && (
@@ -175,6 +179,13 @@ export function ReaderPage() {
           className="mb-4"
         />
       )}
+
+      {/* Mobile: ReaderTopBar hides its own ListenControl/FontSizeSelector below `lg` (too cramped
+          next to the title there) and this row takes over, sitting under the cover image instead. */}
+      <div className="mb-4 flex items-center justify-center gap-3 lg:hidden">
+        {listenProps && <ListenControl {...listenProps} />}
+        <FontSizeSelector fontSize={fontSize} onFontSizeChange={setFontSize} />
+      </div>
 
       <StoryBody
         story={story}
