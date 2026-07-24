@@ -13,6 +13,7 @@ import {
   type SubmitAttemptResponse,
 } from '@wortgarten/shared';
 import { PrismaService } from '../../prisma/prisma.service';
+import { WorldsService } from '../../worlds/worlds.service';
 import { SessionBuilderService } from './session-builder.service';
 import { SessionGradingService } from './session-grading.service';
 
@@ -26,6 +27,7 @@ export class SessionService {
     private readonly prisma: PrismaService,
     private readonly builder: SessionBuilderService,
     private readonly grading: SessionGradingService,
+    private readonly worlds: WorldsService,
   ) {}
 
   /** Resume-or-create. An ACTIVE session started <24h ago is returned as-is; older ones are marked
@@ -101,7 +103,14 @@ export class SessionService {
     }
 
     const secondCard = await this.buildSecondCardSlot(userId);
-    const [nextPreview, practicePool] = await Promise.all([this.builder.planPreview(userId), this.builder.practicePoolPreview(userId)]);
+    const [nextPreview, practicePool, newlyUnlockedWorlds] = await Promise.all([
+      this.builder.planPreview(userId),
+      this.builder.practicePoolPreview(userId),
+      // The only place UserWord.level ever crosses into RECOGNIZE+ — the sole moment a world can
+      // newly qualify. Recorded here so the celebration fires exactly once, on the session that
+      // caused it.
+      this.worlds.recordUnlocks(userId),
+    ]);
 
     await this.prisma.drillSession.update({ where: { id: sessionId }, data: { status: 'COMPLETED', completedAt: new Date() } });
 
@@ -111,6 +120,7 @@ export class SessionService {
       leveledUp,
       elapsedMs: Date.now() - session.startedAt.getTime(),
       masteredWords,
+      newlyUnlockedWorlds,
       secondCard,
       nextSessionCount: nextPreview.total,
       practiceCount: practicePool.total,

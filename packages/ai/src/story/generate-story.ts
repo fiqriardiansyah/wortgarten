@@ -7,6 +7,7 @@ import type { AiService } from '../ai.service';
 import { buildStoryFromDraft } from './build-story-tokens';
 import type { LexemeResolver } from './lexeme-resolver';
 import { selectStoryVocabulary } from './select-vocabulary';
+import { selectWorldForStory } from './select-world';
 import { buildStoryJob } from './story-job';
 
 // A learner's tap-heavy reading pace, not a fluent reader's — deliberately slower than typical
@@ -65,13 +66,14 @@ export async function generateStoryForUser(
 ): Promise<GenerateStoryResult> {
   console.log(`[generateStoryForUser] in: userId=${userId} trigger=${triggerContext} language=${language}`);
 
-  const vocab = await selectStoryVocabulary(prisma, userId, language);
+  const world = await selectWorldForStory(prisma, userId, language);
+  const vocab = await selectStoryVocabulary(prisma, userId, language, world?.key);
   if (!vocab) {
     console.log(`[generateStoryForUser] out: skipped (too_few_known_words) userId=${userId}`);
     return { status: 'skipped', reason: 'too_few_known_words' };
   }
 
-  const job = buildStoryJob(vocab);
+  const job = buildStoryJob(vocab, world);
   // Daytime (lazy) generation must never load the local model into RAM while the API is serving —
   // remoteOnly means this call either uses GROQ or doesn't run at all (see AiService.run).
   const result = await aiService.run(job, { remoteOnly: triggerContext === 'lazy' });
@@ -112,6 +114,7 @@ export async function generateStoryForUser(
     audioUrl: null,
     audioSync: null,
     sentenceTimings: null,
+    worldKey: world?.key ?? null,
   });
 
   const created = await prisma.story.create({
@@ -126,6 +129,7 @@ export async function generateStoryForUser(
       coverageKnownPct: built.coverageKnownPct,
       estMinutes,
       source: result.provider,
+      worldKey: world?.key ?? null,
     },
   });
   console.log(`[generateStoryForUser] story row created: storyId=${created.id} userId=${userId}`);

@@ -12,6 +12,7 @@ import { ProgressModule } from './progress/progress.module';
 import { SessionModule } from './modules/session/session.module';
 import { StoriesModule } from './stories/stories.module';
 import { WordsModule } from './modules/words/words.module';
+import { WorldsModule } from './worlds/worlds.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { WordsModule } from './modules/words/words.module';
     SessionModule,
     StoriesModule,
     WordsModule,
+    WorldsModule,
   ],
 })
 export class AppModule {}

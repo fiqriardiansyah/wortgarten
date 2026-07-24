@@ -184,6 +184,7 @@ const heroStory: Story = {
   audioUrl: null,
   audioSync: null,
   sentenceTimings: null,
+  worldKey: null,
 };
 
 // ─── Earlier story: "Im Supermarkt" ────────────────────────────────────────
@@ -232,6 +233,7 @@ const supermarktStory: Story = {
   audioUrl: null,
   audioSync: null,
   sentenceTimings: null,
+  worldKey: null,
 };
 
 // ─── Earlier story: "Der Hund läuft nach Hause" ────────────────────────────
@@ -279,6 +281,7 @@ const hundNachHauseStory: Story = {
   audioUrl: null,
   audioSync: null,
   sentenceTimings: null,
+  worldKey: null,
 };
 
 // ─── Earlier story: "Ein guter Morgen" — translation intentionally null ───
@@ -321,6 +324,7 @@ const guterMorgenStory: Story = {
   audioUrl: null,
   audioSync: null,
   sentenceTimings: null,
+  worldKey: null,
 };
 
 // ─── Earlier story: "Die Katze und der Park" — oldest, still unread ───────
@@ -377,6 +381,7 @@ const katzeParkStory: Story = {
   audioUrl: null,
   audioSync: null,
   sentenceTimings: null,
+  worldKey: null,
 };
 
 // ─── Tomorrow's story — GENERATING, not tappable, no body yet ─────────────
@@ -400,6 +405,7 @@ const tomorrowStory: Story = {
   audioUrl: null,
   audioSync: null,
   sentenceTimings: null,
+  worldKey: null,
 };
 
 // ─── Library fixture ────────────────────────────────────────────────────

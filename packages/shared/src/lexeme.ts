@@ -13,7 +13,7 @@ export type PartOfSpeech =
 
 export type Gender = 'MASCULINE' | 'FEMININE' | 'NEUTER';
 
-const ARTICLE_BY_GENDER: Record<Gender, string> = {
+export const ARTICLE_BY_GENDER: Record<Gender, string> = {
   MASCULINE: 'der',
   FEMININE: 'die',
   NEUTER: 'das',
@@ -76,3 +76,11 @@ export const ladderLevelColor: Record<LadderLevel, LadderLevelColor> = {
 };
 
 export const LADDER_LEVELS: LadderLevel[] = ['NEW', 'RECOGNIZE', 'RECALL', 'PRODUCE', 'MASTERED'];
+
+/** Every rung except NEW — the one "known" definition story vocabulary selection and world-unlock
+ * progress both gate on. Defined once here so neither reimplements it. */
+export const KNOWN_LEVELS: LadderLevel[] = ['RECOGNIZE', 'RECALL', 'PRODUCE', 'MASTERED'];
+
+export function isKnownLevel(level: LadderLevel): boolean {
+  return KNOWN_LEVELS.includes(level);
+}

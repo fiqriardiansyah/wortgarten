@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@wortgarten/database';
+import type { Gender, PrismaClient } from '@wortgarten/database';
 import {
   clauseFinalTokenIndices,
   foldForLookup,
@@ -16,6 +16,7 @@ export interface IndexedLexeme {
   partOfSpeech: PartOfSpeech;
   separablePrefix: string | null;
   frequencyRank: number | null;
+  gender: Gender | null;
 }
 
 export interface IndexedSense {
@@ -42,7 +43,7 @@ export interface LexiconIndex {
 export async function loadLexiconIndex(prisma: PrismaClient, language: string): Promise<LexiconIndex> {
   const lexemes = await prisma.lexeme.findMany({
     where: { language },
-    select: { id: true, lemma: true, partOfSpeech: true, separablePrefix: true, frequencyRank: true },
+    select: { id: true, lemma: true, partOfSpeech: true, separablePrefix: true, frequencyRank: true, gender: true },
   });
   const lexemesById = new Map(lexemes.map((l) => [l.id, l]));
 

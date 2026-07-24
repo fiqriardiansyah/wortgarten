@@ -8,8 +8,9 @@
     "seed:load": "ts-node src/3-load.ts",
     "seed:examples": "ts-node src/4-examples.ts",
     "seed:index": "ts-node src/5-index.ts",
+    "seed:worlds": "ts-node src/6-worlds.ts",
     "seed:verify": "ts-node src/verify.ts",
-    "seed:all": "pnpm run seed:filter && pnpm run seed:rank && pnpm run seed:load",
+    "seed:all": "pnpm run seed:filter && pnpm run seed:rank && pnpm run seed:load && pnpm run seed:worlds",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

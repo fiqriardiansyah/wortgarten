@@ -94,6 +94,24 @@ export function SessionSummary({ summary, onStartNext, startNextPending, onPract
         </motion.div>
       ))}
 
+      {summary.newlyUnlockedWorlds.map((world, i) => (
+        <motion.div
+          key={world.key}
+          variants={cardEnterVariants}
+          initial="hidden"
+          animate="visible"
+          transition={cardEnterTransition(summary.masteredWords.length + i + 1)}
+        >
+          {/* Joy, never danger — teal/yellow only, never coral (see design tokens' convention). */}
+          <Card hover={false} className="mt-4" fill={tokens.color.tealSoft} stroke={tokens.color.teal}>
+            <p className="font-extrabold text-teal-deep">
+              {world.icon} {world.name} just opened!
+            </p>
+            <p className="mt-1 text-sm text-ink">Tonight's story happens there.</p>
+          </Card>
+        </motion.div>
+      ))}
+
       {secondCard && (
         <Card hover={false} className="mt-4">
           <p className="text-sm text-ink">{secondCard.label}</p>

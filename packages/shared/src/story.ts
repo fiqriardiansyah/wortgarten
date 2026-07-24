@@ -106,6 +106,10 @@ export const StorySchema = z.object({
   // state per story (the "✓ read" chip) and there's nowhere else to derive it from client-side —
   // the real worker/API will need to track this too (e.g. via a UserStory join).
   isRead: z.boolean(),
+  // World.key, not a denormalized name/icon — the client already fetches the worlds list for the
+  // Worlds card and looks up {name, icon} from that same cache. Null for stories generated before
+  // Story Worlds shipped, or when the user had no unlocked world to pick from.
+  worldKey: z.string().nullable(),
 });
 export type Story = z.infer<typeof StorySchema>;
 

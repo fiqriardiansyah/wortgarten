@@ -1,5 +1,5 @@
-import type { Lexeme, PrismaClient, WordLevel } from '@wortgarten/database';
-import { displayForm } from '@wortgarten/shared';
+import type { Lexeme, PrismaClient } from '@wortgarten/database';
+import { displayForm, isKnownLevel } from '@wortgarten/shared';
 
 // Articles, prepositions, conjunctions, pronouns everyone meets almost immediately — without
 // these the model can't form a grammatical sentence at all, so they're always allowed even if
@@ -12,8 +12,6 @@ const NEW_WORD_COUNT = 2;
 // Shorter is more reliable on every axis: fewer chances to stray from the allowlist, less JSON
 // for a 3B model to malform, and a more comfortable read for an A1-A2 learner.
 export const STORY_TARGET_WORD_COUNT = 70;
-
-const KNOWN_LEVELS: WordLevel[] = ['RECOGNIZE', 'RECALL', 'PRODUCE', 'MASTERED'];
 
 export interface StoryVocabularyWord {
   lexemeId: string;
@@ -42,8 +40,17 @@ function toDisplayLemma(lexeme: Lexeme): string {
 /**
  * Plain code — the model never sees this decision, only its output (the doc's core safety
  * mechanism). Returns null when the user has too few known words to make a story worth shipping.
+ * `worldKey`, when given, biases the 1-2 "new" words toward that world's own word list (most
+ * frequent unused word first) instead of raw global frequency — themed new words are better
+ * learning AND they nudge the user toward their next unlock. Falls back to the existing
+ * global-frequency pick when the world has no unused candidates left.
  */
-export async function selectStoryVocabulary(prisma: PrismaClient, userId: string, language = 'de'): Promise<StoryVocabulary | null> {
+export async function selectStoryVocabulary(
+  prisma: PrismaClient,
+  userId: string,
+  language = 'de',
+  worldKey?: string | null,
+): Promise<StoryVocabulary | null> {
   console.log(`[selectStoryVocabulary] in: userId=${userId} language=${language}`);
   const userWords = await prisma.userWord.findMany({
     where: { userId, sense: { lexeme: { language } } },
@@ -54,7 +61,7 @@ export async function selectStoryVocabulary(prisma: PrismaClient, userId: string
   const knownLexemes = new Map<string, Lexeme>();
   const knownSenseByLexeme = new Map<string, string>();
   for (const uw of userWords) {
-    if (KNOWN_LEVELS.includes(uw.level)) {
+    if (isKnownLevel(uw.level)) {
       knownLexemes.set(uw.sense.lexemeId, uw.sense.lexeme);
       knownSenseByLexeme.set(uw.sense.lexemeId, uw.senseId);
     }
@@ -72,12 +79,29 @@ export async function selectStoryVocabulary(prisma: PrismaClient, userId: string
 
   // Not already in the bank at ANY level (even NEW) — a word the user is already mid-learning
   // elsewhere isn't a fresh comprehensible-input hook for this story.
-  const excludeIds = [...new Set([...bankLexemeIds, ...functionLexemeIds])];
-  const newWordCandidates = await prisma.lexeme.findMany({
-    where: { language, frequencyRank: { gt: FUNCTION_WORD_RANK_CEILING }, id: { notIn: excludeIds } },
-    orderBy: { frequencyRank: 'asc' },
-    take: NEW_WORD_COUNT,
-  });
+  const excludeIdSet = new Set<string>([...bankLexemeIds, ...functionLexemeIds]);
+
+  let newWordCandidates: Lexeme[] = [];
+  if (worldKey) {
+    const world = await prisma.world.findUnique({
+      where: { key: worldKey },
+      include: { words: { include: { lexeme: true } } },
+    });
+    if (world) {
+      newWordCandidates = world.words
+        .map((w) => w.lexeme)
+        .filter((l) => l.language === language && !excludeIdSet.has(l.id))
+        .sort((a, b) => (a.frequencyRank ?? Infinity) - (b.frequencyRank ?? Infinity))
+        .slice(0, NEW_WORD_COUNT);
+    }
+  }
+  if (newWordCandidates.length === 0) {
+    newWordCandidates = await prisma.lexeme.findMany({
+      where: { language, frequencyRank: { gt: FUNCTION_WORD_RANK_CEILING }, id: { notIn: [...excludeIdSet] } },
+      orderBy: { frequencyRank: 'asc' },
+      take: NEW_WORD_COUNT,
+    });
+  }
   const newWords: StoryVocabularyWord[] = newWordCandidates.map((l) => ({ lexemeId: l.id, displayLemma: toDisplayLemma(l) }));
 
   const allowlistIds = new Set<string>([...knownLexemes.keys(), ...functionLexemeIds, ...newWords.map((w) => w.lexemeId)]);

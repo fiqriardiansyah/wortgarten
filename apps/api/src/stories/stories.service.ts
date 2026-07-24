@@ -61,6 +61,7 @@ function toContractStory(row: StoryRow, isNewToday: boolean, knownLexemeIds: Set
     audioUrl: deriveAudioUrl(row.audioKey),
     audioSync: row.audioSync as StoryAudioSync | null,
     sentenceTimings: row.sentenceTimings as unknown as SentenceTiming[] | null,
+    worldKey: row.worldKey,
   };
 }
 

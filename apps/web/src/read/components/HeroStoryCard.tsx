@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
 import { StoryCoverBanner } from '@/components/ui/StoryCoverBanner';
+import { useWorldAttribution } from '@/read/api/useWorlds';
 
 interface HeroStoryCardProps {
   story: Story;
@@ -32,6 +33,8 @@ function contentWordChips(story: Story): string[] {
 
 export function HeroStoryCard({ story, index }: HeroStoryCardProps) {
   const navigate = useNavigate();
+  const world = useWorldAttribution(story.worldKey);
+  const newCount = story.newWords.length;
 
   return (
     <Card index={index}>
@@ -45,6 +48,11 @@ export function HeroStoryCard({ story, index }: HeroStoryCardProps) {
       )}
       <div className="flex flex-wrap items-center gap-2">
         {story.isNewToday && <Chip variant="lilac">NEW TODAY</Chip>}
+        {newCount > 0 && (
+          <Chip variant="lilac">
+            +{newCount} new word{newCount === 1 ? '' : 's'}
+          </Chip>
+        )}
         {story.coverageKnownPct === 100 && <Chip variant="success">100% your words</Chip>}
         <span className="ml-auto flex items-center gap-1 text-xs font-semibold text-muted">
           <BookOpen size={13} /> {story.estMinutes} min read
@@ -52,6 +60,11 @@ export function HeroStoryCard({ story, index }: HeroStoryCardProps) {
       </div>
 
       <h2 className="mt-3 text-heading font-extrabold text-ink">{story.title}</h2>
+      {world && (
+        <p className="mt-1 text-xs text-muted">
+          {world.icon} {world.name}
+        </p>
+      )}
       {story.blurb && <p className="mt-1 text-sm text-muted">{story.blurb}</p>}
 
       <div className="mt-3 flex flex-wrap gap-1.5">

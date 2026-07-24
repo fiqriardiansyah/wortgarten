@@ -20,7 +20,6 @@ import { AboutPage } from '@/features/about/AboutPage';
 import { PrivacyPage } from '@/features/legal/PrivacyPage';
 import { TermsPage } from '@/features/legal/TermsPage';
 import { ReadPage } from '@/read/ReadPage';
-import { AllStoriesPage } from '@/read/AllStoriesPage';
 import { ReaderPage } from '@/read/ReaderPage';
 
 function AuthLoadingScreen() {
@@ -107,7 +106,6 @@ export function AppRouter() {
           <Route path="/words" element={<WordsPage />} />
           <Route path="/words/:id" element={<WordDetailPage />} />
           <Route path="/read" element={<ReadPage />} />
-          <Route path="/read/all" element={<AllStoriesPage />} />
           <Route path="/read/:id" element={<ReaderPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/add" element={<AddWordsPage />} />

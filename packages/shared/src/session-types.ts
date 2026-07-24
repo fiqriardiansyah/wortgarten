@@ -292,6 +292,16 @@ export const MasteredWordSchema = z.object({
   displayForm: z.string(), // "der Hund"
 });
 
+// A world crossing its unlock threshold during this exact session — recorded once, at the moment
+// SessionService.complete() first observes it (see packages/shared/src/worlds.ts). Empty on every
+// later session, even though the world stays unlocked forever, so the celebration never repeats.
+export const NewlyUnlockedWorldSchema = z.object({
+  key: z.string(),
+  name: z.string(),
+  icon: z.string(),
+});
+export type NewlyUnlockedWorld = z.infer<typeof NewlyUnlockedWorldSchema>;
+
 export const SecondCardSlotSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('incomplete_nouns'), count: z.number() }),
   z.object({ type: z.literal('stuck_produce'), count: z.number() }),
@@ -306,6 +316,7 @@ export const SessionCompleteResponseSchema = z.object({
   leveledUp: z.number(),
   elapsedMs: z.number(),
   masteredWords: z.array(MasteredWordSchema),
+  newlyUnlockedWorlds: z.array(NewlyUnlockedWorldSchema),
   secondCard: SecondCardSlotSchema,
   // The real next session's size (same selection code as planPreview/composePlan) — the summary
   // screen's "Start next session" CTA count is never a guess.

@@ -121,6 +121,7 @@ model User {
   stories       Story[]
   drillSessions DrillSession[]
   streak        UserStreak?
+  worldUnlocks  UserWorldUnlock[]
 
   @@map("user")
 }
@@ -214,6 +215,7 @@ model Lexeme {
   senses       Sense[]
   forms        WordForm[]
   exampleWords ExampleWord[]
+  worldWords   WorldWord[]
 
   @@index([language, lemma, partOfSpeech])
   @@index([language, frequencyRank])
@@ -433,9 +435,64 @@ model Story {
   // SentenceTiming[] (packages/shared/src/story.ts), only populated when audioSync is
   // 'sentenceLevel' — per-sentence highlight spans for the reader's fallback karaoke mode.
   sentenceTimings  Json?
+  // World.key, not a relation FK — worldKey is a stable code-defined slug (like WordLevel), so a
+  // plain string is enough and avoids cascade-delete decisions on a table designed to grow later.
+  // Null for stories generated before Story Worlds shipped.
+  worldKey         String?
 
   @@index([userId, readAt])
   @@index([userId, createdAt])
+}
+
+// ─── Story Worlds (phase 1: hand-written JSON worlds, seeded) ──────────────
+//
+// A themed setting that rotates which vocabulary tonight's story leans on, unlocked as the user's
+// own bank happens to cover it — never assigned, never gated. See packages/seed/data/worlds/*.json
+// for the authored word lists and packages/ai/src/story/select-world.ts for the rotation logic.
+model World {
+  id            String            @id // deterministic content hash of `world:${key}` (see packages/seed)
+  key           String            @unique
+  name          String
+  icon          String
+  // The exact phrase spliced into the story prompt as one line: `Set this story ${hint}.` — a
+  // hint, never a rule (see packages/ai/src/story/select-world.ts); it cannot cause a rejection.
+  hint          String
+  // 0 means always-unlocked (the free "everyday" world) — every user has it from day one.
+  requiredCount Int
+  words         WorldWord[]
+  unlocks       UserWorldUnlock[]
+
+  @@index([key])
+}
+
+// Compare by lexemeId, never by lemma string — see the model-level warning on Lexeme's callers in
+// packages/seed and packages/ai; a string-keyed world would let homographs unlock the wrong sense.
+model WorldWord {
+  id       String @id @default(cuid())
+  worldId  String
+  world    World  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  lexemeId String
+  lexeme   Lexeme @relation(fields: [lexemeId], references: [id], onDelete: Cascade)
+
+  @@unique([worldId, lexemeId])
+  @@index([lexemeId])
+}
+
+// One row per (user, world), written once on first qualification and never deleted — an unlock is
+// a permanent recorded event, not a cache of "haveCount >= requiredCount" (which can drop after a
+// qualifying world is unlocked if the user later deletes words; the row must not follow it back
+// down). Written only from SessionService.complete(), the sole place UserWord.level ever crosses
+// into RECOGNIZE+.
+model UserWorldUnlock {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  worldId    String
+  world      World    @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, worldId])
+  @@index([userId])
 }
 
 // A diagnostic review queue, never a write path into the dictionary: a surface form the story

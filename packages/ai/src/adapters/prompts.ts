@@ -63,7 +63,7 @@ function storyExample(name: string): string {
 }
 
 function storyPrompt(job: AiJob): Prompt {
-  const meta = (job.meta ?? {}) as { newWordDisplayLemmas?: string[] };
+  const meta = (job.meta ?? {}) as { newWordDisplayLemmas?: string[]; worldHint?: string };
   const newWords = meta.newWordDisplayLemmas ?? [];
   const words = cappedVocabulary(job, newWords).join(', ');
   const names = pickStoryNames(3);
@@ -71,6 +71,8 @@ function storyPrompt(job: AiJob): Prompt {
     newWords.length > 0
       ? `Repeat ${newWords.length > 1 ? 'these new words' : 'this new word'} rather than reaching for another one: ${newWords.join(', ')}.\n`
       : '';
+  // A hint, never a rule — deliberately not checked by anything downstream. See select-world.ts.
+  const worldLine = meta.worldHint ? `${meta.worldHint}\n` : '';
 
   return {
     system:
@@ -90,6 +92,7 @@ function storyPrompt(job: AiJob): Prompt {
       '- The title uses only these words too.\n' +
       '- Separate paragraphs with a blank line (two newlines) inside "story", and the matching paragraph break inside "translation".\n' +
       featureLine +
+      worldLine +
       '\nReturn exactly this shape (the example below is illustrative only — write your own story):\n' +
       storyExample(names[0]),
   };

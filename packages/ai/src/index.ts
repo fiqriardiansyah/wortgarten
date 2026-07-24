@@ -24,3 +24,5 @@ export type { BuiltStory } from './story/build-story-tokens';
 export { generateStoryForUser } from './story/generate-story';
 export type { GenerateStoryResult, StoryTriggerContext } from './story/generate-story';
 export { isEligibleForNewStory, STORY_ELIGIBLE_ACTIVE_DAYS } from './story/eligibility';
+export { pickTonightsWorld, selectWorldForStory } from './story/select-world';
+export type { SelectedWorld } from './story/select-world';

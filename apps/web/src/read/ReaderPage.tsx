@@ -11,6 +11,7 @@ import { StoryCoverBanner } from '@/components/ui/StoryCoverBanner';
 import { FontSizeSelector } from '@/read/components/FontSizeSelector';
 import { ListenControl } from '@/read/components/ListenControl';
 import { useListenAudio } from '@/read/useListenAudio';
+import { useWorldAttribution } from '@/read/api/useWorlds';
 
 interface SelectedWord {
   token: StoryToken;
@@ -99,6 +100,7 @@ export function ReaderPage() {
   const progress = useScrollProgress();
 
   const { isPlaying, currentTimeMs, speed, setSpeed, toggle } = useListenAudio(story?.audioUrl ?? null);
+  const world = useWorldAttribution(story?.worldKey ?? null);
   const { activeToken, activeSentence } = useMemo(
     () => (story && isPlaying ? findActivePosition(story, currentTimeMs) : { activeToken: null, activeSentence: null }),
     [story, isPlaying, currentTimeMs],
@@ -178,6 +180,12 @@ export function ReaderPage() {
           height={120}
           className="mb-4"
         />
+      )}
+
+      {world && (
+        <p className="mb-2 text-center text-xs text-muted">
+          {world.icon} {world.name}
+        </p>
       )}
 
       {/* Mobile: ReaderTopBar hides its own ListenControl/FontSizeSelector below `lg` (too cramped

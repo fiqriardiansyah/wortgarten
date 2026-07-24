@@ -1,18 +1,14 @@
 import { BookOpen, Sparkles } from 'lucide-react';
 import { ZodError } from 'zod';
-import Measure from 'react-measure';
-import Masonry from 'react-responsive-masonry';
 import { tokens } from '@/design/tokens';
 import { useGenerateStoryDev, useLibrary } from '@/read/api/useLibrary';
 import { HeroStoryCard } from '@/read/components/HeroStoryCard';
-import { EarlierStoryCard } from '@/read/components/EarlierStoryCard';
-import { EarlierStoriesSummaryCard } from '@/read/components/EarlierStoriesSummaryCard';
+import { LibraryCard } from '@/read/components/LibraryCard';
 import { TomorrowStoryCard } from '@/read/components/TomorrowStoryCard';
 import { WaitingTomorrowCard } from '@/read/components/WaitingTomorrowCard';
 import { ReadingLevelCard } from '@/read/components/ReadingLevelCard';
 import { PickedUpCard } from '@/read/components/PickedUpCard';
-
-const TWO_COLUMN_MIN_WIDTH = 480;
+import { WorldsCard } from '@/read/components/WorldsCard';
 
 function Skeleton() {
   return (
@@ -77,7 +73,10 @@ export function ReadPage() {
     );
   }
 
-  const hero = stories.find((story) => story.isNewToday) ?? stories.find((story) => story.status === 'READY');
+  // Only today's genuinely unread story earns the hero slot — never fall back to re-showing an
+  // already-read story there. When there is none, pendingState (always set in that case, see
+  // StoriesService.listForUser) drives the hero slot instead (Tomorrow's-story states below).
+  const hero = stories.find((story) => story.isNewToday) ?? null;
   const earlier = stories.filter((story) => story.status === 'READY' && story.id !== hero?.id);
   const readCount = stories.filter((story) => story.isRead).length;
 
@@ -97,43 +96,26 @@ export function ReadPage() {
       </div>
 
       <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-5">
-        {/* Left column */}
+        {/* Main column — today's story is the single reward at the top, alone; worlds and the
+            shelved library are structural content, not sidebar furniture, so they live here too. */}
         <div className="flex flex-col gap-5">
-          {hero && <HeroStoryCard story={hero} index={0} />}
+          {hero ? (
+            <HeroStoryCard story={hero} index={0} />
+          ) : pendingState === 'generating' ? (
+            <TomorrowStoryCard index={0} />
+          ) : pendingState === 'waitingTomorrow' ? (
+            <WaitingTomorrowCard index={0} />
+          ) : null}
 
-          {earlier.length > 0 && (
-            <>
-              {/* Mobile: one compact card linking to the paginated /read/all page, so the
-                  reading-level/picked-up cards further down aren't buried under a long list. */}
-              <div className="lg:hidden">
-                <EarlierStoriesSummaryCard stories={earlier} index={1} />
-              </div>
+          <WorldsCard index={1} />
 
-              {/* Desktop: full masonry grid inline in the left column. */}
-              <div className="hidden lg:block">
-                <h2 className="mb-3 text-sm font-bold text-ink">Earlier stories</h2>
-                <Measure bounds>
-                  {({ measureRef, contentRect }) => (
-                    <div ref={measureRef}>
-                      <Masonry columnsCount={(contentRect.bounds?.width ?? 0) >= TWO_COLUMN_MIN_WIDTH ? 2 : 1} gutter="0.75rem">
-                        {earlier.map((story, i) => (
-                          <EarlierStoryCard key={story.id} story={story} index={i + 1} />
-                        ))}
-                      </Masonry>
-                    </div>
-                  )}
-                </Measure>
-              </div>
-            </>
-          )}
+          <LibraryCard stories={earlier} index={2} />
         </div>
 
-        {/* Right rail (desktop) */}
+        {/* Right rail (desktop) — reading level and picked-up-while-reading only. */}
         <div className="mt-5 flex flex-col gap-4 lg:mt-0">
-          {pendingState === 'generating' && <TomorrowStoryCard index={0} />}
-          {pendingState === 'waitingTomorrow' && <WaitingTomorrowCard index={0} />}
-          <ReadingLevelCard level={readingLevel} index={1} />
-          <PickedUpCard stories={stories} index={2} />
+          <ReadingLevelCard level={readingLevel} index={0} />
+          <PickedUpCard stories={stories} index={1} />
         </div>
       </div>
     </div>
