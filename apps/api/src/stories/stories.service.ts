@@ -150,6 +150,15 @@ export class StoriesService {
     }
   }
 
+  /** Every story generated in a given world, newest first — used by the world detail page's
+   * story list. Reuses the same `toContractStory` mapper as `listForUser`/`getById`, just without
+   * the day-boundary `isNewToday` concept, which has no meaning outside the Read page's hero slot. */
+  async listForWorld(userId: string, worldKey: string): Promise<Story[]> {
+    const rows = await this.prisma.story.findMany({ where: { userId, worldKey }, orderBy: { createdAt: 'desc' } });
+    const knownLexemeIds = await this.words.getKnownLexemeIds(userId);
+    return rows.map((row) => toContractStory(row, false, knownLexemeIds));
+  }
+
   async getById(userId: string, id: string): Promise<Story> {
     const row = await this.prisma.story.findUnique({ where: { id } });
     if (!row || row.userId !== userId) {

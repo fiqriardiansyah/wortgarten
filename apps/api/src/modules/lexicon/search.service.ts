@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { foldForLookup } from '@wortgarten/shared';
-import type { LexiconSearchResult } from '@wortgarten/shared';
+import type { LexiconSearchResult, SenseDetailResponse } from '@wortgarten/shared';
 import type { Lexeme, Sense } from '@wortgarten/database';
 import { PrismaService } from '../../prisma/prisma.service';
+import { toLexemeSummary } from './lexeme-summary';
 
 const DEFAULT_LIMIT = 20;
 const CANDIDATES_PER_TIER = DEFAULT_LIMIT * 3; // headroom so frequencyRank can pick winners within each tier before the final slice
@@ -102,5 +103,22 @@ export class SearchService {
       lexeme,
       senses: lexeme.senses.map((sense) => ({ ...sense, inBank: ownedSenseIds.has(sense.id) })),
     }));
+  }
+
+  /** A bare senseId's full detail — for surfaces (e.g. a missing-world-words tile) that only
+   * carry a senseId and need lemma/POS/translation/example without a search query or Story. */
+  async getSenseDetail(senseId: string): Promise<SenseDetailResponse | null> {
+    const sense = await this.prisma.sense.findUnique({ where: { id: senseId }, include: { lexeme: true } });
+    if (!sense) return null;
+    return {
+      lexeme: toLexemeSummary(sense.lexeme),
+      sense: {
+        id: sense.id,
+        translation: sense.translation,
+        definition: sense.definition,
+        example: sense.example,
+        cefrLevel: sense.cefrLevel,
+      },
+    };
   }
 }

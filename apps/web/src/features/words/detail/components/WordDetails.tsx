@@ -68,7 +68,7 @@ export function WordDetails({ id, onDeleted, sticky = false }: WordDetailsProps)
   }
 
   return (
-    <div className={sticky ? 'sticky top-6' : undefined}>
+    <div className={sticky ? 'sticky top-4' : undefined}>
       <Card hover={false}>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-heading-sm font-extrabold text-ink">{fullDisplayForm(word.lexeme)}</h1>

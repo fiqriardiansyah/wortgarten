@@ -77,7 +77,9 @@ export function ReadPage() {
   // already-read story there. When there is none, pendingState (always set in that case, see
   // StoriesService.listForUser) drives the hero slot instead (Tomorrow's-story states below).
   const hero = stories.find((story) => story.isNewToday) ?? null;
-  const earlier = stories.filter((story) => story.status === 'READY' && story.id !== hero?.id);
+  // Includes the hero itself — a story only READY today still belongs to its world's shelf, or
+  // that world would look empty until tomorrow just because its one story hasn't been read yet.
+  const earlier = stories.filter((story) => story.status === 'READY');
   const readCount = stories.filter((story) => story.isRead).length;
 
   return (
@@ -112,8 +114,9 @@ export function ReadPage() {
           <LibraryCard stories={earlier} index={2} />
         </div>
 
-        {/* Right rail (desktop) — reading level and picked-up-while-reading only. */}
-        <div className="mt-5 flex flex-col gap-4 lg:mt-0">
+        {/* Right rail (desktop) — reading level and picked-up-while-reading only. Sticky + self-start
+            so it pins in the viewport while the (usually longer) main column scrolls past it. */}
+        <div className="mt-5 flex flex-col gap-4 lg:sticky lg:top-5 lg:mt-0 lg:self-start">
           <ReadingLevelCard level={readingLevel} index={0} />
           <PickedUpCard stories={stories} index={1} />
         </div>

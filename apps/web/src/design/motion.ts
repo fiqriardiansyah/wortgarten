@@ -43,3 +43,20 @@ export const progressFillTransition: Transition = {
   duration: 0.7,
   ease: 'easeOut',
 };
+
+/** Swap animation for the worlds detail panel — an overshoot ease gives the incoming panel a
+ * wave-like settle instead of a flat slide. Exit stays a plain quick fade so the bounce only
+ * ever plays on the way in. */
+export const worldSwitchVariants: Variants = {
+  enter: { opacity: 0, y: 24 },
+  center: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.34, 1.56, 0.64, 1] },
+  },
+  exit: {
+    opacity: 0,
+    y: -16,
+    transition: { duration: 0.18, ease: 'easeIn' },
+  },
+};

@@ -21,6 +21,7 @@ import { PrivacyPage } from '@/features/legal/PrivacyPage';
 import { TermsPage } from '@/features/legal/TermsPage';
 import { ReadPage } from '@/read/ReadPage';
 import { ReaderPage } from '@/read/ReaderPage';
+import { WorldsListPage } from '@/read/WorldsListPage';
 
 function AuthLoadingScreen() {
   return (
@@ -107,6 +108,7 @@ export function AppRouter() {
           <Route path="/words/:id" element={<WordDetailPage />} />
           <Route path="/read" element={<ReadPage />} />
           <Route path="/read/:id" element={<ReaderPage />} />
+          <Route path="/worlds" element={<WorldsListPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/add" element={<AddWordsPage />} />
           <Route path="/profile" element={<ProfilePage />} />

@@ -5,6 +5,7 @@ import { Chip } from '@/components/ui/Chip';
 import { BookOpen, ChevronRight, Sparkles, Sprout } from 'lucide-react';
 import type { HomeStoryCard } from '@wortgarten/shared';
 import { useCreateSession } from '@/features/session/api/useCreateSession';
+import { tokens } from '@/design/tokens';
 
 interface StoryCardProps {
   story: HomeStoryCard;
@@ -38,7 +39,7 @@ export function StoryCard({ story, index }: StoryCardProps) {
 
   if (story.state === 'waitingTomorrow') {
     return (
-      <Card index={index} hover={false}>
+      <Card index={index} hover={false} stroke={tokens.color.teal}>
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-teal-soft">
             <BookOpen size={18} className="text-teal" />

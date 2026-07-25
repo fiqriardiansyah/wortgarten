@@ -459,6 +459,9 @@ model World {
   hint          String
   // 0 means always-unlocked (the free "everyday" world) — every user has it from day one.
   requiredCount Int
+  // Full public URL (not an R2 key — worlds are hand-authored/seeded, not AI-generated like
+  // Story.coverImageKey, so there's no derive-at-response-time step). Null renders as icon-only.
+  image         String?
   words         WorldWord[]
   unlocks       UserWorldUnlock[]
 

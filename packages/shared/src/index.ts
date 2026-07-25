@@ -205,6 +205,15 @@ export const LexiconSearchResponseSchema = z.object({
 });
 export type LexiconSearchResponse = z.infer<typeof LexiconSearchResponseSchema>;
 
+// A single sense's full detail (lemma/POS/translation/example) resolved from a bare senseId —
+// for surfaces that only have a senseId to hand (e.g. a missing-world-words tile) and no
+// LexiconSearchResult or Story context to pull it from.
+export const SenseDetailResponseSchema = z.object({
+  lexeme: LexemeSummarySchema,
+  sense: SenseSummarySchema,
+});
+export type SenseDetailResponse = z.infer<typeof SenseDetailResponseSchema>;
+
 export const AnalyzedSenseCandidateSchema = z.object({
   senseId: z.string(),
   translation: z.string(),

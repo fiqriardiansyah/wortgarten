@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { computeWorldProgress, type WorldDef } from './worlds';
 
-const everyday: WorldDef = { key: 'everyday', name: 'Everyday', icon: '🌤️', hint: 'in everyday life', requiredCount: 0 };
-const atHome: WorldDef = { key: 'at_home', name: 'At home', icon: '🏠', hint: 'at home', requiredCount: 3 };
+const everyday: WorldDef = { key: 'everyday', name: 'Everyday', icon: '🌤️', hint: 'in everyday life', requiredCount: 0, image: null };
+const atHome: WorldDef = { key: 'at_home', name: 'At home', icon: '🏠', hint: 'at home', requiredCount: 3, image: 'https://example.com/at-home.jpg' };
 
 describe('computeWorldProgress', () => {
   it('a requiredCount:0 world is always unlocked, even with zero known words', () => {
@@ -37,6 +37,7 @@ describe('computeWorldProgress', () => {
         icon: '🌤️',
         hint: 'in everyday life',
         requiredCount: 0,
+        image: null,
         haveCount: 0,
         addedCount: 0,
         knownWords: [],
@@ -48,6 +49,7 @@ describe('computeWorldProgress', () => {
         icon: '🏠',
         hint: 'at home',
         requiredCount: 3,
+        image: 'https://example.com/at-home.jpg',
         haveCount: 1,
         addedCount: 0,
         knownWords: [],

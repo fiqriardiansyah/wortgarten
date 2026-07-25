@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { StorySchema } from './story';
 
 export const KnownWorldWordSchema = z.object({
   lexemeId: z.string(),
@@ -14,6 +15,8 @@ export const WorldProgressSchema = z.object({
   // "Stories set {hint}." description line so the worlds card never needs a second copy field.
   hint: z.string(),
   requiredCount: z.number(),
+  // Full public URL, or null to fall back to icon-only (see World.image, packages/database).
+  image: z.string().nullable(),
   haveCount: z.number(),
   // Words already added to the bank for this world but still below RECOGNIZE — the "waiting in
   // your next session" gap. Never counted toward `haveCount`/`isUnlocked` (see computeWorldProgress).
@@ -42,12 +45,18 @@ export const MissingWorldWordsResponseSchema = z.object({
 });
 export type MissingWorldWordsResponse = z.infer<typeof MissingWorldWordsResponseSchema>;
 
+export const WorldStoriesResponseSchema = z.object({
+  stories: z.array(StorySchema),
+});
+export type WorldStoriesResponse = z.infer<typeof WorldStoriesResponseSchema>;
+
 export interface WorldDef {
   key: string;
   name: string;
   icon: string;
   hint: string;
   requiredCount: number;
+  image: string | null;
 }
 
 /**
@@ -79,6 +88,7 @@ export function computeWorldProgress(
       icon: world.icon,
       hint: world.hint,
       requiredCount: world.requiredCount,
+      image: world.image,
       haveCount,
       addedCount: addedCounts[world.key] ?? 0,
       knownWords: knownWordsByKey[world.key] ?? [],

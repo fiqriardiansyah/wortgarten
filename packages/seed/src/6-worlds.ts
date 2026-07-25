@@ -16,6 +16,7 @@ const WorldFileSchema = z.object({
   icon: z.string().min(1),
   requiredCount: z.number().int().nonnegative(),
   hint: z.string().min(1),
+  image: z.string().url().optional(),
   words: z.array(z.string().min(1)).min(1),
 });
 type WorldFile = z.infer<typeof WorldFileSchema>;
@@ -73,8 +74,8 @@ async function upsertWorld(prisma: PrismaClient, result: WorldLoadResult): Promi
 
   await prisma.world.upsert({
     where: { key: world.key },
-    create: { id: worldId, key: world.key, name: world.name, icon: world.icon, hint: world.hint, requiredCount: world.requiredCount },
-    update: { name: world.name, icon: world.icon, hint: world.hint, requiredCount: world.requiredCount },
+    create: { id: worldId, key: world.key, name: world.name, icon: world.icon, hint: world.hint, requiredCount: world.requiredCount, image: world.image ?? null },
+    update: { name: world.name, icon: world.icon, hint: world.hint, requiredCount: world.requiredCount, image: world.image ?? null },
   });
 
   const existing = await prisma.worldWord.findMany({ where: { worldId }, select: { id: true, lexemeId: true } });

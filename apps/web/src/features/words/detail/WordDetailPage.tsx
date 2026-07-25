@@ -11,7 +11,7 @@ export function WordDetailPage() {
       <Link to="/words" className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-muted hover:text-ink">
         <ArrowLeft size={16} /> Back to your words
       </Link>
-      <WordDetails id={id} onDeleted={() => navigate('/words')} />
+      <WordDetails id={id} sticky onDeleted={() => navigate('/words')} />
     </div>
   );
 }
