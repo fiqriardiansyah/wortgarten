@@ -2,7 +2,7 @@ import { BookOpen, Sparkles } from 'lucide-react';
 import { ZodError } from 'zod';
 import { tokens } from '@/design/tokens';
 import { useGenerateStoryDev, useLibrary } from '@/read/api/useLibrary';
-import { HeroStoryCard } from '@/read/components/HeroStoryCard';
+import { StackedHeroCard } from '@/read/components/StackedHeroCard';
 import { LibraryCard } from '@/read/components/LibraryCard';
 import { TomorrowStoryCard } from '@/read/components/TomorrowStoryCard';
 import { WaitingTomorrowCard } from '@/read/components/WaitingTomorrowCard';
@@ -81,6 +81,7 @@ export function ReadPage() {
   // that world would look empty until tomorrow just because its one story hasn't been read yet.
   const earlier = stories.filter((story) => story.status === 'READY');
   const readCount = stories.filter((story) => story.isRead).length;
+  const unreadCount = stories.filter((story) => !story.isRead).length;
 
   return (
     <div>
@@ -102,7 +103,7 @@ export function ReadPage() {
             shelved library are structural content, not sidebar furniture, so they live here too. */}
         <div className="flex flex-col gap-5">
           {hero ? (
-            <HeroStoryCard story={hero} index={0} />
+            <StackedHeroCard story={hero} hasMoreUnread={unreadCount > 1} />
           ) : pendingState === 'generating' ? (
             <TomorrowStoryCard index={0} />
           ) : pendingState === 'waitingTomorrow' ? (

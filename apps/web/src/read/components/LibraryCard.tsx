@@ -255,7 +255,7 @@ export function LibraryCard({ stories, index }: LibraryCardProps) {
       </div>
 
       <SketchBox seed={`library-panel-${active.key}`} className="mt-3">
-        <div className="flex max-h-[40vh] flex-col">
+        <div className="flex max-h-[60vh] flex-col">
           <div className="flex flex-shrink-0 items-center gap-2 border-b border-line-soft px-3 pb-2 pt-3">
             {active.icon && <span className="text-lg leading-none">{active.icon}</span>}
             <p className="text-sm font-bold text-ink">{active.title}</p>
