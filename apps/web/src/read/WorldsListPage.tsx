@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Lock, Sparkle } from 'lucide-react';
 import type { WorldProgress } from '@wortgarten/shared';
 import { Card } from '@/components/ui/Card';
 import { tokens } from '@/design/tokens';
@@ -9,7 +9,7 @@ import { worldSwitchVariants } from '@/design/motion';
 import { useWorlds } from './api/useWorlds';
 import { useWorldStories } from './api/useWorldStories';
 import { useMissingWorldWords } from './api/useMissingWorldWords';
-import { WorldProgressBar, knownWordsLine, MissingWorldWords } from './components/WorldsCard';
+import { WorldProgressBar, knownWordsLine, MissingWorldWords, LockedWorldTeaser } from './components/WorldsCard';
 import { StoryRow } from './components/StoryRow';
 import { PanelTabButton } from './components/LibraryCard';
 
@@ -22,7 +22,7 @@ import { PanelTabButton } from './components/LibraryCard';
 const ITEM_HEIGHT = 76;
 // Resting tile width: a thin sliver on mobile (labels are illegible at that width anyway, so it's
 // not trying to be one), the old regular size from tablet up.
-const MOBILE_ITEM_WIDTH = 20;
+const MOBILE_ITEM_WIDTH = 40;
 const REGULAR_ITEM_WIDTH = 100;
 const WIDE_SCREEN_QUERY = '(min-width: 768px)';
 // Coverflow-style falloff: the active tile (distance 0) grows past the rail column's own width
@@ -31,6 +31,13 @@ const WIDE_SCREEN_QUERY = '(min-width: 768px)';
 const RAIL_WIDTHS = [160, 130, 112];
 function railWidthForDistance(distance: number, baseWidth: number) {
   return RAIL_WIDTHS[distance] ?? baseWidth;
+}
+// Same taper shape as RAIL_WIDTHS, for the horizontal "pull forward" nudge on the active tile.
+// Gated behind isScrolling exactly like the width falloff above — live at rest made the rail look
+// permanently lopsided instead of reading as a scroll-driven effect.
+const RAIL_OFFSETS = [20, 10, 4];
+function railOffsetForDistance(distance: number) {
+  return RAIL_OFFSETS[distance] ?? 0;
 }
 
 function useIsWideScreen() {
@@ -63,7 +70,9 @@ function WorldRailItem({
   world,
   active,
   distance,
+  offsetDistance,
   baseWidth,
+  isScrolling,
   onSelect,
   registerRef,
 }: {
@@ -73,55 +82,68 @@ function WorldRailItem({
   /** Absolute index distance from the currently active rail item, or Infinity while at rest — the
    * coverflow-style size falloff (via `railSizeForDistance`) only shows up mid-scroll. */
   distance: number;
+  /** Absolute index distance from the active item, or Infinity while at rest — drives the
+   * horizontal pull-forward nudge, same mid-scroll-only gating as `distance`. */
+  offsetDistance: number;
   /** Resting width — mobile sliver vs. the regular tablet-and-up size. */
   baseWidth: number;
+  /** Drives the lock/unlock icon's width (and margin) collapsing to 0 at rest — not just opacity,
+   * so the card slides over to fill the gap instead of leaving dead space behind a faded icon. */
+  isScrolling: boolean;
   onSelect: () => void;
   registerRef: (el: HTMLButtonElement | null) => void;
 }) {
   const locked = !world.isUnlocked;
   const width = railWidthForDistance(distance, baseWidth);
+  const x = railOffsetForDistance(offsetDistance);
   return (
-    <motion.button
-      ref={registerRef}
-      type="button"
-      data-world-key={world.key}
-      onClick={onSelect}
-      className="relative block flex-shrink-0 overflow-hidden rounded-2xl text-left"
-      style={{ zIndex: 1, height: ITEM_HEIGHT, overflowAnchor: 'none' }}
-      animate={{ width }}
-      transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-    >
-      {world.image ? (
-        <img
-          src={world.image}
-          alt=""
-          loading="lazy"
-          className={`absolute inset-0 h-full w-full object-cover ${locked ? 'grayscale' : ''}`}
+    <div className="flex flex-shrink-0 items-center">
+      <motion.button
+        ref={registerRef}
+        type="button"
+        data-world-key={world.key}
+        onClick={onSelect}
+        className="relative block flex-shrink-0 overflow-hidden rounded-2xl text-left"
+        style={{ zIndex: 1, height: ITEM_HEIGHT, overflowAnchor: 'none' }}
+        animate={{ width, x }}
+        transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+      >
+        {world.image ? (
+          <img
+            src={world.image}
+            alt=""
+            loading="lazy"
+            className={`absolute inset-0 h-full w-full object-cover ${locked ? 'grayscale' : ''}`}
+          />
+        ) : (
+          <div className="absolute inset-0" style={{ backgroundColor: active ? tokens.color.teal : tokens.color.muted }} />
+        )}
+
+        <div
+          className="absolute inset-0"
+          style={{
+            background: active
+              ? `linear-gradient(to top, ${tokens.color.tealDeep}CC, ${tokens.color.tealDeep}4D)`
+              : `linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.25))`,
+          }}
         />
-      ) : (
-        <div className="absolute inset-0" style={{ backgroundColor: active ? tokens.color.teal : tokens.color.muted }} />
-      )}
 
-      <div
-        className="absolute inset-0"
-        style={{
-          background: active
-            ? `linear-gradient(to top, ${tokens.color.tealDeep}CC, ${tokens.color.tealDeep}4D)`
-            : `linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.25))`,
-        }}
-      />
-
-      <span className="absolute left-2.5 top-2 text-lg leading-none">{world.icon}</span>
-
-      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 px-2.5 pb-1.5 pt-4 text-left">
-        <span className="truncate text-sm font-bold leading-tight text-white">{world.name}</span>
-        {!world.isUnlocked && (
-          <span className="text-[11px] font-semibold text-white/85">
-            {world.haveCount}/{world.requiredCount}
+        {locked && (
+          <span className="absolute left-2.5 top-2 leading-none text-white">
+            <Lock size={14} />
           </span>
         )}
-      </div>
-    </motion.button>
+
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 px-2.5 pb-1.5 pt-4 text-left">
+          <span className="truncate text-sm font-bold leading-tight text-white">{world.name}</span>
+          {!world.isUnlocked && (
+            <span className="text-[11px] font-semibold text-white/85">
+              {world.haveCount}/{world.requiredCount}
+            </span>
+          )}
+        </div>
+      </motion.button>
+    </div>
   );
 }
 
@@ -156,13 +178,15 @@ function WorldDetailPanel({ world }: { world: WorldProgress }) {
           <p className="mt-0.5 text-xs text-muted">Stories set {world.hint}.</p>
         </div>
         <span className="flex-shrink-0 text-xs font-semibold" style={{ color: world.isUnlocked ? tokens.color.teal : tokens.color.muted }}>
-          {world.isUnlocked ? 'Unlocked' : `${world.haveCount}/${world.requiredCount}`}
+          {world.isUnlocked ? 'Unlocked' : `${world.haveCount} of ${world.requiredCount} words`}
         </span>
       </div>
 
-      <div className="mt-3 flex-shrink-0">
-        <WorldProgressBar haveCount={world.haveCount} addedCount={world.addedCount} requiredCount={world.requiredCount} />
-      </div>
+      {!world.isUnlocked && (
+        <div className="mt-3 flex-shrink-0">
+          <WorldProgressBar haveCount={world.haveCount} addedCount={world.addedCount} requiredCount={world.requiredCount} />
+        </div>
+      )}
       {knownWordsLine(world) && <p className="mt-2.5 flex-shrink-0 text-xs text-ink">{knownWordsLine(world)}</p>}
 
       <div className="mt-4 flex flex-shrink-0 gap-4 border-b border-t border-line-soft pt-3">
@@ -177,7 +201,11 @@ function WorldDetailPanel({ world }: { world: WorldProgress }) {
 
       <div className="min-h-0 flex-1 pt-2">
         {panelTab === 'stories' ? (
-          <WorldStories worldKey={world.key} />
+          world.isUnlocked ? (
+            <WorldStories worldKey={world.key} />
+          ) : (
+            <LockedWorldTeaser world={world} onAddWords={() => setPanelTab('words')} />
+          )
         ) : missingWords.isLoading ? (
           <p className="py-2 text-sm text-muted">Loading…</p>
         ) : (missingWords.data?.words.length ?? 0) > 0 ? (
@@ -203,8 +231,19 @@ function orderWorlds(worlds: WorldProgress[]): WorldProgress[] {
 
 export function WorldsListPage() {
   const { data, isLoading } = useWorlds();
-  const worlds = orderWorlds(data?.worlds ?? []);
+  // Memoized on the underlying data, not recomputed every render — orderWorlds returns a fresh
+  // array each call, and the scroll-spy effect below keys off `worlds` identity. A click sets
+  // activeKey synchronously, which re-renders this component; without memoizing, that re-render
+  // would hand the effect a "new" worlds array, re-running its unconditional startup scroll-sync
+  // before the just-started scrollIntoView animation has actually moved anything — stomping the
+  // click's activeKey back to whatever tile is still centered. (2nd click "worked" only because by
+  // then the 1st click's scroll had already finished.)
+  const worlds = useMemo(() => orderWorlds(data?.worlds ?? []), [data?.worlds]);
   const railBaseWidth = useIsWideScreen() ? REGULAR_ITEM_WIDTH : MOBILE_ITEM_WIDTH;
+  // orderWorlds always puts the single nearest-to-unlock locked world first when one exists (see
+  // its own doc comment) — worlds[0] being locked is exactly the "at least one world still
+  // locked" case, no need to re-sort here.
+  const nearestLocked = worlds.length > 0 && !worlds[0].isUnlocked ? worlds[0] : null;
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
   // The coverflow size falloff (railSizeForDistance) only shows while the rail is actually being
@@ -259,8 +298,12 @@ export function WorldsListPage() {
     function onScroll() {
       if (suppressSpyRef.current) return;
       setIsScrolling(true);
+      // 150ms was too tight — momentum/trackpad scroll ticks can leave gaps wider than that between
+      // individual scroll events, so isScrolling flickered false then true again mid-gesture,
+      // snapping the coverflow (width/x/icon) back to resting and re-growing it right after: a
+      // visible glitch. 450ms gives real pauses room to land without eating a deliberate stop.
       window.clearTimeout(scrollIdleTimeoutRef.current);
-      scrollIdleTimeoutRef.current = window.setTimeout(() => setIsScrolling(false), 150);
+      scrollIdleTimeoutRef.current = window.setTimeout(() => setIsScrolling(false), 450);
       updateActiveFromScroll();
     }
 
@@ -300,7 +343,7 @@ export function WorldsListPage() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-[28px] font-extrabold leading-tight text-ink">Your worlds</h1>
-          <p className="mt-0.5 text-sm text-muted">Every world your stories can be set in</p>
+          <p className="mt-0.5 text-sm text-muted">Every place your stories can be set</p>
         </div>
         {/* requiredCount:0 (the always-free "everyday" world) is excluded from both counts — it was
             never actually locked, so it isn't a real "unlocked" achievement (see recordUnlocks). */}
@@ -309,10 +352,27 @@ export function WorldsListPage() {
             className="flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-bold"
             style={{ backgroundColor: `${tokens.color.teal}1A`, color: tokens.color.teal }}
           >
-            {worlds.filter((w) => w.requiredCount > 0 && w.isUnlocked).length}/{worlds.filter((w) => w.requiredCount > 0).length} unlocked
+            {worlds.filter((w) => w.requiredCount > 0 && w.isUnlocked).length} of {worlds.filter((w) => w.requiredCount > 0).length} unlocked
           </span>
         )}
       </div>
+
+      {nearestLocked && (
+        <div
+          className="mt-4 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm text-ink"
+          style={{ borderColor: tokens.color.yellow, backgroundColor: tokens.color.yellowSoft }}
+        >
+          <Sparkle size={16} className="flex-shrink-0" style={{ color: tokens.color.yellowDeep }} />
+          <p>
+            You're{' '}
+            <strong className="font-extrabold">
+              {nearestLocked.requiredCount - nearestLocked.haveCount} word
+              {nearestLocked.requiredCount - nearestLocked.haveCount === 1 ? '' : 's'}
+            </strong>{' '}
+            from unlocking <strong className="font-extrabold">{nearestLocked.name}</strong>. Closest one yet.
+          </p>
+        </div>
+      )}
 
       {isLoading && (
         <div className="mt-5 flex gap-5">
@@ -338,7 +398,9 @@ export function WorldsListPage() {
                 world={world}
                 active={world.key === activeKey}
                 distance={isScrolling ? Math.abs(index - activeIndex) : Infinity}
+                offsetDistance={isScrolling ? Math.abs(index - activeIndex) : Infinity}
                 baseWidth={railBaseWidth}
+                isScrolling={isScrolling}
                 onSelect={() => selectWorld(world.key)}
                 registerRef={(el) => {
                   if (el) itemRefs.current.set(world.key, el);

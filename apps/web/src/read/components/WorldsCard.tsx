@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { MissingWorldWord, WorldProgress } from '@wortgarten/shared';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
+import { Button } from '@/components/ui/Button';
 import { tokens } from '@/design/tokens';
 import { useAddWord } from '@/features/add-words/api/useAddWord';
 import { useCreateSession } from '@/features/session/api/useCreateSession';
 import { useWorlds } from '../api/useWorlds';
 import { useMissingWorldWords } from '../api/useMissingWorldWords';
+import { useSenseDetail } from '../api/useSenseDetail';
 import { WordDetailModal } from './WordDetailModal';
 
 interface WorldsCardProps {
@@ -30,8 +32,8 @@ export function WorldProgressBar({ haveCount, addedCount, requiredCount }: { hav
       style={{ height: tokens.component.progressBar.height, backgroundColor: tokens.color.line }}
     >
       <div className="flex h-full">
-        <div className="h-full" style={{ width: `${havePct}%`, backgroundColor: tokens.color.teal }} />
-        <div className="h-full" style={{ width: `${addedPct}%`, backgroundColor: tokens.color.tealSoft }} />
+        <div className="h-full" style={{ width: `${havePct}%`, backgroundColor: tokens.color.yellow }} />
+        <div className="h-full" style={{ width: `${addedPct}%`, backgroundColor: tokens.color.yellowSoft }} />
       </div>
     </div>
   );
@@ -170,6 +172,53 @@ function WordRow({ word, onOpen, onAdd }: { word: MissingWorldWord; onOpen: () =
       >
         <Plus size={14} className="text-ink" />
       </button>
+    </div>
+  );
+}
+
+/** Stories-tab empty state for a locked world (WorldsListPage's detail panel and LibraryCard's
+ * tabbed panel both use it) — a locked world has zero stories by definition (see
+ * generate-story.ts), so "No stories set here yet." read as broken rather than "not yet". This
+ * sells what's coming instead: the missing-word count doubles as the CTA count, and the "taste"
+ * quote is a real Tatoeba example sentence for the first missing word (same `sense.example` field
+ * WordDetailModal already shows) — never a fabricated line, since the words tab right next to it
+ * would immediately contradict a fake preview. */
+export function LockedWorldTeaser({ world, onAddWords }: { world: WorldProgress; onAddWords: () => void }) {
+  const missingWords = useMissingWorldWords(world.key);
+  const words = missingWords.data?.words ?? [];
+  const count = words.length;
+  const tasteDetail = useSenseDetail(words[0]?.senseId ?? null);
+  const taste = tasteDetail.data?.sense.example ?? null;
+
+  if (missingWords.isLoading) return <p className="py-2 text-sm text-muted">Loading…</p>;
+  if (count === 0) return <p className="py-2 text-sm text-muted">No stories set here yet.</p>;
+
+  return (
+    <div className="flex flex-col items-center px-2 py-4 text-center">
+      <div className="mb-4 flex items-end justify-center gap-6 border-b-2 pb-2" style={{ borderColor: tokens.color.line, width: 140 }}>
+        <BookOpen size={22} style={{ color: tokens.color.teal }} />
+        <span className="h-4 w-4 flex-shrink-0 rounded-full" style={{ backgroundColor: tokens.color.yellow }} />
+      </div>
+
+      <p className="text-sm font-extrabold text-ink">This world is almost stocked</p>
+      <p className="mt-1.5 max-w-xs text-xs text-muted">
+        Add {count} more word{count === 1 ? '' : 's'} and {world.name} comes alive with its own stories.
+        {taste && " Here's the kind of thing you'll read:"}
+      </p>
+
+      {taste && (
+        <div
+          className="mt-3 w-full rounded-xl border border-dashed px-3 py-2.5 text-left"
+          style={{ borderColor: tokens.color.line, backgroundColor: tokens.color.surfaceAlt }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wide text-muted">A taste</p>
+          <p className="mt-1 text-sm italic text-ink">&ldquo;{taste}&rdquo;</p>
+        </div>
+      )}
+
+      <Button className="mt-4" onClick={onAddWords}>
+        Add these {count} word{count === 1 ? '' : 's'} →
+      </Button>
     </div>
   );
 }

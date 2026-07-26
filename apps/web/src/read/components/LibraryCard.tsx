@@ -14,7 +14,7 @@ import { cardEnterVariants, cardEnterTransition } from '@/design/motion';
 import { useWorlds } from '../api/useWorlds';
 import { useMissingWorldWords } from '../api/useMissingWorldWords';
 import { StoryRow } from './StoryRow';
-import { WorldProgressBar, knownWordsLine, MissingWorldWords } from './WorldsCard';
+import { WorldProgressBar, knownWordsLine, MissingWorldWords, LockedWorldTeaser } from './WorldsCard';
 
 interface LibraryCardProps {
   stories: Story[];
@@ -288,7 +288,9 @@ export function LibraryCard({ stories, index }: LibraryCardProps) {
 
           <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
             {panelTab === 'stories' ? (
-              active.stories.length > 0 ? (
+              active.progress && !active.progress.isUnlocked ? (
+                <LockedWorldTeaser world={active.progress} onAddWords={() => setPanelTab('words')} />
+              ) : active.stories.length > 0 ? (
                 active.stories.map((story) => <StoryRow key={story.id} story={story} />)
               ) : (
                 <p className="py-2 text-sm text-muted">No stories set here yet.</p>
