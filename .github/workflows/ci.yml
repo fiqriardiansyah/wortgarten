@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch/PR makes the in-flight run obsolete.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck / build / test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # apps/api's vitest suites talk to a real Postgres (fixtures + cleanup, no
+    # mocked DB layer), so CI needs the same thing docker-compose.yml gives dev.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: wortgarten
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/wortgarten
+      # Present so anything reading them at import time gets a value, never a
+      # real credential — no test in this repo calls out to a paid provider.
+      BETTER_AUTH_SECRET: ci-not-a-real-secret
+      BETTER_AUTH_URL: http://localhost:3026
+      WEB_ORIGIN: http://localhost:5173
+      STORY_IMAGES_ENABLED: 'false'
+      TURBO_TELEMETRY_DISABLED: '1'
+      NEXT_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reads the version from package.json's "packageManager" field.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Turbo's local cache: build/typecheck are cacheable, so unchanged
+      # packages are restored instead of recompiled.
+      - name: Restore turbo cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo/cache
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      # generated/prisma is gitignored, so the client must be generated before
+      # anything type-checks or compiles against it.
+      - name: Generate Prisma client
+        run: pnpm run db:generate
+
+      # db push, not migrate deploy: this is a throwaway CI database and the
+      # schema is the source of truth the tests are written against.
+      - name: Push schema to CI database
+        run: pnpm run db:push
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Test
+        run: pnpm run test
