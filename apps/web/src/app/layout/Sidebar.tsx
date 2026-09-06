@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { Home, Type, BookOpen, BarChart2, Plus, Sprout } from 'lucide-react';
+import { Home, Type, BookOpen, MessageCircle, BarChart2, Plus, Sprout } from 'lucide-react';
 import { SidebarNavItem } from '@/components/ui/SidebarNavItem';
 import { Avatar } from '@/components/ui/Avatar';
 import { SketchBox } from '@/components/ui/SketchBox';
@@ -11,6 +11,7 @@ const NAV = [
   { to: '/', icon: <Home size={18} />, label: 'Home' },
   { to: '/words', icon: <Type size={18} />, label: 'My Words' },
   { to: '/read', icon: <BookOpen size={18} />, label: 'Read' },
+  { to: '/chats', icon: <MessageCircle size={18} />, label: 'Chats' },
   { to: '/progress', icon: <BarChart2 size={18} />, label: 'Progress' },
 ];
 

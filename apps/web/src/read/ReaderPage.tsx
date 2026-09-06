@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { MessageCircle } from 'lucide-react';
 import { ZodError } from 'zod';
 import type { Story, StoryParagraph, StoryToken } from '@wortgarten/shared';
 import { ApiError } from '@/lib/apiClient';
+import { useOpenConversation } from '@/chat/api/useChat';
 import { useStory, useMarkWordKnown } from '@/read/api/useStory';
 import { ReaderTopBar, type ReaderFontSize } from '@/read/components/ReaderTopBar';
 import { StoryBody, type ActiveSentencePosition, type ActiveTokenPosition } from '@/read/components/StoryBody';
@@ -92,8 +94,10 @@ function findActivePosition(
 
 export function ReaderPage() {
   const { id = '' } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: story, isLoading, isError, error, refetch } = useStory(id);
   const markWordKnown = useMarkWordKnown(id);
+  const openConversation = useOpenConversation();
   const [fontSize, setFontSize] = useState<ReaderFontSize>('M');
   const [selected, setSelected] = useState<SelectedWord | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
@@ -206,6 +210,20 @@ export function ReaderPage() {
 
       <p className="mt-6 text-center text-xs text-muted">tap = review · underlined = new word</p>
 
+      {/* Only present when STORY_CHAT_ENABLED was on at generation time and the model actually
+          carried persona fields — same nullable-bonus-layer convention as coverImageUrl/audioUrl. */}
+      {story.character && (
+        <button
+          type="button"
+          onClick={() => openConversation.mutate(story.character!.id, { onSuccess: (res) => navigate(`/chats/${res.conversationId}`) })}
+          disabled={openConversation.isPending}
+          className="mt-6 flex items-center justify-center gap-2 self-center rounded-pill border-2 border-teal bg-teal-soft px-4 py-2 text-sm font-bold text-teal transition-colors hover:brightness-95 disabled:opacity-50"
+        >
+          <MessageCircle size={16} />
+          Talk to {story.character.name}
+        </button>
+      )}
+
       {/* `translation` is nullable — most stories won't have one yet, so this only renders when present. */}
       {story.translation && (
         <div className="mt-4 border-t border-line pt-4">
@@ -221,7 +239,7 @@ export function ReaderPage() {
 
       {selected && (
         <WordPopup
-          story={story}
+          glossary={story.glossary}
           token={selected.token}
           paragraph={selected.paragraph}
           onAdd={handleAdd}

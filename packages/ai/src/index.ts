@@ -19,10 +19,35 @@ export { selectStoryVocabulary, FUNCTION_WORD_RANK_CEILING, MIN_KNOWN_WORDS_FOR_
 export type { StoryVocabulary, StoryVocabularyWord } from './story/select-vocabulary';
 export { buildStoryJob } from './story/story-job';
 export { checkStoryDraft } from './story/story-checker';
-export { buildStoryFromDraft } from './story/build-story-tokens';
-export type { BuiltStory } from './story/build-story-tokens';
+export { buildStoryFromDraft, tokenizeAgainstAllowlist } from './story/build-story-tokens';
+export type { BuiltStory, TokenizeAgainstAllowlistParams, TokenizedText } from './story/build-story-tokens';
 export { generateStoryForUser } from './story/generate-story';
 export type { GenerateStoryResult, StoryTriggerContext } from './story/generate-story';
 export { isEligibleForNewStory, STORY_ELIGIBLE_ACTIVE_DAYS } from './story/eligibility';
 export { pickTonightsWorld, selectWorldForStory } from './story/select-world';
 export type { SelectedWorld } from './story/select-world';
+
+// ─── Story Chat ─────────────────────────────────────────────────────────────
+export { CHARACTER_ARCHETYPES } from './adapters/prompts';
+export type { CharacterArchetype } from './adapters/prompts';
+export { selectChatVocabulary } from './chat/select-chat-vocabulary';
+export type { ChatVocabulary } from './chat/select-chat-vocabulary';
+export { buildChatSystemPrompt } from './chat/persona-prompt';
+export type { PersonaInput, ChatMemoryInput } from './chat/persona-prompt';
+export { buildChatTurnJob, CHAT_MIN_COVERAGE_PCT, CHAT_MAX_REPLY_WORDS } from './chat/chat-job';
+export type { ChatTurnHistoryEntry } from './chat/chat-job';
+export { createCheckChatTurn } from './chat/chat-checker';
+export type { CheckedChatTurn } from './chat/chat-checker';
+export { pickScriptedReply } from './chat/scripted-replies';
+export { runChatTurn } from './chat/run-chat-turn';
+export type { RunChatTurnParams, ChatTurnResult } from './chat/run-chat-turn';
+export { pickNextReplyPlan } from './chat/reply-director';
+export type { ReplyDirectorInput } from './chat/reply-director';
+
+// ─── Story Chat: memory (iteration 5) ───────────────────────────────────────
+export { buildMemoryJob, CHAT_MEMORY_MAX_SUMMARY_WORDS } from './chat/memory-job';
+export { checkMemoryNote } from './chat/memory-checker';
+export type { CheckedMemoryNote } from './chat/memory-checker';
+export { isFactSafe, hasNoDeniedContent, filterSafeFacts, sanitizeSummary } from './chat/memory-safety';
+export { generateMemoryNoteForConversation } from './chat/build-memory-note';
+export type { MemoryNoteResult } from './chat/build-memory-note';

@@ -110,6 +110,10 @@ export const StorySchema = z.object({
   // Worlds card and looks up {name, icon} from that same cache. Null for stories generated before
   // Story Worlds shipped, or when the user had no unlocked world to pick from.
   worldKey: z.string().nullable(),
+  // Story Chat's only new dependency on Story — the "💬 Talk to [name]" button's data. Same
+  // nullable-bonus-layer convention as coverImageUrl/audioUrl: null when STORY_CHAT_ENABLED was
+  // off at generation time, the model omitted persona fields, or this story predates the feature.
+  character: z.object({ id: z.string(), name: z.string() }).nullable(),
 });
 export type Story = z.infer<typeof StorySchema>;
 

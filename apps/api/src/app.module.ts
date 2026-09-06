@@ -4,6 +4,7 @@ import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { resolve } from 'path';
 import { createAuth } from './lib/auth';
 import { PrismaModule } from './prisma/prisma.module';
+import { ChatModule } from './chat/chat.module';
 import { HealthModule } from './health/health.module';
 import { HomeModule } from './home/home.module';
 import { LexiconModule } from './modules/lexicon/lexicon.module';
@@ -27,6 +28,7 @@ import { WorldsModule } from './worlds/worlds.module';
       }),
     }),
     PrismaModule,
+    ChatModule,
     HealthModule,
     HomeModule,
     LexiconModule,

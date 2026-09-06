@@ -122,6 +122,8 @@ model User {
   drillSessions DrillSession[]
   streak        UserStreak?
   worldUnlocks  UserWorldUnlock[]
+  conversations Conversation[]
+  deliveryEvents DeliveryEvent[]
 
   @@map("user")
 }
@@ -439,6 +441,9 @@ model Story {
   // plain string is enough and avoids cascade-delete decisions on a table designed to grow later.
   // Null for stories generated before Story Worlds shipped.
   worldKey         String?
+  // Story Chat (see below) — null until STORY_CHAT_ENABLED and the bonus persona-attach step
+  // succeeds, same "already shipped, bonus layer" discipline as coverImageKey/audioKey above.
+  character        Character?
 
   @@index([userId, readAt])
   @@index([userId, createdAt])
@@ -524,4 +529,107 @@ model AiQuota {
   limit  Int
 
   @@unique([date, source])
+}
+
+// ─── Story Chat (iteration 1) ───────────────────────────────────────────────
+//
+// A character from a story (or the pinned default host) the user can talk to. Persona is
+// generated WITH the story in the same STORY AiJob response — no extra AI call. `storyId` is
+// nullable: the pinned default host ("Tom") has no story and must exist before the user has read
+// anything. `safetyLocked` rules sit above whatever persona/story content says and are assembled
+// fresh into every system prompt at request time (see packages/ai/src/chat/persona-prompt.ts) —
+// this column is a marker for future auditing, not itself an enforcement mechanism.
+model Character {
+  id           String        @id @default(cuid())
+  storyId      String?       @unique
+  story        Story?        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  name         String
+  role         String
+  personaLine  String
+  levelCapJson Json
+  archetype    String
+  safetyLocked Boolean       @default(true)
+  conversations Conversation[]
+}
+
+// One conversation per (user, character) they've met. The default host's conversation is
+// lazy-created on first inbox fetch, same as a story character's conversation is lazy-created on
+// first "💬 Talk to [name]" tap — see apps/api/src/chat/chat.service.ts.
+model Conversation {
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  characterId    String
+  character      Character       @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  lastMessageAt  DateTime
+  unreadCount    Int             @default(0)
+  createdAt      DateTime        @default(now())
+  messages       Message[]
+  deliveryEvents DeliveryEvent[]
+  memoryNote     MemoryNote?
+
+  @@unique([userId, characterId])
+  @@index([userId, lastMessageAt])
+}
+
+// One bubble. `tokensJson`/`glossary` power tap-a-word + Add on character bubbles only (mirrors
+// Story.paragraphs/Story.glossary) — both stay null on `sender: "user"` rows, which render as
+// plain text. `mode` records which ReplySlot renderer produced a user bubble (Seam 1); `source`
+// records which TurnSource produced a character bubble (Seam 2) — "groq" | "scripted".
+model Message {
+  id             String          @id @default(cuid())
+  conversationId String
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         String
+  text           String
+  translation    String?
+  tokensJson     Json?
+  glossary       Json?
+  mode           String          @default("type")
+  source         String?
+  // The reply director's plan for the NEXT user turn (NextReplyPlan, see packages/shared/src/chat.ts)
+  // — set on character rows only, null on "user" rows. Persisted (not recomputed on refetch) so a
+  // choice/tiles turn's options survive a page reload instead of silently reshuffling.
+  nextReplyPlanJson Json?
+  createdAt      DateTime        @default(now())
+  deliveryEvents DeliveryEvent[]
+
+  @@index([conversationId, createdAt])
+}
+
+// ─── Story Chat (iteration 5: memory) ───────────────────────────────────────
+//
+// One running note per conversation, (re)written nightly by the worker (see
+// packages/ai/src/chat/build-memory-note.ts) — never in the request path. `summary` replaces
+// old bubbles for context purposes only; the real `Message` rows are never deleted or edited by
+// this feature, so the user can still scroll their real history. `factsJson` is capped small
+// (see CHAT_MEMORY_MAX_FACTS) and both the night summariser's prompt and the plain-code checker
+// enforce the safety deny list (see memory-safety.ts) — nothing identifying is ever stored here.
+model MemoryNote {
+  id             String       @id @default(cuid())
+  conversationId String       @unique
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  summary        String       @default("")
+  factsJson      Json         @default("[]") // MemoryFact[] — see packages/shared/src/chat.ts
+  // The newest Message folded into `summary`/`factsJson` — the next nightly run only reads
+  // messages created after this one. Null means the note has never been written (or was reset
+  // by "Forget this"), so the next run folds in the conversation's entire history so far.
+  lastMessageId  String?
+  updatedAt      DateTime     @default(now())
+}
+
+// Delivery queue — in-app unread dots now; real push notification fields clip onto this same row
+// later without a schema change.
+model DeliveryEvent {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  messageId      String
+  message        Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  deliveredInApp Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@index([userId, deliveredInApp])
 }

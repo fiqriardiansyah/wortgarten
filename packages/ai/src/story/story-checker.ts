@@ -21,5 +21,13 @@ export function checkStoryDraft(raw: AiRawResult, _job: AiJob): AiCheckedResult<
   }
 
   const translation = parsed.data.translation?.trim() || null;
-  return { ok: true, value: { title, story, translation }, provider: raw.provider };
+  const characterName = parsed.data.characterName?.trim() || null;
+  const characterRole = parsed.data.characterRole?.trim() || null;
+  const characterPersonaLine = parsed.data.characterPersonaLine?.trim() || null;
+  const characterArchetype = parsed.data.characterArchetype?.trim() || null;
+  return {
+    ok: true,
+    value: { title, story, translation, characterName, characterRole, characterPersonaLine, characterArchetype },
+    provider: raw.provider,
+  };
 }

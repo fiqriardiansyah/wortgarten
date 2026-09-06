@@ -6,6 +6,9 @@ import { PrismaAiQuotaStore } from './quota/ai-quota.store';
 import { SystemClock } from './clock';
 import { AiRouter } from './ai-router';
 import { AiService } from './ai.service';
+import { createCheckChatTurn } from './chat/chat-checker';
+import { checkMemoryNote } from './chat/memory-checker';
+import { LexemeResolver } from './story/lexeme-resolver';
 import { checkStoryDraft } from './story/story-checker';
 import { AI_QUOTA_STORE, CLOCK } from './tokens';
 
@@ -38,9 +41,17 @@ const DEFAULT_MAX_RETRIES = 2;
     },
     {
       provide: AiService,
-      useFactory: (router: AiRouter, groq: GroqAdapter, ollama: OllamaAdapter) =>
-        new AiService(router, groq, ollama, Number(process.env.AI_MAX_RETRIES ?? DEFAULT_MAX_RETRIES), checkStoryDraft),
-      inject: [AiRouter, GroqAdapter, OllamaAdapter],
+      useFactory: (router: AiRouter, groq: GroqAdapter, ollama: OllamaAdapter, prisma: PrismaService) =>
+        new AiService(
+          router,
+          groq,
+          ollama,
+          Number(process.env.AI_MAX_RETRIES ?? DEFAULT_MAX_RETRIES),
+          checkStoryDraft,
+          createCheckChatTurn(new LexemeResolver(prisma)),
+          checkMemoryNote,
+        ),
+      inject: [AiRouter, GroqAdapter, OllamaAdapter, PrismaService],
     },
   ],
   exports: [AiService, PrismaService],

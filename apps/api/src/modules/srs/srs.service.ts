@@ -120,6 +120,30 @@ export class SrsService {
     });
   }
 
+  /**
+   * Story Chat's memory payoff (iteration 2): a rusty word used unprompted in a real sentence
+   * advances its FSRS schedule exactly as a GOOD drill recall would, and moves the ladder up one
+   * rung — but writes no `Attempt` row. `Attempt.drillSessionId`/`planItemId` are required FKs
+   * into a real `DrillSession`, which a chat turn never has; inventing a fake one just to satisfy
+   * that constraint would be schema theater, not a real drill. This is the one path that advances
+   * `UserWord` FSRS state without a DrillSession — deliberate, not an oversight.
+   */
+  async applyPassiveReview(userWord: UserWord, now: Date = new Date()): Promise<UserWord> {
+    const { card } = this.scheduler.next(this.toCard(userWord), now, Rating.Good);
+    return this.prisma.userWord.update({
+      where: { id: userWord.id },
+      data: {
+        stability: card.stability,
+        difficulty: card.difficulty,
+        dueAt: card.due,
+        reps: card.reps,
+        lapses: card.lapses,
+        lastReviewedAt: now,
+        level: this.applyLevel(userWord.level, true),
+      },
+    });
+  }
+
   /** The ladder is plain code, independent of FSRS: pass moves up one rung, fail moves down one. */
   applyLevel(currentLevel: WordLevel, passed: boolean): WordLevel {
     const index = LEVEL_LADDER.indexOf(currentLevel);

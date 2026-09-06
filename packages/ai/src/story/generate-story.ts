@@ -4,8 +4,10 @@ import { attachStoryCover, type ImageService } from '@wortgarten/images';
 import { StorySchema } from '@wortgarten/shared';
 import type { StoryDraft } from '@wortgarten/shared';
 import type { AiService } from '../ai.service';
+import { CHARACTER_ARCHETYPES } from '../adapters/prompts';
 import { buildStoryFromDraft } from './build-story-tokens';
 import type { LexemeResolver } from './lexeme-resolver';
+import type { StoryVocabulary } from './select-vocabulary';
 import { selectStoryVocabulary } from './select-vocabulary';
 import { selectWorldForStory } from './select-world';
 import { buildStoryJob } from './story-job';
@@ -43,6 +45,38 @@ async function recordUnresolvedSurfaces(prisma: PrismaClient, language: string, 
         update: { occurrences: { increment: occurrences }, lastSeenAt: new Date(), sampleStoryId },
       })
       .catch((err) => console.error(`[generateStoryForUser] failed to record unresolved surface "${surface}":`, err));
+  }
+}
+
+/**
+ * Story Chat's bonus layer, same "already shipped, can never fail the story" discipline as
+ * attachStoryCover/attachStoryAudio: only runs when STORY_CHAT_ENABLED, only when the draft
+ * actually carried persona fields (a model that omitted them just means no character this time —
+ * never a retry). `levelCapJson` is a diagnostic snapshot only — the live vocab ceiling for an
+ * actual chat turn is recomputed fresh per-turn by selectChatVocabulary, since a frozen
+ * generation-time snapshot would go stale as the user's own bank grows.
+ */
+async function attachStoryCharacter(prisma: PrismaClient, storyId: string, draft: StoryDraft, vocab: StoryVocabulary): Promise<void> {
+  if (process.env.STORY_CHAT_ENABLED !== 'true') return;
+  if (!draft.characterName) return;
+
+  const archetype = CHARACTER_ARCHETYPES.includes(draft.characterArchetype as (typeof CHARACTER_ARCHETYPES)[number])
+    ? (draft.characterArchetype as string)
+    : CHARACTER_ARCHETYPES[0];
+
+  try {
+    await prisma.character.create({
+      data: {
+        storyId,
+        name: draft.characterName,
+        role: draft.characterRole ?? 'a friend from the story',
+        personaLine: draft.characterPersonaLine ?? 'Warm, curious, and easy to talk to.',
+        archetype,
+        levelCapJson: { knownWordCount: vocab.knownLexemeIds.size, allowlistSize: vocab.allowlistIds.size },
+      },
+    });
+  } catch (err) {
+    console.error(`[attachStoryCharacter] failed for storyId=${storyId}:`, err);
   }
 }
 
@@ -115,6 +149,9 @@ export async function generateStoryForUser(
     audioSync: null,
     sentenceTimings: null,
     worldKey: world?.key ?? null,
+    // Character is attached (if at all) strictly after this row is created — see the bonus-layer
+    // step below, same discipline as coverImageKey/audioKey. Never populated at parse-time.
+    character: null,
   });
 
   const created = await prisma.story.create({
@@ -145,6 +182,9 @@ export async function generateStoryForUser(
   // Same "already shipped" ordering as the cover — Listen Mode audio is a bonus layer that can
   // never block, delay, or fail the story. See attachStoryAudio's own doc comment.
   await attachStoryAudio(prisma, audioService, created.id, built.paragraphs);
+
+  // Story Chat's persona, same bonus-layer ordering — see attachStoryCharacter's own doc comment.
+  await attachStoryCharacter(prisma, created.id, draft, vocab);
 
   console.log(`[generateStoryForUser] out: shipped storyId=${created.id} userId=${userId} provider=${result.provider} coverage=${built.coverageKnownPct}pct`);
   return { status: 'shipped', storyId: created.id };

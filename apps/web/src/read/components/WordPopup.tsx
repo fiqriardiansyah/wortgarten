@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { Check, Sparkles } from 'lucide-react';
-import type { Story, StoryParagraph, StoryToken } from '@wortgarten/shared';
+import type { StoryGlossaryEntry, StoryParagraph, StoryToken } from '@wortgarten/shared';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
@@ -8,15 +8,15 @@ import { SpeakButton } from '@/components/ui/SpeakButton';
 import { tokens } from '@/design/tokens';
 
 interface WordPopupProps {
-  story: Story;
+  glossary: Record<string, StoryGlossaryEntry>;
   token: StoryToken;
   paragraph: StoryParagraph;
   onAdd: (lexemeId: string) => void;
   onClose: () => void;
 }
 
-export function WordPopup({ story, token, paragraph, onAdd, onClose }: WordPopupProps) {
-  const entry = token.lexemeId ? story.glossary[token.lexemeId] : undefined;
+export function WordPopup({ glossary, token, paragraph, onAdd, onClose }: WordPopupProps) {
+  const entry = token.lexemeId ? glossary[token.lexemeId] : undefined;
   const sentence = paragraph.tokens.map((t) => t.text).join('');
   const isNew = token.status === 'new';
   // A real lexeme just outside this user's allowlist — comprehensible input, not one of the
