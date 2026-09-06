@@ -1,5 +1,6 @@
 import type { Story, StoryParagraph, StoryToken } from '@wortgarten/shared';
 import type { ReaderFontSize } from './ReaderTopBar';
+import { TokenSpan } from './TokenSpan';
 
 const FONT_SIZE_CLASSES: Record<ReaderFontSize, string> = {
   S: 'text-base leading-relaxed',
@@ -46,48 +47,15 @@ export function StoryBody({ story, fontSize, onTapWord, activeToken, activeSente
               activeSentence?.paragraphIndex === pIndex && tIndex >= activeSentence.startTokenIndex && tIndex <= activeSentence.endTokenIndex;
             const isActive = isActiveWord || isInActiveSentence;
             const isScrollAnchor = isActiveWord || (isInActiveSentence && tIndex === activeSentence?.startTokenIndex);
-            const anchorRef = isScrollAnchor ? registerActiveRef : undefined;
-            // Primary teal, never coral — a confident follow-along, not an alert (see design tokens).
-            const highlightClass = isActive ? 'bg-teal text-white' : '';
-
-            if (token.kind !== 'word') {
-              return (
-                <span key={tIndex} ref={anchorRef} className={`rounded ${highlightClass}`}>
-                  {token.text}
-                </span>
-              );
-            }
-
-            if (token.status === 'unknown' && !token.lexemeId) {
-              // A word the resolver couldn't place at all (hallucination/typo/unhandled
-              // inflection) — an ordinary comprehensible-input gap, not the learner's mistake.
-              // Plain text: no color, no popup, no tap.
-              return (
-                <span key={tIndex} ref={anchorRef} className={`rounded ${highlightClass}`}>
-                  {token.text}
-                </span>
-              );
-            }
-
-            // 'unknown' here always carries a real lexemeId (the branch above caught the null
-            // case) — a real word just outside this user's allowlist, rendered exactly like 'new'.
-            const isAccented = token.status === 'new' || token.status === 'unknown';
-            // `text-white`/`text-ink` are equal-specificity utilities — never let both land on the
-            // same element (Tailwind's generated order, not this file's class order, would decide
-            // the winner). Active always wins over the accent color.
-            const textColorClass = isActive ? 'text-white' : isAccented ? 'text-ink' : '';
-            const accentClass = isAccented ? 'font-semibold underline decoration-2 decoration-yellow underline-offset-4' : '';
 
             return (
-              <button
+              <TokenSpan
                 key={tIndex}
-                ref={anchorRef}
-                type="button"
-                onClick={() => onTapWord(token, paragraph)}
-                className={`rounded px-0.5 -mx-0.5 transition-colors hover:bg-teal-soft ${highlightClass} ${textColorClass} ${accentClass}`}
-              >
-                {token.text}
-              </button>
+                token={token}
+                isActive={isActive}
+                registerRef={isScrollAnchor ? registerActiveRef : undefined}
+                onTap={(tapped) => onTapWord(tapped, paragraph)}
+              />
             );
           })}
         </p>

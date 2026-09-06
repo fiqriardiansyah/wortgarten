@@ -199,3 +199,57 @@ describe('SrsService.grade (integration)', () => {
     ).rejects.toThrow();
   });
 });
+
+describe('SrsService.applyPassiveReview (integration)', () => {
+  const prisma = new PrismaClient();
+  const srs = new SrsService(prisma as unknown as PrismaService);
+
+  const lexemeIds: string[] = [];
+  let testUserId: string;
+  let userWord: UserWord;
+
+  beforeAll(async () => {
+    const lexeme = await prisma.lexeme.create({
+      data: {
+        id: randomUUID(),
+        sourceKey: randomUUID(),
+        language: LANG,
+        lemma: 'sprechen',
+        partOfSpeech: 'VERB',
+        senses: { create: [{ id: randomUUID(), sourceKey: randomUUID(), translation: 'to speak' }] },
+      },
+      include: { senses: true },
+    });
+    lexemeIds.push(lexeme.id);
+
+    const user = await prisma.user.create({ data: { name: 'Passive Review Test', email: `srs-passive-${Date.now()}@example.com` } });
+    testUserId = user.id;
+
+    // Already reviewed once and rusty (a fresh reps:0 word is never "rusty" — see retrievability()),
+    // mirroring what Story Chat's gradeRustyWordsUsed actually finds via WordsService.findRusty.
+    userWord = await prisma.userWord.create({
+      data: { userId: testUserId, senseId: lexeme.senses[0].id, level: 'RECALL', reps: 1, stability: 1, difficulty: 5, lastReviewedAt: new Date('2026-01-01T00:00:00Z'), dueAt: new Date('2026-01-02T00:00:00Z') },
+    });
+  });
+
+  afterAll(async () => {
+    await prisma.userWord.deleteMany({ where: { userId: testUserId } });
+    await prisma.user.delete({ where: { id: testUserId } });
+    await prisma.lexeme.deleteMany({ where: { id: { in: lexemeIds } } });
+    await prisma.$disconnect();
+  });
+
+  it('advances FSRS state and moves the ladder up one rung, without writing an Attempt row', async () => {
+    const now = new Date();
+    const updated = await srs.applyPassiveReview(userWord, now);
+
+    expect(updated.reps).toBe(2);
+    expect(updated.stability).toBeGreaterThan(userWord.stability);
+    expect(updated.dueAt.getTime()).toBeGreaterThan(now.getTime());
+    expect(updated.lastReviewedAt?.getTime()).toBe(now.getTime());
+    expect(updated.level).toBe('PRODUCE'); // RECALL -> PRODUCE, one rung up
+
+    const attempts = await prisma.attempt.findMany({ where: { userWordId: userWord.id } });
+    expect(attempts).toHaveLength(0);
+  });
+});

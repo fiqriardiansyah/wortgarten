@@ -7,7 +7,8 @@
     "dev": "ts-node -e \"console.log('Worker: no jobs scheduled yet')\"",
     "start": "node dist/main",
     "ai:sanity": "ts-node src/jobs/ai-sanity.ts",
-    "story:batch": "ts-node src/jobs/story-batch.ts"
+    "story:batch": "ts-node src/jobs/story-batch.ts",
+    "chat:memory-batch": "ts-node src/jobs/chat-memory-batch.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",

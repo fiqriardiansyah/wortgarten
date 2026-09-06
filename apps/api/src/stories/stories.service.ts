@@ -33,7 +33,12 @@ function computeReadingLevel(wordsUnlocked: number): ReadingLevel {
 // later added to the bank (see useStory.ts's markLexemeKnown — that flip only lives in the
 // client's query cache and is gone on reload). Reconcile against the live bank on every read so a
 // word added via "+ Add to my words" shows as known even after a full page refresh.
-function toContractStory(row: StoryRow, isNewToday: boolean, knownLexemeIds: Set<string>): Story {
+function toContractStory(
+  row: StoryRow,
+  isNewToday: boolean,
+  knownLexemeIds: Set<string>,
+  character: { id: string; name: string } | null,
+): Story {
   const paragraphs = (row.paragraphs as unknown as StoryParagraph[]).map((paragraph) => ({
     tokens: paragraph.tokens.map((token) =>
       (token.status === 'new' || token.status === 'unknown') && token.lexemeId && knownLexemeIds.has(token.lexemeId)
@@ -62,7 +67,14 @@ function toContractStory(row: StoryRow, isNewToday: boolean, knownLexemeIds: Set
     audioSync: row.audioSync as StoryAudioSync | null,
     sentenceTimings: row.sentenceTimings as unknown as SentenceTiming[] | null,
     worldKey: row.worldKey,
+    character,
   };
+}
+
+/** Batched, not N+1: `Character.storyId` is unique, so at most one row per story either way. */
+async function fetchCharactersByStoryId(prisma: PrismaService, storyIds: string[]): Promise<Map<string, { id: string; name: string }>> {
+  const rows = await prisma.character.findMany({ where: { storyId: { in: storyIds } }, select: { id: true, name: true, storyId: true } });
+  return new Map(rows.filter((r) => r.storyId !== null).map((r) => [r.storyId as string, { id: r.id, name: r.name }]));
 }
 
 @Injectable()
@@ -101,7 +113,8 @@ export class StoriesService {
     const firstUnreadIndex = rows.findIndex((r) => r.readAt === null);
 
     const knownLexemeIds = await this.words.getKnownLexemeIds(userId);
-    const stories = rows.map((row, i) => toContractStory(row, i === firstUnreadIndex, knownLexemeIds));
+    const characters = await fetchCharactersByStoryId(this.prisma, rows.map((r) => r.id));
+    const stories = rows.map((row, i) => toContractStory(row, i === firstUnreadIndex, knownLexemeIds, characters.get(row.id) ?? null));
 
     // Dormant users and users already sitting on an unread story never trigger a new one here —
     // isEligibleForNewStory enforces both, plus the one-new-story-per-day rule (User.timezone
@@ -156,7 +169,8 @@ export class StoriesService {
   async listForWorld(userId: string, worldKey: string): Promise<Story[]> {
     const rows = await this.prisma.story.findMany({ where: { userId, worldKey }, orderBy: { createdAt: 'desc' } });
     const knownLexemeIds = await this.words.getKnownLexemeIds(userId);
-    return rows.map((row) => toContractStory(row, false, knownLexemeIds));
+    const characters = await fetchCharactersByStoryId(this.prisma, rows.map((r) => r.id));
+    return rows.map((row) => toContractStory(row, false, knownLexemeIds, characters.get(row.id) ?? null));
   }
 
   async getById(userId: string, id: string): Promise<Story> {
@@ -166,12 +180,13 @@ export class StoriesService {
     }
 
     const knownLexemeIds = await this.words.getKnownLexemeIds(userId);
+    const character = (await fetchCharactersByStoryId(this.prisma, [id])).get(id) ?? null;
 
     if (!row.readAt) {
       const updated = await this.prisma.story.update({ where: { id }, data: { readAt: new Date() } });
-      return StorySchema.parse(toContractStory(updated, false, knownLexemeIds));
+      return StorySchema.parse(toContractStory(updated, false, knownLexemeIds, character));
     }
 
-    return StorySchema.parse(toContractStory(row, false, knownLexemeIds));
+    return StorySchema.parse(toContractStory(row, false, knownLexemeIds, character));
   }
 }

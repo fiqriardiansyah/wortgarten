@@ -95,6 +95,7 @@ describe('StreakService snapshot behavior', () => {
     const completedAt = days(1, 7).map((day) => ({ completedAt: new Date(`${day}T12:00:00.000Z`) }));
     const prisma = {
       drillSession: { findMany: vi.fn().mockResolvedValue(completedAt) },
+      message: { findMany: vi.fn().mockResolvedValue([]) },
       userStreak: {
         findUnique: vi.fn(async () => snapshot),
         upsert: vi.fn(async ({ create, update }: { create: Record<string, unknown>; update: Record<string, unknown> }) => {

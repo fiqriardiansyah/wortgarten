@@ -160,20 +160,28 @@ export class StreakService {
   async recomputeFromHistory(userId: string, timezone?: string, now = new Date()): Promise<StreakWithCalendar> {
     const resolvedTimezone = timezone ?? (await this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { timezone: true } })).timezone;
     const safeTimezone = isValidTimeZone(resolvedTimezone) ? resolvedTimezone : 'UTC';
-    const [sessions, previous] = await Promise.all([
+    const [sessions, chatTurns, previous] = await Promise.all([
       this.prisma.drillSession.findMany({
         where: { userId, status: 'COMPLETED', completedAt: { not: null } },
         select: { completedAt: true },
         orderBy: { completedAt: 'asc' },
       }),
+      // Talking to a character counts as a learn-day too (Story Chat) — a user's own sent
+      // messages, same as a drill session's completedAt, are independent evidence of a learning
+      // day. Pure replay stays the source of truth either way: no separate "record streak" call.
+      this.prisma.message.findMany({
+        where: { sender: 'user', conversation: { userId } },
+        select: { createdAt: true },
+      }),
       this.prisma.userStreak.findUnique({ where: { userId } }),
     ]);
 
     const todayKey = localDateKey(now, safeTimezone);
-    const replayed = replayLearningDays(
-      sessions.flatMap(({ completedAt }) => (completedAt ? [localDateKey(completedAt, safeTimezone)] : [])),
-      todayKey,
-    );
+    const learningDayKeys = [
+      ...sessions.flatMap(({ completedAt }) => (completedAt ? [localDateKey(completedAt, safeTimezone)] : [])),
+      ...chatTurns.map(({ createdAt }) => localDateKey(createdAt, safeTimezone)),
+    ];
+    const replayed = replayLearningDays(learningDayKeys, todayKey);
     const lastLearningDay = replayed.lastLearningDayKey
       ? localDayRange(replayed.lastLearningDayKey, safeTimezone).start
       : null;

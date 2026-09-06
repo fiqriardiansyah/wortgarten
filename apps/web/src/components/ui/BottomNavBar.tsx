@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useMatch } from 'react-router-dom';
-import { Home, Type, BookOpen, BarChart2, Plus } from 'lucide-react';
+import { Home, Type, BookOpen, MessageCircle, BarChart2, Plus } from 'lucide-react';
 import { tokens } from '@/design/tokens';
 import { SketchBox } from '@/components/ui/SketchBox';
 
@@ -9,6 +9,7 @@ const NAV = [
   { to: '/', icon: <Home size={20} />, label: 'Home' },
   { to: '/words', icon: <Type size={20} />, label: 'Words' },
   { to: '/read', icon: <BookOpen size={20} />, label: 'Read' },
+  { to: '/chats', icon: <MessageCircle size={20} />, label: 'Chats' },
   { to: '/progress', icon: <BarChart2 size={20} />, label: 'Progress' },
 ];
 

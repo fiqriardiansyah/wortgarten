@@ -15,8 +15,12 @@ import { z } from 'zod';
 export const AiProviderSchema = z.enum(['GROQ', 'OLLAMA']);
 export type AiProvider = z.infer<typeof AiProviderSchema>;
 
-// SANITY_SENTENCE proved the spine; STORY is the first real content job on top of it.
-export const AiJobTypeSchema = z.enum(['SANITY_SENTENCE', 'STORY']);
+// SANITY_SENTENCE proved the spine; STORY is the first real content job on top of it. CHAT_TURN
+// (Story Chat) is a third: a character's reply, capped to the reader's level by a coverage check
+// instead of a shape-only gate — see checkChatTurn in packages/ai/src/chat/chat-checker.ts.
+// CHAT_MEMORY (iteration 5) is a fourth: a NIGHT-ONLY job (never the daytime request path) that
+// (re)writes a conversation's running summary/facts — see build-memory-note.ts.
+export const AiJobTypeSchema = z.enum(['SANITY_SENTENCE', 'STORY', 'CHAT_TURN', 'CHAT_MEMORY']);
 export type AiJobType = z.infer<typeof AiJobTypeSchema>;
 
 export const AiJobSchema = z.object({
@@ -47,6 +51,11 @@ export const AiCheckFailReasonSchema = z.enum([
   'EMPTY',
   'TOO_LONG',
   'USED_DISALLOWED_WORD',
+  // CHAT_TURN only: the reply resolved fine (real German, well-formed JSON) but its vocabulary
+  // coverage against the reader's own allowlist fell below the turn's minCoveragePct — distinct
+  // from TOO_LONG (a word-count gate). Triggers the same retry-then-REMOTE_QUOTA_EXHAUSTED path
+  // as any other checker failure; never touches OLLAMA (see AiService.run's remoteOnly).
+  'TOO_HARD',
   // A remote-only run (daytime lazy generation) found the GROQ free quota exhausted, or exhausted
   // its retries on GROQ — never a checker verdict. The one signal that must never fall back to
   // OLLAMA, so it can't be conflated with a real checker failure.
@@ -123,5 +132,44 @@ export const StoryDraftSchema = z.object({
   // retry. checkStoryDraft normalizes a missing/blank value to `null`, matching the frozen
   // `Story.translation` contract in packages/shared/src/story.ts.
   translation: z.string().nullable().optional(),
+  // Story Chat (see chat.ts): the story's lead character, generated in this same call so no
+  // second AI request is needed just for persona. All optional/nullable — a model that omits
+  // them costs no retry (checkStoryDraft normalizes to null; generateStoryForUser then simply
+  // skips the bonus Character-attach step, same as a failed cover image or audio attach).
+  characterName: z.string().nullable().optional(),
+  characterRole: z.string().nullable().optional(),
+  characterPersonaLine: z.string().nullable().optional(),
+  characterArchetype: z.string().nullable().optional(),
 });
 export type StoryDraft = z.infer<typeof StoryDraftSchema>;
+
+// ─── CHAT_TURN ──────────────────────────────────────────────────────────────
+//
+// The draft a character's reply, before resolution — plain German text plus its English
+// translation. Same reasoning as STORY: checking it against the reader's level (a coverage
+// percentage, by lexemeId) and tokenizing it into StoryToken/StoryGlossaryEntry both require a
+// DB-backed dictionary lookup, so this checker also lives in @wortgarten/ai (createCheckChatTurn),
+// not here — this schema is just the shape gate.
+
+export const ChatTurnDraftSchema = z.object({
+  reply: z.string(),
+  translation: z.string().nullable().optional(),
+  // Iteration 2 (reply variety): 0-3 short ready-made replies the user could send next, raw from
+  // the model — chat-checker.ts re-runs the same level check on each before they're usable, so a
+  // missing/omitted field (older prompt, model that ignores the instruction) costs nothing.
+  suggestedReplies: z.array(z.string()).max(3).optional(),
+});
+export type ChatTurnDraft = z.infer<typeof ChatTurnDraftSchema>;
+
+// ─── CHAT_MEMORY (iteration 5: memory) ───────────────────────────────────────
+//
+// The nightly summariser's draft, before the safety filter runs — plain code (memory-safety.ts)
+// still enforces the deny list independently of whatever the model was instructed to omit; see
+// packages/ai/src/chat/memory-checker.ts. `facts` is capped generously here (the checker applies
+// the real, smaller cap — CHAT_MEMORY_MAX_FACTS) so an over-eager model costs nothing but a trim.
+
+export const MemoryNoteDraftSchema = z.object({
+  summary: z.string(),
+  facts: z.array(z.string()).max(16).optional(),
+});
+export type MemoryNoteDraft = z.infer<typeof MemoryNoteDraftSchema>;

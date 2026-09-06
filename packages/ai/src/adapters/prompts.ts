@@ -1,3 +1,4 @@
+import { CHAT_MEMORY_MAX_FACTS } from '@wortgarten/shared';
 import type { AiJob } from '@wortgarten/shared';
 
 export interface Prompt {
@@ -58,9 +59,16 @@ function cappedVocabulary(job: AiJob, newWords: string[]): string[] {
 function storyExample(name: string): string {
   return (
     `{"title":"Der Hund im Park","story":"Der Hund läuft im Park.\\n\\n${name} sieht den Hund. Sie lacht.",` +
-    `"translation":"The dog runs in the park.\\n\\n${name} sees the dog. She laughs."}`
+    `"translation":"The dog runs in the park.\\n\\n${name} sees the dog. She laughs.",` +
+    `"characterName":"${name}","characterRole":"a girl who loves dogs","characterPersonaLine":` +
+    `"Cheerful and curious, always noticing small details about animals.","characterArchetype":"friendly_host"}`
   );
 }
+
+// Story Chat picks the fallback bank by this value when Groq is unavailable — keep the pool
+// small and stable so scripted-replies.ts's Record<archetype, string[]> stays exhaustive.
+export const CHARACTER_ARCHETYPES = ['friendly_host', 'curious_kid', 'calm_shopkeeper', 'cheerful_traveler'] as const;
+export type CharacterArchetype = (typeof CHARACTER_ARCHETYPES)[number];
 
 function storyPrompt(job: AiJob): Prompt {
   const meta = (job.meta ?? {}) as { newWordDisplayLemmas?: string[]; worldHint?: string };
@@ -93,8 +101,92 @@ function storyPrompt(job: AiJob): Prompt {
       '- Separate paragraphs with a blank line (two newlines) inside "story", and the matching paragraph break inside "translation".\n' +
       featureLine +
       worldLine +
+      '\nAlso name the story\'s lead character (usually its main human, one of the Names above) so the reader can later ' +
+      'chat with them: "characterName" (one of the Names above), "characterRole" (a short in-world description, e.g. ' +
+      '"a boy who lost his keys"), "characterPersonaLine" (one sentence describing their personality, in English), and ' +
+      `"characterArchetype" (exactly one of: ${CHARACTER_ARCHETYPES.join(', ')}).\n` +
       '\nReturn exactly this shape (the example below is illustrative only — write your own story):\n' +
       storyExample(names[0]),
+  };
+}
+
+interface ChatTurnMeta {
+  systemPrompt: string;
+  /** Capped display-lemma list (see MAX_PROMPT_WORDS) — the reader's known+function words, no
+   * "new word" concept for chat. Shown to the model the same way STORY shows its allowlist. */
+  allowlistDisplay: string[];
+  history: { role: 'user' | 'character'; text: string }[];
+  userText: string;
+}
+
+// The system prompt is fully assembled by the caller (safety prefix + persona + level-cap
+// instruction — see packages/ai/src/chat/persona-prompt.ts) and just carried through job.meta,
+// the same escape hatch STORY already uses for newWordDisplayLemmas/worldHint. buildPrompt stays
+// the one place both adapters get their instructions from, even for a job shape this dynamic.
+function chatTurnPrompt(job: AiJob): Prompt {
+  const meta = job.meta as unknown as ChatTurnMeta;
+  const transcript = meta.history.map((turn) => `${turn.role === 'user' ? 'User' : 'You'}: ${turn.text}`).join('\n');
+  const words = meta.allowlistDisplay.slice(0, MAX_PROMPT_WORDS).join(', ');
+
+  return {
+    system:
+      `${meta.systemPrompt}\n\n` +
+      `Vocabulary you should stay inside for this reply: ${words}. It's fine to use a word slightly ` +
+      'outside this list if the conversation truly needs it — just prefer these words when you can.\n\n' +
+      'Reply with a single JSON object and nothing else — no markdown, no code fences, no prose ' +
+      'before or after it — matching exactly {"reply": "...", "translation": "...", "suggestedReplies": ' +
+      '["...", "..."]}, where "reply" is your in-character German reply (one or two short sentences), ' +
+      '"translation" is its English translation, and "suggestedReplies" is 0-3 short, simple things ' +
+      'the learner could plausibly say back to you, in German, using only the vocabulary above — omit ' +
+      'it (or leave it empty) whenever nothing natural fits.',
+    user: (transcript ? `${transcript}\n` : '') + `User: ${meta.userText}`,
+  };
+}
+
+interface ChatMemoryMeta {
+  oldSummary: string;
+  oldFacts: string[];
+  newBubbles: { role: 'user' | 'character'; text: string }[];
+}
+
+// Night-only (see AiJobTypeSchema's doc comment) — this prompt is never sent from the request
+// path, so it's fine for it to be slower/more deliberate than chatTurnPrompt. Deliberately
+// restates the child-safety deny list here even though memory-safety.ts enforces it in code too:
+// two independent layers, one in the prompt (best-effort, cheap) and one in plain code
+// (authoritative) — see the spec's "both...must enforce this" rule.
+function memoryPrompt(job: AiJob): Prompt {
+  const meta = job.meta as unknown as ChatMemoryMeta;
+  const transcript = meta.newBubbles.map((turn) => `${turn.role === 'user' ? 'User' : 'Character'}: ${turn.text}`).join('\n');
+  const oldFactsLine = meta.oldFacts.length > 0 ? meta.oldFacts.map((f) => `- ${f}`).join('\n') : '(none yet)';
+
+  return {
+    system:
+      'You maintain a short private memory note for a language-practice chat character, so the ' +
+      'character can remember a learner across days. Write in English. Reply with a single JSON ' +
+      'object and nothing else — no markdown, no code fences, no prose before or after it, ' +
+      'matching exactly {"summary": "...", "facts": ["...", "..."]}.\n\n' +
+      'STRICT RULES — never violate these:\n' +
+      '- NEVER invent or assume a fact. Only record something the learner (or your own prior reply) ' +
+      'actually said in the messages below — if you are not sure it was really said, leave it out.\n' +
+      '- NEVER include the learner\'s real name, age, birthday, address, school, employer, phone ' +
+      'number, email, or any other detail that could identify or locate them, even if they said it ' +
+      'directly.\n' +
+      '- NEVER include health, family, or financial details.\n' +
+      '- NEVER include anything the learner asked to keep secret, or anything about meeting in ' +
+      'person.\n' +
+      '- Only keep light, harmless learning notes (e.g. a grammar point they struggled with) and ' +
+      'preferences/topics they actually volunteered (e.g. a hobby, or why they are learning German). ' +
+      'If in doubt, leave it out.',
+    user:
+      `Previous summary: ${meta.oldSummary || '(none yet)'}\n\n` +
+      `Previous facts:\n${oldFactsLine}\n\n` +
+      `New messages since then:\n${transcript || '(none)'}\n\n` +
+      'Write an updated "summary" (a few warm sentences, in English: what you\'ve talked about and ' +
+      'how the learner is doing — topics, a struggle, a small win) that folds in anything worth ' +
+      `keeping from the previous summary plus the new messages above. Write an updated "facts" list ` +
+      `(at most ${CHAT_MEMORY_MAX_FACTS} short items) carrying forward any previous facts still ` +
+      'relevant plus any new safe ones — drop anything that violates the safety rules above, even ' +
+      'if that means dropping something from the previous facts list too.',
   };
 }
 
@@ -107,5 +199,9 @@ export function buildPrompt(job: AiJob): Prompt {
       return sanitySentencePrompt(job);
     case 'STORY':
       return storyPrompt(job);
+    case 'CHAT_TURN':
+      return chatTurnPrompt(job);
+    case 'CHAT_MEMORY':
+      return memoryPrompt(job);
   }
 }

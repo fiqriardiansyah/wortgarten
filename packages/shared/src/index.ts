@@ -10,6 +10,7 @@ export * from './separable';
 export * from './session-types';
 export * from './grading';
 export * from './story';
+export * from './chat';
 export * from './ai';
 export * from './timezone';
 export * from './worlds';
@@ -258,7 +259,7 @@ export type AnalyzeResponse = z.infer<typeof AnalyzeResponseSchema>;
 
 // ─── Word bank ────────────────────────────────────────────────────────────────
 
-export const AddWordSourceTypeSchema = z.enum(['search', 'paste', 'manual', 'read', 'world']);
+export const AddWordSourceTypeSchema = z.enum(['search', 'paste', 'manual', 'read', 'world', 'chat']);
 export type AddWordSourceType = z.infer<typeof AddWordSourceTypeSchema>;
 
 export const AddWordRequestSchema = z.object({

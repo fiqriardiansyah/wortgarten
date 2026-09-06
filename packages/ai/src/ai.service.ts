@@ -21,6 +21,12 @@ export class AiService {
     // Optional: only STORY jobs need it. Undefined is fine for callers that only ever run
     // SANITY_SENTENCE (e.g. existing tests) — see checkerFor's error if a STORY job shows up anyway.
     private readonly checkStoryDraft?: Checker,
+    // Optional: only CHAT_TURN jobs need it — same reasoning as checkStoryDraft above.
+    private readonly checkChatTurn?: Checker,
+    // Optional: only CHAT_MEMORY jobs need it — same reasoning as checkStoryDraft above. Unlike
+    // checkChatTurn, this one is pure (no DB lookup), but it's still a caller-supplied checker for
+    // consistency with how every other job type is wired.
+    private readonly checkChatMemory?: Checker,
   ) {}
 
   private adapterFor(provider: AiProvider): AiAdapter {
@@ -34,6 +40,12 @@ export class AiService {
       case 'STORY':
         if (!this.checkStoryDraft) throw new Error('STORY job requires AiService to be constructed with checkStoryDraft');
         return this.checkStoryDraft;
+      case 'CHAT_TURN':
+        if (!this.checkChatTurn) throw new Error('CHAT_TURN job requires AiService to be constructed with checkChatTurn');
+        return this.checkChatTurn;
+      case 'CHAT_MEMORY':
+        if (!this.checkChatMemory) throw new Error('CHAT_MEMORY job requires AiService to be constructed with checkChatMemory');
+        return this.checkChatMemory;
     }
   }
 

@@ -65,6 +65,88 @@ function glossaryEntryFor(hit: LexemeMatch, knownSenseId?: string): StoryGlossar
   };
 }
 
+export interface TokenizeAgainstAllowlistParams {
+  allowlistIds: Set<string>;
+  knownSenseByLexeme: Map<string, string>;
+  /** Decides a resolved allowlist hit's StoryToken.status — Story distinguishes known/new/function,
+   * Chat (no "new" tier) only ever returns known/function. See build-story-tokens.ts's own
+   * `statusFor` for the Story caller, and select-chat-vocabulary.ts for the Chat one. */
+  statusFor: (lexemeId: string) => StoryTokenStatus;
+}
+
+export interface TokenizedText {
+  tokens: StoryToken[];
+  glossary: Record<string, StoryGlossaryEntry>;
+  totalWordCount: number;
+  unknownWordCount: number;
+  unresolvedSurfaces: string[];
+}
+
+/**
+ * One paragraph/message worth of segment→resolve→map — the single place a plain-text draft
+ * becomes the frozen StoryToken/StoryGlossaryEntry shape against a given allowlist. Shared by
+ * `buildStoryFromDraft` (per Story paragraph) and Story Chat's checker/scripted-fallback tokenizer
+ * (a whole message, treated as one paragraph) so there is exactly one resolution implementation.
+ */
+export async function tokenizeAgainstAllowlist(
+  resolver: LexemeResolver,
+  text: string,
+  { allowlistIds, knownSenseByLexeme, statusFor }: TokenizeAgainstAllowlistParams,
+  language = 'de',
+): Promise<TokenizedText> {
+  const { normalized, segments } = segmentText(text);
+  const slots = await resolver.lookupSentence(normalized, language);
+
+  const slotByWordIndex = new Map<number, SentenceTokenMatch>();
+  for (const slot of slots) {
+    for (const idx of slot.tokenIndices) slotByWordIndex.set(idx, slot);
+  }
+
+  const glossary: Record<string, StoryGlossaryEntry> = {};
+  const unresolvedSurfaces: string[] = [];
+  let totalWordCount = 0;
+  let unknownWordCount = 0;
+
+  const tokens: StoryToken[] = segments.map((segment): StoryToken => {
+    if (segment.kind !== 'word') {
+      return { text: segment.text, kind: segment.kind, lexemeId: null, senseId: null, status: 'function' };
+    }
+
+    totalWordCount++;
+    const slot = slotByWordIndex.get(segment.wordIndex!);
+    const allowlistHit = slot?.matches.find((m) => allowlistIds.has(m.lexeme.id));
+
+    if (allowlistHit) {
+      const lexemeId = allowlistHit.lexeme.id;
+      const status = statusFor(lexemeId);
+      const knownSenseId = knownSenseByLexeme.get(lexemeId);
+      const senseId = knownSenseId ?? allowlistHit.senses[0]?.id ?? null;
+      if (!glossary[lexemeId]) glossary[lexemeId] = glossaryEntryFor(allowlistHit, knownSenseId);
+      return { text: segment.text, kind: 'word', lexemeId, senseId, status };
+    }
+
+    // Resolves to a real lexeme, just not one on this allowlist — comprehensible input, not a
+    // defect. Glossaried so tapping still works; carries a senseId (fallback to the lexeme's
+    // first sense) so "+ Add to my words" never fails on an 'unknown' token.
+    const outsideHit = slot?.matches[0];
+    if (outsideHit) {
+      unknownWordCount++;
+      const lexemeId = outsideHit.lexeme.id;
+      const senseId = outsideHit.senses[0]?.id ?? null;
+      if (!glossary[lexemeId]) glossary[lexemeId] = glossaryEntryFor(outsideHit);
+      return { text: segment.text, kind: 'word', lexemeId, senseId, status: 'unknown' };
+    }
+
+    // Resolves to nothing at all — hallucination, invented name, typo, or an inflection
+    // LookupService doesn't handle. Ordinary expected case: ships as plain text, never thrown.
+    unknownWordCount++;
+    unresolvedSurfaces.push(segment.text);
+    return { text: segment.text, kind: 'word', lexemeId: null, senseId: null, status: 'unknown' };
+  });
+
+  return { tokens, glossary, totalWordCount, unknownWordCount, unresolvedSurfaces };
+}
+
 /**
  * Re-tokenizes an already-checker-approved draft into the frozen StoryToken/StoryGlossaryEntry
  * shape — the worker's overnight tokenMap precompute, so the Reader does zero runtime NLP.
@@ -96,58 +178,24 @@ export async function buildStoryFromDraft(
   const paragraphs: StoryParagraph[] = [];
 
   for (const paragraphText of paragraphTexts) {
-    const { normalized, segments } = segmentText(paragraphText);
-    const slots = await resolver.lookupSentence(normalized, language);
+    const result = await tokenizeAgainstAllowlist(
+      resolver,
+      paragraphText,
+      {
+        allowlistIds: vocab.allowlistIds,
+        knownSenseByLexeme: vocab.knownSenseByLexeme,
+        statusFor: (lexemeId) => statusFor(lexemeId, vocab),
+      },
+      language,
+    );
 
-    const slotByWordIndex = new Map<number, SentenceTokenMatch>();
-    for (const slot of slots) {
-      for (const idx of slot.tokenIndices) slotByWordIndex.set(idx, slot);
-    }
+    Object.assign(glossary, result.glossary);
+    for (const token of result.tokens) if (token.lexemeId) usedLexemeIds.add(token.lexemeId);
+    totalWordCount += result.totalWordCount;
+    unknownWordCount += result.unknownWordCount;
+    unresolvedSurfaces.push(...result.unresolvedSurfaces);
 
-    const tokens: StoryToken[] = segments.map((segment): StoryToken => {
-      if (segment.kind !== 'word') {
-        return { text: segment.text, kind: segment.kind, lexemeId: null, senseId: null, status: 'function' };
-      }
-
-      totalWordCount++;
-      const slot = slotByWordIndex.get(segment.wordIndex!);
-      const allowlistHit = slot?.matches.find((m) => vocab.allowlistIds.has(m.lexeme.id));
-
-      if (allowlistHit) {
-        const lexemeId = allowlistHit.lexeme.id;
-        const status = statusFor(lexemeId, vocab);
-        usedLexemeIds.add(lexemeId);
-
-        const knownSenseId = vocab.knownSenseByLexeme.get(lexemeId);
-        const senseId = knownSenseId ?? allowlistHit.senses[0]?.id ?? null;
-
-        if (!glossary[lexemeId]) glossary[lexemeId] = glossaryEntryFor(allowlistHit, knownSenseId);
-
-        return { text: segment.text, kind: 'word', lexemeId, senseId, status };
-      }
-
-      // Resolves to a real lexeme, just not one on this user's allowlist (e.g. "Katze") — the
-      // comprehensible-input mechanic, not a defect. Glossaried so tapping still works. Still
-      // carries a senseId (fallback to the lexeme's first sense) — WordPopup's "+ Add to my
-      // words" is deliberately offered for 'unknown' tokens too (see WordPopup's isAddable), so
-      // a null senseId here would make every such tap fail in useMarkWordKnown.
-      const outsideHit = slot?.matches[0];
-      if (outsideHit) {
-        unknownWordCount++;
-        const lexemeId = outsideHit.lexeme.id;
-        const senseId = outsideHit.senses[0]?.id ?? null;
-        if (!glossary[lexemeId]) glossary[lexemeId] = glossaryEntryFor(outsideHit);
-        return { text: segment.text, kind: 'word', lexemeId, senseId, status: 'unknown' };
-      }
-
-      // Resolves to nothing at all — hallucination, invented name, typo, or an inflection
-      // LookupService doesn't handle. Ordinary expected case: ships as plain text, never thrown.
-      unknownWordCount++;
-      unresolvedSurfaces.push(segment.text);
-      return { text: segment.text, kind: 'word', lexemeId: null, senseId: null, status: 'unknown' };
-    });
-
-    paragraphs.push({ tokens });
+    paragraphs.push({ tokens: result.tokens });
   }
 
   const newWords = vocab.newWords.filter((w) => usedLexemeIds.has(w.lexemeId)).map((w) => w.lexemeId);

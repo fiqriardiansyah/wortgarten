@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 # A newer push to the same branch/PR makes the in-flight run obsolete.
 concurrency:
